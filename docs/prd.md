@@ -30,19 +30,19 @@ específico de Administración que reporta a Gerencia.
 │ DIRECCIÓN DE        │        │
 │ PRODUCCIÓN          │        │
 │                     │        │
-│ ┌────────┐ ┌──────┐│        │
-│ │ALMACÉN │ │OPERAC││        │
-│ │(8 pers)│ │(18 p)││        │
-│ │        │ │      ││        │
-│ │ Recibe │ │5 secc││        │
-│ │ Almac. │ │3 tur ││        │
-│ │ Emite  │ │Lotes ││        │
-│ │ Verif. │ │Calid ││        │
-│ │ PT     │ │Desp. ││        │
-│ └───┬────┘ └──┬───┘│        │
+│ ┌────────┐ ┌──────┐ │        │
+│ │ALMACÉN │ │OPERAC│ │        │
+│ │(8 pers)│ │(18 p)│ │        │
+│ │        │ │      │ │        │
+│ │ Recibe │ │5 secc│ │        │
+│ │ Almac. │ │3 tur │ │        │
+│ │ Emite  │ │Lotes │ │        │
+│ │ Verif. │ │Calid │ │        │
+│ │ PT     │ │Desp. │ │        │
+│ └───┬────┘ └──┬───┘ │        │
 │     │         │     │        │
 │     └── Jefe ─┘     │        │
-│     Producción       │        │
+│     Producción      │        │
 │     autoriza        │        │
 └──────────┬──────────┘        │
            │                   │
@@ -148,7 +148,7 @@ flowchart TB
 4. **Administración recibe datos totales** (MP usada, lotes producidos,
    costo-beneficio) no el detalle operativo. Puede abrir detalle si algo no cierra.
 
-5. **Producción y Almacén operan en el mismo galpón.** El traspaso físico es
+5. **Producción y Almacén operan en el mismo galpón/ambiente.** El traspaso físico es
    directo, pero documentalmente queda registrado en el sistema.
 
 ### 2.3 Subdominios
@@ -216,17 +216,17 @@ flowchart TB
 
 ### 3.2 Almacén (Dirección de Producción)
 
-| ID     | Requerimiento                                                                            | Prioridad |
-| ------ | ---------------------------------------------------------------------------------------- | --------- |
-| RF-A01 | Registrar recepción de MP (fardos) con fecha, proveedor, cantidad, características       | Alta      |
-| RF-A02 | Asignar ubicación física a la MP almacenada                                              | Alta      |
-| RF-A03 | Registrar emisión de MP a Operación con referencia a autorización del Jefe de Producción | Alta      |
-| RF-A04 | Registrar recepción de producto terminado desde Operación                                | Alta      |
-| RF-A05 | Registrar verificación física de PT antes de marcarlo como disponible                    | Alta      |
-| RF-A06 | Registrar movimientos de insumos — **detalle a definir**                                 | Media     |
-| RF-A07 | Consultar stock actual de MP, insumos y PT por ubicación y lote                          | Alta      |
-| RF-A08 | Registrar ajustes de inventario (sobrantes, faltantes, mermas)                           | Media     |
-| RF-A09 | Realizar conteo cíclico / inventario físico                                              | Media     |
+| ID     | Requerimiento                                                                              | Prioridad |
+| ------ | ------------------------------------------------------------------------------------------ | --------- |
+| RF-A01 | Registrar recepción de MP (fardos) con fecha, proveedor, camion, cantidad, características | Alta      |
+| RF-A02 | Asignar ubicación física a la MP almacenada                                                | Alta      |
+| RF-A03 | Registrar emisión de MP a Operación con referencia a autorización del Jefe de Producción   | Alta      |
+| RF-A04 | Registrar recepción de producto terminado desde Operación                                  | Alta      |
+| RF-A05 | Registrar verificación física de PT antes de marcarlo como disponible                      | Alta      |
+| RF-A06 | Registrar movimientos de insumos — **detalle a definir**                                   | Media     |
+| RF-A07 | Consultar stock actual de MP, insumos y PT por ubicación y lote                            | Alta      |
+| RF-A08 | Registrar ajustes de inventario (sobrantes, faltantes, mermas)                             | Media     |
+| RF-A09 | Realizar conteo cíclico / inventario físico                                                | Media     |
 
 ### 3.3 Jefe de Producción
 
@@ -286,12 +286,12 @@ Esto garantiza trazabilidad desde el día 1 y prepara el sistema para cualquier 
 
 | Rol                       | Área                 | Alcance                                           |
 | ------------------------- | -------------------- | ------------------------------------------------- |
+| **Jefe de Producción**    | Dirección Producción | **Todo** — granular, autorizaciones, consolidados |
+| **Admin (nexo Gerencia)** | Administración       | Reportes consolidados, valuación, costos, cierres |
 | **Supervisor Operación**  | Operación            | Sus secciones, sus turnos                         |
 | **Inspector Calidad**     | Operación            | Calidad de proceso + lotes (historial completo)   |
 | **Encargado Almacén**     | Almacén              | Stocks, movimientos, recepción, emisión           |
 | **Verificador Almacén**   | Almacén              | Verificación de PT                                |
-| **Jefe de Producción**    | Dirección Producción | **Todo** — granular, autorizaciones, consolidados |
-| **Admin (nexo Gerencia)** | Administración       | Reportes consolidados, valuación, costos, cierres |
 
 ### 4.4 Principios de Persistencia
 
