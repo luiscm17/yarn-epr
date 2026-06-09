@@ -31,4 +31,4 @@ build/
 Thumbs.db
 
 # Tooling
-.atl/.skill-registry.cache.json
+.atl/
