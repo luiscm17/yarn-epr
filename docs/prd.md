@@ -72,7 +72,7 @@ específico de Administración que reporta a Gerencia.
 
 **Total usuarios activos del sistema: ~28** (26 en Producción + 1 Jefe + 1 Admin).
 
-Adicionalmente hay ~80 operarios por turno que **no usan el sistema**.
+Adicionalmente hay ~40 operarios por turno que **no usan el sistema**.
 
 ### 1.3 Principios de Diseño
 
