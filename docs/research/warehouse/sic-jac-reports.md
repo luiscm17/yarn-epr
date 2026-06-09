@@ -1,54 +1,56 @@
-Puntos fuertes de la reunion 
+Puntos fuertes de la reunion
+
 * Producto terminado - Entregado - Stock
-* Produccion de ovillado - Embolsado y su respectivo producto terminado 
+* Produccion de ovillado - Embolsado y su respectivo producto terminado
 * Producto recuperado/Producto defectuoso - Stock 'desorden de producto defectuoso'
 * Ingresos - Stock entregado a planta/Entregado a almacen *Colorante y auxiliares
                                                           *Etiquetas
                                                           *Bolsas
-* Informe detallado de tintoreria 
-* Facturas de suministros 
-* Salidas de producto terminado - ventas 
+* Informe detallado de tintoreria
+* Facturas de suministros
+* Salidas de producto terminado - ventas
 * Lotes
 * Notas (Sistema de facturas propias de la empresa) 'Revisar y optimizar'
 * Clientes
 
 # SISTEMA SIC JAC 1
 
-## REPORTES 
+## REPORTES
+
 Los reportes estan estructurados por 7 secciones:
 
-* Codigo 
-Es el numero de item asignado 
+* Codigo
+Es el numero de item asignado
 
-* Descripcion 
+* Descripcion
 Informacion detallada acerca de la categoria/sub categoria/item dependiendo del tipo de reporte solicitado
 
-* Unidad 
+* Unidad
 La unidad de medida usada para el producto (Kilos, litros o  Bolivianos dependiendo del tipo de item manejado)
 
 * Saldo (Un dia anterior al inicio del reporte)
 Es todo el stock almacenado antes de la fecha inicio del reporte, consta de dos partes.
 Cantidad:
-Indica la cantidad almacenada del producto en kilos 
+Indica la cantidad almacenada del producto en kilos
 Valor:
-Es el precio general del lote expresado en Bolivianos 
+Es el precio general del lote expresado en Bolivianos
 
-* Entrada 
-Son todos los productos añadidos a la fecha desde la fecha inicio del reporte que consta igual de la cantidad y el valor 
+* Entrada
+Son todos los productos añadidos a la fecha desde la fecha inicio del reporte que consta igual de la cantidad y el valor
 
-* Salida 
-Son los productos vendidos hasta la ultima fecha del reporte que consta igual de la cantidad y el valor del lote en general 
+* Salida
+Son los productos vendidos hasta la ultima fecha del reporte que consta igual de la cantidad y el valor del lote en general
 
-* Saldos 
-Es el Stock al ultimo dia del reporte, los preductos que sobraron o no se vendieron 
+* Saldos
+Es el Stock al ultimo dia del reporte, los preductos que sobraron o no se vendieron
 
-### Formula 
+### Formula
 
 (Saldo (Un dia anterior al inicio del reporte) + Entrada) - Salidas = Saldos
 
 Los reportes estan divididos en tres categorias:
 
-* Categoria 
+* Categoria
 
 Es el reporte mas general posible que abarca muy poco detalle ej: 'Almacen producto terminado'
 
@@ -96,12 +98,12 @@ En el apartado de ingresos se hace la añadidura de un nuevo item:
 
 * Descripcion (Es el item en especifo si es lana por ('Rojo 3006 2/18' 'Verde Botella 4057 2/32' 'Maiz6005 Recuperado' 'Naranja 1013 2/18 TIPO N'))
 
-* Unidad 
+* Unidad
 Se refiere a la unidad de medida (Kilos)
 
 ###### SALIDA
 
-En aqui se marca el objetivo como vendido, especificando cuanto del producto se vendio y cuanto aun queda en el stock este se divide por mas categorias como ser: 
+En aqui se marca el objetivo como vendido, especificando cuanto del producto se vendio y cuanto aun queda en el stock este se divide por mas categorias como ser:
 
 * N. Salida (Puesto por el sistema, es un contador que va registrando las salidas y cada vez que hace una se agrega un numero mas)
 
@@ -121,7 +123,7 @@ En aqui se marca el objetivo como vendido, especificando cuanto del producto se 
 
 * Entregado a: (El lugar en donde llegara la mercaderia)
 
-Nota: El ingreso es por el numero de lote, el producto se llena automaticamente, la cantidad de entrada/salida se llena automaticamente y se añade o extrae automaticamente al stock 
+Nota: El ingreso es por el numero de lote, el producto se llena automaticamente, la cantidad de entrada/salida se llena automaticamente y se añade o extrae automaticamente al stock
 
 ## Tipos de categoria
 
@@ -139,7 +141,7 @@ Nota: El ingreso es por el numero de lote, el producto se llena automaticamente,
 * Titulo Fantasia (Es como el titulo 2/18 pero su peso varia)
 * StolL (Es como el 2/32 pero mas fino)
 
-## Nomenclaturas especiales de items 
+## Nomenclaturas especiales de items
 
 * Terminacion en -D (Devolucion)
 * Terminacion en -FT (Fuera de Tabla)
