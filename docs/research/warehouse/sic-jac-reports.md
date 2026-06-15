@@ -1,18 +1,3 @@
-Puntos fuertes de la reunion
-
-* Producto terminado - Entregado - Stock
-* Produccion de ovillado - Embolsado y su respectivo producto terminado
-* Producto recuperado/Producto defectuoso - Stock 'desorden de producto defectuoso'
-* Ingresos - Stock entregado a planta/Entregado a almacen *Colorante y auxiliares
-                                                          *Etiquetas
-                                                          *Bolsas
-* Informe detallado de tintoreria
-* Facturas de suministros
-* Salidas de producto terminado - ventas
-* Lotes
-* Notas (Sistema de facturas propias de la empresa) 'Revisar y optimizar'
-* Clientes
-
 # SISTEMA SIC JAC 1
 
 ## REPORTES
@@ -101,7 +86,7 @@ En el apartado de ingresos se hace la añadidura de un nuevo item:
 * Unidad
 Se refiere a la unidad de medida (Kilos)
 
-###### SALIDA
+#### SALIDA
 
 En aqui se marca el objetivo como vendido, especificando cuanto del producto se vendio y cuanto aun queda en el stock este se divide por mas categorias como ser:
 
