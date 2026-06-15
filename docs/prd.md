@@ -1,123 +1,123 @@
-# SISTEMA DE GESTIÓN DE PRODUCCIÓN TEXTIL — PRD
+# SISTEMA DE GESTIÓN DE PRODUCCIÓN TEXTIL — PRD Maestro
 
-> **Product Requirements Document**
+> **Product Requirements Document — Contrato Ejecutivo**
 >
-> Define el problema, el modelo de dominio y los requerimientos del sistema
+> Define el problema, el alcance y las reglas de dominio del sistema
 > para la **Dirección de Producción** (Unidad Almacén + Unidad Operación)
-> y su transmisión de información consolidada hacia **Administración**.
+> y su transmisión de información consolidada hacia **Gerencia**.
 >
+> Los PRD de detalle viven en `docs/prd/`:
+>
+> - [`docs/prd/warehouse.md`](./prd/warehouse.md) — Unidad Almacén
+> - `docs/prd/operation.md` — Unidad Operación
 
 ---
 
-## 1. Resumen Ejecutivo
-
-### 1.1 Propósito
+## 1. Propósito
 
 Sistematizar la gestión de la **Dirección de Producción** de una planta textil,
 articulando sus dos unidades internas — Almacén y Operación — bajo la supervisión
-del Jefe de Producción, y transmitiendo datos consolidados diarios a un integrante
-específico de Administración que reporta a Gerencia.
+del Jefe de Producción, eliminando planillas paralelas en Excel y papel, y
+transmitiendo datos consolidados diarios a Gerencia.
 
-### 1.2 Dominios de Negocio
+---
+
+## 2. Estructura organizacional
+
+### 2.1 Organigrama del sistema
 
 ```
-                  GERENCIA
-                     │
-          ┌──────────┴──────────┐
-          │                     │
-          ▼                     │
-┌─────────────────────┐        │
-│ DIRECCIÓN DE        │        │
-│ PRODUCCIÓN          │        │
-│                     │        │
-│ ┌────────┐ ┌──────┐ │        │
-│ │ALMACÉN │ │OPERAC│ │        │
-│ │(8 pers)│ │(18 p)│ │        │
-│ │        │ │      │ │        │
-│ │ Recibe │ │5 secc│ │        │
-│ │ Almac. │ │3 tur │ │        │
-│ │ Emite  │ │Lotes │ │        │
-│ │ Verif. │ │Calid │ │        │
-│ │ PT     │ │Desp. │ │        │
-│ └───┬────┘ └──┬───┘ │        │
-│     │         │     │        │
-│     └── Jefe ─┘     │        │
-│     Producción      │        │
-│     autoriza        │        │
-└──────────┬──────────┘        │
-           │                   │
-           │ Datos diarios     │
-           │ consolidados      │
-           ▼                   │
-┌──────────────────────┐       │
-│  ADMINISTRACIÓN      │       │
-│  (1 persona -        │       │
-│   nexo con Gerencia) │       │
-│                      │       │
-│  ● Recibe y valúa    │       │
-│  ● Costea            │       │
-│  ● Cierres mensuales │       │
-└──────────────────────┘       │
-           │                   │
-           └───────────────────┘
+                   GERENCIA
+                      │
+        ┌─────────────┼─────────────┐
+        │             │             │
+        ▼             ▼             ▼
+   ┌─────────┐ ┌───────────┐ ┌────────────────┐
+   │PRODUC-  │ │ADMINIS-   │ │COMERCIALIZA-   │
+   │CIÓN     │ │TRACIÓN    │ │CIÓN            │
+   └────┬────┘ └───────────┘ └────────────────┘
+        │
+        ▼
+┌──────────────────────────────┐
+│   DIRECCIÓN DE PRODUCCIÓN    │
+│                              │
+│  ┌──────────────────────┐   │
+│  │ JEFE DE PRODUCCIÓN   │   │
+│  │ Autoriza, supervisa, │   │
+│  │ consolida reporte    │   │
+│  └────────┬─────────────┘   │
+│           │                 │
+│     ┌─────┴─────┐           │
+│     │           │           │
+│     ▼           ▼           │
+│ ┌────────┐ ┌──────────┐    │
+│ │ALMACÉN │ │OPERACIÓN │    │
+│ │Jefe +  │ │Supervis. │    │
+│ │Auxil.  │ │(x turno) │    │
+│ └────────┘ └──────────┘    │
+└───────────────┬─────────────┘
+                │
+                │ Reporte diario
+                │ consolidado
+                ▼
+┌──────────────────────────────┐
+│  ADMINISTRACIÓN              │
+│  1 persona (nexo Gerencia)   │
+│  Recibe, valúa, costea,      │
+│  cierra mensual              │
+└──────────────────────────────┘
 ```
 
-| Área                              | Personas | Rol en el sistema                                             |
-| --------------------------------- | -------- | ------------------------------------------------------------- |
-| **Almacén** (dentro de Prod.)     | ~8       | Opera recepción de MP, emisiones, verificación de PT          |
-| **Operación** (dentro de Prod.)   | ~18      | Opera máquinas, lotes, calidad, desperdicio                   |
-| **Jefe de Producción**            | 1        | Autoriza emisiones, supervisa granular, consolida             |
-| **Persona Admin (nexo Gerencia)** | 1        | Recibe consolidados diarios, valúa, cierra mensual            |
-| **Resto de Administración**       | ~9       | **Fuera del alcance** — manejan otros procesos (ventas, etc.) |
+**Nota:** El sistema cubre la **Dirección de Producción**. El destino del reporte
+consolidado es la persona responsable de Gerencia
+(alcance limitado a la recepción del reporte). Las direcciones de Administración y Comercialización están fuera de alcance.
 
-**Total usuarios activos del sistema: ~28** (26 en Producción + 1 Jefe + 1 Admin).
+### 2.2 Roles del sistema
 
-Adicionalmente hay ~40 operarios por turno que **no usan el sistema**.
+| Rol | Cant. | Responsabilidades en el sistema |
+|-----|-------|---------------------------------|
+| **Jefe de Producción** | 1 | Autoriza emisiones de MP, supervisa dashboard granular de ambas unidades, verifica coherencia (MP emitida vs lotes producidos), consolida y envía reporte diario a Administración. La Secretaria (parte de su equipo) opera el sistema en conjunto con el Jefe de Produccion, principalmente para tareas de supervisión, análisis y reportes. |
+| **Jefe Unidad Almacén** | 1 | Supervisa recepción de MP, emisiones a Operación, verificación de PT, control de inventarios. Opera el sistema. Reporta al Jefe de Producción. |
+| **Auxiliar Operativo (Almacén)** | — | Ejecuta movimientos físicos: recepción, verificación, embolsado, despacho. Opera el sistema para registrar movimientos. |
+| **Supervisor** | 3 (1 por turno) | Está a cargo de la operación en su turno. Registra producción por sección, control de calidad, lotes y desperdicio **directamente en el sistema**. Reporta al Jefe de Producción. |
+| **Gerencia** | 1 | Recibe reporte diario consolidado, valúa inventarios, costea, realiza cierre mensual. |
+| **Operarios** | — | **No usan el sistema.** Operan máquinas. Su producción es registrada por los supervisores en el sistema. |
 
-### 1.3 Principios de Diseño
+### 2.3 Principios de diseño
 
 1. **El Jefe de Producción es el usuario central.** Necesita visibilidad granular
    de ambas unidades para autorizar, supervisar y detectar incoherencias.
 
-2. **Cada unidad opera su proceso.** Almacén maneja stocks y movimientos.
-   Operación maneja máquinas, turnos y lotes. No interfieren entre sí.
+2. **Cada unidad opera su proceso.** Almacén gestiona stocks y movimientos.
+   Operación gestiona máquinas, turnos y lotes. No interfieren entre sí.
 
-3. **El dato se captura una vez en el origen.** No hay planillas paralelas ni
-   reingreso de información.
+3. **El dato lo captura quien lo genera.** El Supervisor registra producción,
+   calidad y lotes directamente en el sistema. No hay intermediarios ni
+   planillas paralelas.
 
-4. **La transmisión a Administración es un subproducto del sistema.** Los
+4. **Trazabilidad de principio a fin.** Todo lote de MP debe tener su PT
+   correspondiente (no se admiten huérfanos). Y cada lote en Operación recorre
+   6 etapas secuenciales con máquina de estados — sin saltos, con cuarentena
+   y reproceso documentados.
+
+5. **La operación es continua por turnos.** 3 turnos, cada uno con un Supervisor
+   a cargo. La producción no se detiene. El sistema debe soportar el traspaso
+   de información entre turnos sin pérdida ni duplicación.
+
+6. **La transmisión a Administración es un subproducto del sistema.** Los
    consolidados diarios se generan automáticamente desde los datos operativos.
 
-5. **Inmutabilidad y auditoría.** Los registros críticos son inmutables.
-   Las correcciones son trazables.
+7. **Inmutabilidad y auditoría.** Los registros críticos (movimientos de almacén,
+   producción, autorizaciones) son inmutables. Las correcciones son trazables.
 
-6. **Diseñado para la incertidumbre.** Los procesos no completamente definidos
+8. **Diseñado para la incertidumbre.** Los procesos no completamente definidos
    (insumos, costeo) deben poder agregarse sin reestructurar lo existente.
-
-7. **UI en español, modelo en inglés.** El usuario ve etiquetas en español.
-   El modelo de datos, APIs y código van en inglés.
 
 ---
 
-## 2. Modelo de Dominio
+## 3. Dominios de negocio
 
-### 2.1 Mapa General
-
-```mermaid
-flowchart TD
-    JP["JEFE DE PRODUCCIÓN<br><br>* Autoriza emisión de MP<br>* Supervisa estado granular<br>  de Almacén + Operación<br>* Verifica coherencia (MP vs lotes)<br>* Consolida reporte diario"]
-
-    JP -->|autoriza| ALM["ALMACÉN<br><br>* Recibe MP (fardos)<br>* Almacena<br>* Emite a operación<br>* Verifica PT físico"]
-
-    JP -->|supervisa| OPE["OPERACIÓN<br><br>* 5 secciones: Prep, Spin,<br>  Wind, Twist, Skeining<br>* 3 turnos<br>* Trazabilidad por lotes<br>  (6 etapas)<br>* Calidad de proceso<br>* Desperdicio"]
-
-    ALM --> INFO["INFORME DIARIO CONSOLIDADO<br>(MP usada, lotes, costo-beneficio)"]
-    OPE --> INFO
-
-    INFO --> ADMIN["ADMINISTRACIÓN (nexo Gerencia)<br><br>* Valúa inventario<br>* Costea<br>* Cierre mensual"]
-```
-
-### 2.2 Flujo de Valor de la Materia Prima
+### 3.1 Mapa general — Flujo de valor de la MP
 
 ```mermaid
 flowchart TB
@@ -126,374 +126,127 @@ flowchart TB
         MP["LLEGA MP (fardos)"] --> ALM_R["ALMACÉN<br>recibe, almacena"]
         ALM_R --> OPE["OPERACIÓN<br>transforma, genera lotes,<br>desperdicio"]
         OPE --> ALM_V["ALMACÉN<br>verifica PT físico"]
-        ALM_V --> DISP["DISPONIBLE para venta<br>(a Comercialización)"]
+        ALM_V --> DISP["DISPONIBLE para venta"]
     end
 
-    ALM_R -.->|emisión*| JP["JEFE DE PRODUCCIÓN<br>autoriza emisión*<br>consolida reporte diario"]
-    OPE -.->|reporta| JP
+    ALM_R -.->|autoriza emisión| JP["JEFE DE PRODUCCIÓN"]
+    OPE -.->|reporta diario| JP
 
     JP --> ADMIN["ADMINISTRACIÓN<br>valúa, costea, cierra mensual"]
 ```
 
-**Puntos clave:**
+**Puntos clave del flujo:**
 
-1. **La MP se emite de forma global.** No se asigna a lotes específicos.
-   El costeo será por asignación global o por período.
+1. **El ciclo del lote en Operación tiene 6 etapas internas:** Inventario →
+   Tintorería → Secado → Devanado → Embolsado → Calidad. Cada etapa tiene
+   su propia máquina de estados. El lote no puede saltarse etapas.
 
 2. **El Jefe de Producción autoriza cada emisión** de MP de Almacén a Operación.
 
-3. **El Jefe de Producción recibe datos granulares** de ambas unidades y los
-   consolida en un reporte diario para Administración.
+3. **Trazabilidad obligatoria:** todo lote de MP ingresado debe tener su
+   correspondiente PT. No se admiten lotes huérfanos.
 
-4. **Administración recibe datos totales** (MP usada, lotes producidos,
-   costo-beneficio) no el detalle operativo. Puede abrir detalle si algo no cierra.
-
-5. **Producción y Almacén operan en el mismo galpón/ambiente.** El traspaso físico es
+4. **Producción y Almacén operan en el mismo galpón.** El traspaso físico es
    directo, pero documentalmente queda registrado en el sistema.
 
-### 2.3 Subdominios
+5. **El reporte diario a Administración es automático.** Se genera desde los datos
+   operativos sin intervención manual.
 
-#### Operación (dentro de Dirección de Producción)
+### 3.2 Inventario de subdominios
 
-| Subdominio             | Referencia                                                                                                                                      |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Hilatura**           | 5 secciones, producción por máquina/turno, avance, calidad de proceso, desperdicio — documentado en `yarn-production.md`                        |
-| **Lotes**              | Trazabilidad por 6 etapas (Inventario → Tintorería → Secado → Devanado → Embolsado → Calidad) con máquina de estados — documentado en `lots.md` |
-| **Calidad de Proceso** | Muestras estadísticas por máquina/tipo                                                                                                          |
-| **Desperdicio**        | Registro por grupo de máquinas                                                                                                                  |
+#### Unidad Almacén
 
-#### Almacén (dentro de Dirección de Producción)
+| Subdominio | Descripción | Documentado en |
+|---|---|---|
+| **Materia Prima (MP)** | Recepción de fardos de hilado base. Asigna código `NN-GGGG-NNN` a cada lote. Enriquece el lote con datos del pedido (título, color, cliente). Ese código es el identificador único que usa todo el proceso. | `docs/prd/warehouse.md` |
+| **Producto Terminado (PT)** | Inventario de hilado procesado que llega desde Operación. Almacén registra entradas, salidas y saldos. Fórmula: (Saldo Ant. + Entradas) − Salidas = Saldos. Las nomenclaturas especiales (-D, -FT, etc.) las asigna Control de Calidad en Operación, Almacén solo recibe. | `docs/prd/warehouse.md` |
+| **Tintorería** | Colorantes e insumos químicos. Movimientos: ingreso, muestra, inventario, etc. | `docs/prd/warehouse.md` |
+| **Bolsas, Etiquetas, Fichas, Talonarios** | Insumos de empaque. Unidad: piezas (no kg). | `docs/prd/warehouse.md` |
 
-| Subdominio                      | Estado                                                             |
-| ------------------------------- | ------------------------------------------------------------------ |
-| **Recepción de MP**             | Definido: ingreso de fardos con características                    |
-| **Emisión a Operación**         | Definido: requiere autorización del Jefe de Producción             |
-| **Recepción de PT**             | Definido: desde Operación, verificación física antes de disponible |
-| **Ubicación física**            | Definido: almacén con ubicaciones                                  |
-| **Insumos**                     | **En estudio**: colorantes, auxiliares, etiquetas, envases, conos  |
-| **Inventario físico / ajustes** | Definido conceptualmente, detalle pendiente                        |
+#### Unidad Operación
+
+| Subdominio | Descripción | Documentado en |
+|---|---|---|
+| **Hilatura** | 5 secciones productivas (Preparación, Continuas, Bobinados, Retorcido, Madejeras), 3 turnos. Cada turno tiene un Supervisor a cargo. Producción registrada por máquina/turno/título, avance (peso entrada/salida), calidad de proceso (muestras estadísticas), y desperdicio por grupo de máquinas. Soporte para Madejeras (madejas, no husos) y Bobinados (sin avance, calidad distinta). | `docs/prd/operation.md` _(próximamente)_ |
+| **Lotes** | El código del lote lo asigna Almacén al recibir la MP (`NN-GGGG-NNN`) y es el mismo que usa Operación durante todo el proceso. Trazabilidad por 6 etapas secuenciales: Inventario → Tintorería → Secado → Devanado → Embolsado → Calidad. Cada etapa con máquina de estados (pendiente, en proceso, completado, en cuarentena, reproceso). Sin saltos de etapa permitidos. | `docs/prd/operation.md` |
+| **Calidad de Proceso** | Muestras estadísticas por máquina/tipo. Control en cada sección, con capacidad de poner lotes en cuarentena si no pasan control. Asigna nomenclaturas especiales al PT (-AT alta torsion, -FT fuera de tabla, -VARR con varrilla, etc). Historial completo de calidad por lote. | `docs/prd/operation.md` |
+| **Desperdicio** | Registro por grupo de máquinas. Dos tipos: **real** y **acumulado**. Se denomina "desperdicio teórico" a la suma de ambos. | `docs/prd/operation.md` |
 
 #### Administración (alcance limitado)
 
-| Subdominio                    | Estado                                              |
-| ----------------------------- | --------------------------------------------------- |
-| **Recepción de consolidados** | Definido: reporte diario desde Jefe de Producción   |
-| **Valuación de inventario**   | Definido: MP, WIP, PT, desperdicio valuado          |
-| **Costeo**                    | **Por definir**: método de asignación, periodicidad |
-| **Desperdicio valorizado**    | Definido: desperdicio en $$$ mensual/anual          |
-| **Cierre mensual**            | Definido                                            |
+| Subdominio | Estado |
+|---|---|
+| **Recepción de consolidados** | Definido: reporte diario generado automáticamente desde datos operativos |
+| **Valuación de inventario** | Definido: MP, WIP, PT, desperdicio valuado |
+| **Costeo** | **Por definir**: método de asignación, periodicidad |
+| **Cierre mensual** | Definido |
 
-### 2.4 Relaciones entre Dominios
+### 3.3 Relaciones entre dominios
 
-| Relación                         | Naturaleza                                       |
-| -------------------------------- | ------------------------------------------------ |
-| Almacén → Operación              | Flujo de MP (emisión autorizada por Jefe Prod.)  |
-| Operación → Almacén              | Flujo de PT (entrega de lotes para verificación) |
-| Jefe Producción → Almacén        | Autorización de emisión de MP                    |
-| Jefe Producción → Operación      | Supervisión granular, verificación de coherencia |
-| Jefe Producción → Administración | Reporte diario consolidado                       |
-| Administración → Gerencia        | Valuación, costos, cierres                       |
-
----
-
-## 3. Requerimientos Funcionales
-
-### 3.1 Operación (Dirección de Producción)
-
-| ID     | Requerimiento                                                          | Prioridad |
-| ------ | ---------------------------------------------------------------------- | --------- |
-| RF-O01 | Registrar producción por máquina/turno/título/fecha en cada sección    | Alta      |
-| RF-O02 | Calcular peso neto a partir de peso bruto y tara                       | Alta      |
-| RF-O03 | Registrar avance (peso entrada/salida) en secciones con seguimiento    | Alta      |
-| RF-O04 | Registrar desperdicio por grupo de máquinas                            | Alta      |
-| RF-O05 | Registrar calidad de proceso (muestras estadísticas por máquina)       | Alta      |
-| RF-O06 | Registrar trazabilidad de lotes a través de 6 etapas secuenciales      | Alta      |
-| RF-O07 | Validar máquina de estados de lote (sin saltos, cuarentena, reproceso) | Alta      |
-| RF-O08 | Calcular métricas derivadas: kg/hora, eficiencia, desperdicio %        | Alta      |
-| RF-O09 | Permitir corrección trazable de registros con control de versiones     | Media     |
-| RF-O10 | Soporte para Madejeras (madejas, no husos)                             | Alta      |
-| RF-O11 | Soporte para Bobinados (sin avance, calidad distinta)                  | Alta      |
-
-### 3.2 Almacén (Dirección de Producción)
-
-| ID     | Requerimiento                                                                              | Prioridad |
-| ------ | ------------------------------------------------------------------------------------------ | --------- |
-| RF-A01 | Registrar recepción de MP (fardos) con fecha, proveedor, camion, cantidad, características | Alta      |
-| RF-A02 | Asignar ubicación física a la MP almacenada                                                | Alta      |
-| RF-A03 | Registrar emisión de MP a Operación con referencia a autorización del Jefe de Producción   | Alta      |
-| RF-A04 | Registrar recepción de producto terminado desde Operación                                  | Alta      |
-| RF-A05 | Registrar verificación física de PT antes de marcarlo como disponible                      | Alta      |
-| RF-A06 | Registrar movimientos de insumos — **detalle a definir**                                   | Media     |
-| RF-A07 | Consultar stock actual de MP, insumos y PT por ubicación y lote                            | Alta      |
-| RF-A08 | Registrar ajustes de inventario (sobrantes, faltantes, mermas)                             | Media     |
-| RF-A09 | Realizar conteo cíclico / inventario físico                                                | Media     |
-
-### 3.3 Jefe de Producción
-
-| ID     | Requerimiento                                                                     | Prioridad |
-| ------ | --------------------------------------------------------------------------------- | --------- |
-| RF-J01 | Autorizar o rechazar solicitudes de emisión de MP de Almacén a Operación          | Alta      |
-| RF-J02 | Visualizar dashboard granular con estado de Almacén (stocks, ubicaciones)         | Alta      |
-| RF-J03 | Visualizar dashboard granular con estado de Operación (secciones, lotes, calidad) | Alta      |
-| RF-J04 | Visualizar alertas de coherencia (MP emitida vs lotes producidos)                 | Alta      |
-| RF-J05 | Generar y enviar reporte diario consolidado a Administración                      | Alta      |
-| RF-J06 | Visualizar historial de autorizaciones de emisión                                 | Media     |
-| RF-J07 | Acceder al detalle de cualquier registro en ambas unidades                        | Alta      |
-
-### 3.4 Administración (nexo con Gerencia)
-
-| ID      | Requerimiento                                                           | Prioridad |
-| ------- | ----------------------------------------------------------------------- | --------- |
-| RF-AD01 | Recibir y visualizar reporte diario consolidado de Producción           | Alta      |
-| RF-AD02 | Visualizar MP procesada (kg totales), lotes producidos, costo-beneficio | Alta      |
-| RF-AD03 | Acceder a detalle de datos si algo no cierra (drill-down)               | Media     |
-| RF-AD04 | Valuar inventario de MP, WIP, PT y desperdicio                          | Alta      |
-| RF-AD05 | Calcular costo por período con método de asignación definido            | Alta      |
-| RF-AD06 | Cuantificar desperdicio en términos económicos (mensual/anual)          | Alta      |
-| RF-AD07 | Realizar cierre mensual                                                 | Alta      |
-| RF-AD08 | Generar reportes para Gerencia (stock valorizado, costos, movimientos)  | Alta      |
+| Relación | Naturaleza |
+|---|---|
+| Almacén → Operación | Flujo de MP (emisión autorizada por Jefe de Producción) |
+| Operación → Almacén | Flujo de PT (entrega de lotes para verificación física) |
+| Jefe Producción → Almacén | Autorización de emisión de MP, supervisión de stocks |
+| Jefe Producción → Operación | Supervisión granular, verificación de coherencia |
+| Jefe Producción → Administración | Reporte diario consolidado automático |
+| Administración → Gerencia | Valuación, costos, cierres |
 
 ---
 
-## 4. Requerimientos Transversales
+## 4. Catálogos compartidos
 
-### 4.1 Catálogos Compartidos
-
-| Catálogo                | Usado por                                                           |
-| ----------------------- | ------------------------------------------------------------------- |
-| **Empleados**           | Operación, Almacén, Jefe Producción                                 |
-| **Máquinas**            | Operación (por sección y grupo)                                     |
-| **Títulos de hilado**   | Operación, Lotes                                                    |
-| **Secciones**           | Operación (Preparación, Continuas, Bobinados, Retorcido, Madejeras) |
-| **Turnos**              | Operación, Almacén                                                  |
-| **Tipos de MP**         | Almacén                                                             |
-| **Ubicaciones físicas** | Almacén                                                             |
-| **Unidades de medida**  | Todos (kg, madejas, conos, bolsas)                                  |
-| **Proveedores**         | Almacén                                                             |
-| **Lotes**               | Operación, Almacén, Administración                                  |
-
-### 4.2 Autenticación
-
-Cada usuario del sistema accede con **usuario y contraseña individuales**. No hay terminales compartidas ni acceso anónimo. La autenticación determina:
-
-- Qué módulos ve (Operación, Almacén, Jefatura, Administración)
-- Qué acciones puede realizar (ingresar datos, autorizar, ver reportes)
-- Qué registros quedan asociados a su nombre (auditoría)
-
-Esto garantiza trazabilidad desde el día 1 y prepara el sistema para cualquier requerimiento futuro que requiera identidad digital (gestión documental, aprobaciones, etc.).
-
-### 4.3 Roles y Permisos
-
-| Rol                       | Área                 | Alcance                                           |
-| ------------------------- | -------------------- | ------------------------------------------------- |
-| **Jefe de Producción**    | Dirección Producción | **Todo** — granular, autorizaciones, consolidados |
-| **Admin (nexo Gerencia)** | Administración       | Reportes consolidados, valuación, costos, cierres |
-| **Supervisor Operación**  | Operación            | Sus secciones, sus turnos                         |
-| **Inspector Calidad**     | Operación            | Calidad de proceso + lotes (historial completo)   |
-| **Encargado Almacén**     | Almacén              | Stocks, movimientos, recepción, emisión           |
-| **Verificador Almacén**   | Almacén              | Verificación de PT                                |
-
-### 4.4 Principios de Persistencia
-
-- **Auditabilidad:** toda transacción crítica (emisión, verificación, ajuste,
-  autorización) queda registrada con quién, cuándo y qué cambió.
-- **Inmutabilidad selectiva:** los registros de producción, movimientos de
-  almacén y autorizaciones son inmutables una vez confirmados. Las correcciones
-  son nuevos registros con referencia al original.
-- **Dato crudo vs calculado:** se persiste el valor ingresado por el usuario.
-  Las métricas derivadas (eficiencia, costos, valorización) se calculan en el
-  sistema, no se almacenan como datos de entrada.
-
-### 4.5 Reportes
-
-| Reporte                            | Para                               | Frecuencia        |
-| ---------------------------------- | ---------------------------------- | ----------------- |
-| Producción del turno               | Supervisores Operación             | Por turno         |
-| Eficiencia por sección/máquina     | Supervisores Operación             | Diario            |
-| Lotes en proceso / estado          | Jefe Producción + Operación        | Tiempo real       |
-| Stock de MP disponible             | Jefe Producción + Almacén          | Diario            |
-| PT verificado disponible           | Jefe Producción + Almacén          | Diario            |
-| Dashboard granular completo        | **Jefe de Producción**             | Tiempo real       |
-| Alerta de coherencia (MP vs lotes) | **Jefe de Producción**             | Diario            |
-| Reporte diario consolidado         | **Administración (nexo Gerencia)** | Diario            |
-| Stock valorizado                   | Administración                     | Semanal / Mensual |
-| Desperdicio valorizado ($$$)       | Administración                     | Mensual / Anual   |
-| Costo por período                  | Administración                     | Mensual           |
-| Cierre mensual                     | Administración                     | Mensual           |
+| Catálogo | Usado por |
+|---|---|
+| **Empleados** | Operación, Almacén, Jefe Producción |
+| **Máquinas** | Operación (por sección y grupo) |
+| **Títulos de hilado** | Operación, Lotes |
+| **Secciones** | Operación (Preparación, Continuas, Bobinados, Retorcido, Madejeras) |
+| **Turnos** | Operación, Almacén |
+| **Tipos de MP** | Almacén |
+| **Ubicaciones físicas** | Almacén |
+| **Unidades de medida** | Todos (kg, madejas, conos, bolsas, piezas) |
+| **Proveedores** | Almacén |
+| **Lotes** | Operación, Almacén, Administración |
 
 ---
 
-## 5. Arquitectura Preliminar (Conceptual)
+## 5. Incertidumbres y riesgos
 
-> **Nota:** arquitectura en términos de componentes lógicos, sin asumir stack
-> tecnológico. La elección se hará una vez validado el modelo de dominio.
+| Ítem | Riesgo | Impacto |
+|---|---|---|
+| **Insumos (Tintorería + Empaque)** | Detalle de colorantes, químicos, bolsas, etiquetas ya definido pero no implementado | Módulo de Almacén requiere cubrir los 4 subdominios |
+| **Integración con Comercialización** | Fuera de alcance, pero el PT "disponible para venta" es insumo para ellos | Hay que definir el límite y el formato de salida |
+| **Perfil del Jefe de Producción** | Si el sistema requiere mucha interacción del Jefe de Produccion, puede ser un cuello de botella | La UX del dashboard debe ser inmediata, no demandante |
+| **Adopción** | Usuarios vienen de Excel y papel | UX debe priorizar simplicidad |
+| **Migración** | Datos históricos en Excel, papeles, planillas varias. | Requiere plan aparte |
+| **Desperdicio teórico** | Almacén usa "desperdicio teórico" para referirse a real + acumulado, pero el acumulado lo gestiona Producción | Riesgo de confusión en reportes si no se separa conceptualmente |
 
-### 5.1 Contexto del Sistema (C4 Nivel 1)
+### Decisiones diferidas
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                 SISTEMA DE PRODUCCIÓN TEXTIL              │
-│                                                          │
-│  ┌────────────────┐  ┌────────────────┐                  │
-│  │   OPERACIÓN     │  │   ALMACÉN      │                  │
-│  │  18 usuarios    │  │  8 usuarios    │                  │
-│  │                 │  │                │                  │
-│  │ - Máquinas      │  │ - Recepción    │                  │
-│  │ - Turnos        │  │ - Emisión      │                  │
-│  │ - Lotes         │  │ - Stocks       │                  │
-│  │ - Calidad       │  │ - Verificación │                  │
-│  │ - Desperdicio   │  │                │                  │
-│  └────────┬────────┘  └───────┬────────┘                  │
-│           │                   │                           │
-│           └───────┬───────────┘                           │
-│                   │                                       │
-│          ┌────────▼────────────┐                          │
-│          │   JEFE PRODUCCIÓN   │                          │
-│          │   Dashboard + Auth  │                          │
-│          └────────┬────────────┘                          │
-│                   │                                       │
-│          ┌────────▼────────────┐                          │
-│          │   BACKEND (API)     │                          │
-│          └────────┬────────────┘                          │
-│                   │                                       │
-│          ┌────────▼────────────┐                          │
-│          │     DATABASE        │                          │
-│          └─────────────────────┘                          │
-│                                                          │
-│                   │                                       │
-│          ┌────────▼────────────┐                          │
-│          │   ADMIN (nexo      │                          │
-│          │   Gerencia)        │                          │
-│          │   1 usuario        │                          │
-│          └─────────────────────┘                          │
-└──────────────────────────────────────────────────────────┘
-```
-
-### 5.2 Decisiones Arquitectónicas Clave
-
-1. **Aplicación monolítica con separación modular.** No hay microservicios.
-   El equipo es pequeño, los dominios están fuertemente acoplados a nivel de
-   datos (el flujo de MP los atraviesa). Separación por módulos/carpetas.
-
-2. **Base de datos única con esquemas por dominio.** Una sola BD relacional
-   con separación lógica (esquemas o prefijos: `op_*`, `wh_*`, `admin_*`,
-   `shared_*`). Esto permite joins entre dominios sin complejidad de integración.
-
-3. **API-first.** Toda la lógica de negocio se expone a través de una API.
-   La interfaz de usuario es un cliente más. Permite agregar clientes en el futuro
-   (móvil, integración con Comercialización, etc.).
-
-4. **El dashboard del Jefe de Producción es la pantalla más importante del sistema.**
-   Debe consolidar datos de ambos módulos en tiempo real con alertas de coherencia.
-
-5. **La transmisión a Administración es automática.** El reporte diario se genera
-   desde los datos operativos. No hay acción manual de "enviar" — el sistema lo produce.
-
-6. **Reportes en el mismo sistema.** Los reportes operativos diarios viven dentro
-   del sistema. Para análisis histórico avanzado se puede agregar BI externo después.
-
-7. **Diseñado para evolucionar.** Los subdominios "en estudio" (insumos, costeo)
-   deben poder agregarse sin reestructurar lo existente.
-
-### 5.3 Vista Lógica de Componentes
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                     FRONTEND (Web App)                  │
-│  ┌──────────────┐ ┌──────────────┐ ┌──────────────────┐ │
-│  │ Módulo       │ │ Módulo       │ │ Dashboard        │ │
-│  │ Operación    │ │ Almacén      │ │ Jefe Producción  │ │
-│  │              │ │              │ │                  │ │
-│  │ - Planilla   │ │ - Recepción  │ │ - Autorizaciones │ │
-│  │   x turno    │ │ - Emisión    │ │ - Coherencia     │ │
-│  │ - Lotes      │ │ - Stocks     │ │ - Consolidado    │ │
-│  │ - Calidad    │ │ - Verif. PT  │ │ - Reportes       │ │
-│  │ - Reportes   │ │ - Reportes   │ │                  │ │
-│  └──────┬───────┘ └──────┬───────┘ └────────┬─────────┘ │
-│         │                │                  │           │
-│         └───────┬────────┴─────────┬────────┘           │
-└─────────────────┼──────────────────┼────────────────────┘
-                  │                  │
-       ┌──────────▼──────────────────▼──────────┐
-       │        FRONTEND ADMIN (nexo Gerencia)    │
-       │   Reportes consolidados, valuación,      │
-       │   costos, cierres                       │
-       └──────────────────┬──────────────────────┘
-                          │
-                          ▼
-┌────────────────────────────────────────────────────────┐
-│                API / BACKEND (Business Logic)            │
-│                                                         │
-│  ┌────────────┐ ┌────────────┐ ┌──────────────────────┐│
-│  │ Op.Module  │ │ Wh.Module  │ │ Admin.Module (lite)  ││
-│  │            │ │            │ │                      ││
-│  │ - Machine  │ │ - Receipt  │ │ - Consolidation      ││
-│  │ - Shifts   │ │ - Issue    │ │ - Valuation          ││
-│  │ - Quality  │ │ - Stock    │ │ - Costing            ││
-│  │ - Batches  │ │ - Verify   │ │ - Close              ││
-│  │ - Waste    │ │            │ │                      ││
-│  └──────┬─────┘ └─────┬──────┘ └──────────┬───────────┘│
-│         │             │                   │             │
-│         └──────┬──────┴─────────┬─────────┘             │
-│                ▼                ▼                       │
-│  ┌────────────────┐  ┌────────────────────┐             │
-│  │ Auth & Roles   │  │ Shared Catalogs    │             │
-│  └────────────────┘  └────────────────────┘             │
-└────────────────────────────────────────────────────────┘
-                        │
-                        ▼
-┌────────────────────────────────────────────────────────┐
-│                    DATABASE (RDBMS)                      │
-│                                                         │
-│  ┌─────────────┐ ┌─────────────┐ ┌───────────────────┐ │
-│  │ op_*        │ │ wh_*        │ │ admin_*           │ │
-│  │ (operación) │ │ (almacén)   │ │ (valuación,       │ │
-│  │             │ │             │ │  costos, cierres)  │ │
-│  └─────────────┘ └─────────────┘ └───────────────────┘ │
-│  ┌──────────────────────────────────────────────────┐   │
-│  │ shared_* (catálogos: employees, machines, etc.)  │   │
-│  └──────────────────────────────────────────────────┘   │
-└────────────────────────────────────────────────────────┘
-```
+1. Periodicidad de cierres (mensual parece estable)
+2. Infraestructura (cloud)
+3. Stack tecnológico
 
 ---
 
-## 6. Incertidumbres y Riesgos
+## 6. Glosario
 
-| Ítem                                 | Riesgo                                                                                                                           | Impacto                                                                                                                                                                                                                             |
-| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Asignación de costos**             | No se asigna MP a lotes específicos. Método de costeo sin definir                                                                | Afecta el modelo de datos de Administración                                                                                                                                                                                         |
-| **Insumos**                          | Detalle de colorantes, auxiliares, etiquetas, envases en estudio                                                                 | Módulo de Almacén queda parcial                                                                                                                                                                                                     |
-| **Integración con Comercialización** | Fuera de alcance, pero el PT "disponible para venta" es insumo para ellos                                                        | Hay que definir el límite y el formato de salida                                                                                                                                                                                    |
-| **Perfil del Jefe de Producción**    | Si el sistema requiere mucha interacción del Jefe, puede ser un cuello de botella                                                | La UX del dashboard debe ser inmediata, no demandante                                                                                                                                                                               |
-| **Adopción**                         | Usuarios vienen de Excel y papel                                                                                                 | UX debe priorizar simplicidad                                                                                                                                                                                                       |
-| **Migración**                        | Datos históricos en Excel, papeles, planillas varias                                                                             | Requiere plan aparte                                                                                                                                                                                                                |
-| **Gestión documental futura**        | Los propietarios podrían solicitar gestión documental (subida de PDFs, bandeja de aprobaciones, imágenes) en una etapa posterior | No está en alcance actual, pero impacta autenticación, almacenamiento, modelo de datos y frontend. **Mitigación:** el diseño con login individual ya prepara el terreno. El almacenamiento de archivos será una extensión posterior |
-
-### Decisiones Diferidas
-
-1. Método de costeo de MP
-2. Nivel de detalle de insumos
-3. Periodicidad de cierres (mensual parece estable)
-4. Infraestructura (on-premise vs cloud)
-5. Stack tecnológico
-6. Gestión documental (fuera de alcance del PRD inicial)
-
----
-
-## 7. Glosario
-
-| Término                 | Definición                                                                                 |
-| ----------------------- | ------------------------------------------------------------------------------------------ |
-| **MP**                  | Materia prima (fardos de fibra/textil) que ingresa al proceso productivo                   |
-| **PT**                  | Producto terminado (hilado en madejas o conos) listo para venta                            |
-| **WIP**                 | Work in Progress — producto en proceso dentro de Operación                                 |
-| **Insumos**             | Materiales consumibles: colorantes, auxiliares químicos, etiquetas, bolsas, conos, envases |
-| **Lote**                | Conjunto de madejas que comparten título, color y cliente, ID único LTT-YYYYMMDD-NNN       |
-| **Sección**             | Etapa productiva: Preparación, Continuas, Bobinados, Retorcido, Madejeras                  |
-| **Turno**               | Bloque de trabajo diario (A, B, C)                                                         |
-| **Unidad Almacén**      | Subdirección dentro de Producción que gestiona MP, insumos y PT                            |
-| **Unidad Operación**    | Subdirección dentro de Producción que transforma MP en PT                                  |
-| **Flujo de valor**      | Recorrido de la MP desde que ingresa hasta que sale como PT disponible                     |
-| **Asignación global**   | Método de costeo donde la MP se asigna a períodos, no a lotes específicos                  |
-| **Verificación física** | Proceso de Almacén que revisa el PT antes de marcarlo como disponible                      |
+| Término | Definición |
+|---|---|
+| **MP** | Materia prima (fardos de hilado base) que ingresa al proceso productivo |
+| **PT** | Producto terminado (hilado en madejas o conos) listo para venta |
+| **WIP** | Work in Progress — producto en proceso dentro de Operación |
+| **Insumos** | Materiales consumibles: colorantes, auxiliares químicos, etiquetas, bolsas, conos |
+| **Lote** | Conjunto de madejas que comparten título, color, cliente,etc |
+| **Sección** | Etapa productiva: Preparación, Continuas, Bobinados, Retorcido, Madejeras |
+| **Turno** | Bloque de trabajo diario (A, B, C) |
+| **Unidad Almacén** | Unidad dentro de Dirección de Producción que gestiona MP, insumos y PT |
+| **Unidad Operación** | Unidad dentro de Dirección de Producción que transforma MP en PT |
+| **Flujo de valor** | Recorrido de la MP desde que ingresa hasta que sale como PT disponible |
+| **Verificación física** | Proceso de Almacén que revisa el PT antes de marcarlo como disponible |
+| **Desperdicio teórico** | Término usado que engloba desperdicio real + acumulado. El acumulado lo gestiona Producción |
+| **Peso por título** | El peso esperado de PT se determina por el título del hilado (ej. 2/18), no por un valor fijo |
+| **Codificación de lote MP** | Formato `NN-GGGG-NNN` donde NN = camión distribuidor, GGGG = gestión, NNN = número de ingreso |
+| **Título** | Designación del grosor del hilado (ej. 2/18, 2/32, 4/9). Determina el peso del PT |
+| **Saldo** | Stock calculado: (Saldo Anterior + Entradas) − Salidas |
