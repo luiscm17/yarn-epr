@@ -51,7 +51,7 @@ La Unidad Almacén depende de la **Dirección de Producción**. Su responsable e
 ```
 Dirección de Producción
 ├── Jefe de Producción (incl. Secretaria)
-│   ├── Unidad Almacén           ← Este PRD
+│   ├── Unidad Almacén
 │   │   └── Jefe Unidad Almacén
 │   │       └── Auxiliares Operativos
 │   └── Unidad Operación
@@ -67,7 +67,7 @@ Dirección de Producción
 
 ### 2.3 Relación con otros roles
 
-- **Jefe de Producción:** autoriza emisiones de MP, recibe reportes de stock y alertas del Jefe de Almacén.
+- **Jefe de Producción:** planifica la producción (ver `docs/prd/operation.md §5`), autoriza emisiones de MP, recibe reportes de stock y alertas del Jefe de Almacén.
 - **Supervisores (Operación):** reciben las solicitudes de material desde las secciones productivas y las elevan al Jefe de Almacén. Coordinan la recepción de MP/insumos y la entrega de PT desde las secciones productivas a Almacén.
 - **Comercialización:** recibe PT transferido para venta por unidad o cantidades pequenas. Es un destino de salida, no un usuario del sistema.
 - **Cliente directo:** destino de salida cuando el lote completo se vende al por mayor. No es usuario del sistema.
@@ -157,7 +157,7 @@ En cada cierre, el sistema calcula los saldos con la formula `(Saldo Anterior + 
 |---|---|
 | WH-RM-01 | El sistema debe permitir registrar la recepcion de fardos de MP con: proveedor, factura, peso bruto, titulo, color/fibra y numero de camion. |
 | WH-RM-02 | El sistema debe generar automaticamente el codigo unico `NN-GGGG-NNN` al confirmar la recepcion, donde NN es el numero de camion, GGGG la gestion y NNN el correlativo del ano. |
-| WH-RM-03 | El sistema debe permitir enriquecer el lote con datos del pedido: cliente, color solicitado, titulo, tipo N/CH y observaciones. |
+| WH-RM-03 | El sistema debe permitir enriquecer el lote con datos del pedido: cliente, color solicitado, titulo, tipo N/CH y observaciones. Este enriquecimiento es el insumo para la planificación de producción que realiza el Jefe de Producción (ver `docs/prd/operation.md §5`). |
 | WH-RM-04 | El sistema debe permitir registrar la emision de MP a Operacion indicando: fecha, supervisor receptor, cantidad emitida (kg) y destino. La emision requiere autorizacion del Jefe de Produccion. |
 | WH-RM-05 | El sistema debe mantener un historial de todos los lotes de MP recibidos, con su estado (pendiente de emision, emitido parcialmente, emitido totalmente). |
 
@@ -213,7 +213,7 @@ En cada cierre, el sistema calcula los saldos con la formula `(Saldo Anterior + 
 | **Salida** | Movimiento de salida de PT hacia cliente directo (venta) o Comercializacion. |
 | **Devolucion** | Movimiento de entrada de PT o Supplies que retorna a Almacen despues de haber salido. Puede ser total o parcial. |
 | **Consumo** | Movimiento de salida de Supplies desde Almacen hacia Produccion para su uso en el proceso productivo. |
-| **Operacion** | Unidad organizacional responsable del proceso productivo (6 etapas de hilatura). Recibe MP e insumos de Almacen y devuelve PT verificado. |
+| **Operacion** | Unidad organizacional responsable del proceso productivo (Yarn Spinning + Lot Processing, documentado en `docs/prd/operation.md`). Recibe MP e insumos de Almacen y devuelve PT verificado. |
 | **Comercializacion** | Area que recibe PT desde Almacen para su venta por unidades. No es usuario del sistema de Almacen; es un destino de salida. |
 | **Supervisor de turno** | Rol en Operacion que autoriza solicitudes de material y coordina la entrega de PT a Almacen. |
 | **Jefe de Produccion** | Rol que autoriza emisiones de MP y salidas de PT. Reporta a la Direccion de Produccion. |
