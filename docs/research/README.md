@@ -34,3 +34,11 @@ _No research documents yet._
 ## Administration
 
 _No research documents yet._
+
+---
+
+## Architecture & Design
+
+| Document | Description |
+|----------|-------------|
+| [RBAC Design](rbac-design.md) | RBAC authorization model with hierarchical scopes, inspired by Azure RBAC. Role definitions (`staff`, `lead`, `manager`, `director`, `executive`, `sysadmin`), resource types, scope tree, assignment exceptions, and mapping to the current organizational structure. |
