@@ -96,10 +96,9 @@ DIRECCIÓN DE PRODUCCIÓN
 | **Personal de Tintorería** | Supervisor | Opera el proceso de tintorería dentro del ciclo del lote. |
 | **Embolsado** | Supervisor | Organiza operadores de devanado, ovillado y embolsado. Registra datos de producción del turno. Reporta a Supervisión. |
 
-> **Nota:** A diferencia de lo definido en el PRD maestro (§2.2), donde se indica
+> **Nota:** A diferencia de lo definido en el PRD maestro, donde se indica
 > que "los operarios no usan el sistema", en Operación existen roles operativos
-> (Calidad, Inventario, Personal de Tintorería, Embolsado) que **sí registran datos
-> en el sistema** según su ámbito.
+> (Calidad, Inventario, Personal de Tintorería, Embolsado) que **sí registran datos en el sistema** según su ámbito.
 
 ---
 
@@ -157,17 +156,15 @@ continua).
 **Secciones:**
 
 | Sección | Producción | Avance | Calidad de Proceso | Desperdicio | Quién registra prod./avance |
-|---|---|---|---|---|---|---|
+|---|---|---|---|---|---|
 | Preparación | Peso neto, No. mechas | Entrada/salida | Pruebas y muestras | Grupo de máquinas | Calidad |
 | Continuas (Ring Spinning) | Peso neto, No. husos | Entrada/salida | Pruebas y muestras (12/máquina/tipo) | Grupo de máquinas | Calidad |
 | Bobinados (Winding) | Peso neto, No. husos | Sin avance | Body/km/cortes (sin muestras) | Grupo de máquinas | — |
 | Retorcido (Twisting) | Peso neto, No. husos | Entrada/salida | Pruebas (aleatorias) | Grupo de máquinas | Inventario |
 | Madejeras (Skeining) | Madejas, peso neto | Sin avance | Pruebas (aleatorias) | Grupo de máquinas | Inventario |
 
-> **Calidad de Proceso:** Calidad realiza pruebas y control en TODAS las secciones
-> y máquinas de la planta, con la frecuencia que corresponde a cada una
-> (muestras sistemáticas en Preparación y Continuas; aleatorias en Retorcido
-> y Madejeras; registro de máquina en Bobinados).
+> [!NOTE] **Calidad de Proceso:**
+> Calidad realiza pruebas y control en TODAS las secciones y máquinas de la planta, con la frecuencia que corresponde a cada una (muestras sistemáticas en Preparación y Continuas; aleatorias en Retorcido y Madejeras; registro de máquina en Bobinados).
 
 **Detalle completo en:** [`docs/prd/operation/yarn-spinning.md`](./operation/yarn-spinning.md)
 
@@ -188,15 +185,15 @@ por Almacén se reutiliza durante todo este proceso.
 
 | #   | Etapa          | Quién registra         | Qué se registra                                       |
 | --- | -------------- | ---------------------- | ----------------------------------------------------- |
-| 1   | Inventario     | Inventario             | Fecha, turno, madejas, peso                           |
+| 1   | Inventario     | Inventario             | Fecha, turno, madejas, titulo                           |
 | 2   | Tintorería     | Personal de Tintorería | Madejas, peso neto, temperatura, tina, retener        |
 | 3   | Secado         | Personal de Tintorería | Madejas, peso total                                   |
 | 4   | Devanado       | Inventario             | Conos, desperdicio                                    |
 | 5   | Embolsado      | Embolsado               | Bolsas, conos, desperdicio                            |
 | 6   | Calidad (lote) | Calidad                | Defectos visuales + internos, resultado, nomenclatura |
 
-> **Madejeras** (sección de Yarn Spinning) consolida el hilado y arma los lotes
-> físicos que alimentan la etapa 1 (Inventario) del Lot Processing.
+> [!NOTE] Madejeras
+> La seccion de Madejeras (Yarn Spinning) consolida el hilado y arma los lotes físicos que alimentan la etapa 1 (Inventario) del Lot Processing.
 
 **Detalle completo en:** [`docs/prd/operation/lot-processing.md`](./operation/lot-processing.md)
 
@@ -318,7 +315,7 @@ Esta planificación determina:
 
 | Subdominio                                         | Archivo                                | Estado       |
 | -------------------------------------------------- | -------------------------------------- | ------------ |
-| **Yarn Spinning** (5 secciones)                    | `docs/prd/operation/yarn-spinning.md`  | Por escribir |
+| **Yarn Spinning** (5 secciones)                    | `docs/prd/operation/yarn-spinning.md`  | Escrito |
 | **Lot Processing** (6 etapas + máquina de estados) | `docs/prd/operation/lot-processing.md` | Por escribir |
 | **Calidad de Proceso**                             | `yarn-spinning.md` (incluido)          | Por escribir |
 | **Desperdicio**                                    | Ambos archivos de detalle              | Por escribir |
