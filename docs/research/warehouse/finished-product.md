@@ -148,3 +148,16 @@ Nota: El ingreso es por el numero de lote, el producto se llena automaticamente,
 - Terminacion en -VARR (Lote con Varrilla)
 - Terminacion en -SN (Semi mate N)
 - Terminacion en -Dev (Devolucion)
+
+## Problemas del llenado de datos en almacen
+
+* Calculo manual al momento de ingresar cantidad de bolsas
+* Falta de espacio para mas llenado de datos
+* Problema al momento de corregir errores en la base de datos (equivocacion en los numeros de lotes, en la descripcion del producto o en el tipo)
+* Manejo de datos innecesarios que normalmente no son llenados o repiten algun dato ya puesto anteriormente (costos (en lugar de costos se copia el dato de la cantidad en Kilos))
+* Separacion de distintos datos (Bolsas, precio por lote y precio unitario)
+* Desorden de items al momento de seleccionar el tipo o la sub categoria
+* Registro excesivo innecesario de datos en el sistema
+* Datos fijos q igual deben ser llenados (Se pueden resumir o dejar fijos para que no lo esten llenados siempre)
+* Divisiones de sub categorias innecesarias, poco usadas, repetidas con otro nombre, categorizadas mal
+* Nomenclaturas repetidas
