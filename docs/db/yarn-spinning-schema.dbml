@@ -73,8 +73,8 @@ Table production_discharges {
   created_at timestamptz [default: `now()`]
 
   indexes {
-    (machine_id, date, shift_code) [name: idx_prod_machine_date]
-    (section_id, date) [name: idx_prod_section_date]
+    (machine_id, date, shift_code) [name: 'idx_prod_machine_date']
+    (section_id, date) [name: 'idx_prod_section_date']
   }
 }
 
@@ -96,8 +96,8 @@ Table skeining_productions {
   created_at timestamptz [default: `now()`]
 
   indexes {
-    (machine_id, date, shift_code) [name: idx_skn_machine_date]
-    (section_id, date) [name: idx_skn_section_date]
+    (machine_id, date, shift_code) [name: 'idx_skn_machine_date']
+    (section_id, date) [name: 'idx_skn_section_date']
   }
 }
 
@@ -122,9 +122,9 @@ Table advance_trackings {
   created_at timestamptz [default: `now()`]
 
   indexes {
-    (machine_id, date, shift_code) [name: idx_adv_machine_date]
-    (section_id, date) [name: idx_adv_section_date]
-    (machine_id, shift_code, date, yarn_count_id) [unique, name: idx_adv_unique_turn]
+    (machine_id, date, shift_code) [name: 'idx_adv_machine_date']
+    (section_id, date) [name: 'idx_adv_section_date']
+    (machine_id, shift_code, date, yarn_count_id) [name: 'idx_adv_unique_turn']
   }
 }
 
@@ -151,8 +151,8 @@ Table quality_controls {
   created_at timestamptz [default: `now()`]
 
   indexes {
-    (machine_id, date, shift_code) [name: idx_qlty_machine_date]
-    (section_id, date) [name: idx_qlty_section_date]
+    (machine_id, date, shift_code) [name: 'idx_qlty_machine_date']
+    (section_id, date) [name: 'idx_qlty_section_date']
   }
 }
 
@@ -170,7 +170,7 @@ Table waste_records {
   created_at timestamptz [default: `now()`]
 
   indexes {
-    (section_id, date) [name: idx_waste_section_date]
-    (machine_group_id, date) [name: idx_waste_group_date]
+    (section_id, date) [name: 'idx_waste_section_date']
+    (machine_group_id, date) [name: 'idx_waste_group_date']
   }
 }
