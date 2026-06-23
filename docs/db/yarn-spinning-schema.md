@@ -3,7 +3,7 @@
 > **Domain:** Operation → Yarn Spinning
 > **Source:** `docs/domain/operation/yarn-spinning.md`, `docs/prd/operation/yarn-spinning.md`
 > **Related:** `docs/db/yarn-spinning-schema.dbml`
-> **Stack:** PostgreSQL 15
+> **Stack:** PostgreSQL
 
 ---
 
@@ -22,13 +22,16 @@
 
 ## 2. Shared Catalogs
 
-### 2.1 `employees`
+### 2.1 `users`
+
+System user reference. Shared catalog across all domains (Operation, Warehouse, Auth).
+Placeholder until the Auth context is designed in detail.
 
 | Column | Type | Notes |
 |---|---|---|
-| `employee_id` | integer | PK |
+| `user_id` | integer | PK |
 | `full_name` | varchar(150) | |
-| `role` | varchar(30) | Supervisor, Quality, Inventory |
+| `role` | varchar(30) | ProductionManager, Supervisor, Quality, Inventory, WarehouseManager, WarehouseAssistant |
 | `is_active` | boolean | |
 
 ### 2.2 `shifts`
@@ -103,8 +106,8 @@ Applies to: Preparation (FIN only), Ring Spinning, Winding, Twisting.
 | `date` | date | |
 | `section_id` | integer | FK → sections.section_id |
 | `yarn_count_id` | integer | FK → yarn_counts.yarn_count_id |
-| `supervisor_id` | integer | FK → employees.employee_id |
-| `foreman_id` | integer | FK → employees.employee_id (Quality or Inventory per section) |
+| `supervisor_id` | integer | FK → users.user_id |
+| `foreman_id` | integer | FK → users.user_id (Quality or Inventory per section) |
 | `gross_weight_kg` | decimal(8,2) | Full carriage gross weight (PRD §3.3) |
 | `spindle_count` | integer | Operative spindles for this discharge (PRD §3.2) |
 | `tare_per_spindle_g` | decimal(6,2) | Spindle/bobbin tare weight in grams (PRD §3.2) |
@@ -115,11 +118,13 @@ Applies to: Preparation (FIN only), Ring Spinning, Winding, Twisting.
 | `created_at` | timestamptz | Default now() |
 
 **Check constraint:**
+
 ```
 net_weight_kg = gross_weight_kg - (tare_per_spindle_g * spindle_count / 1000) - carriage_weight_kg
 ```
 
 **Indexes:**
+
 - `idx_prod_machine_date` on (`machine_id`, `date`, `shift_code`)
 - `idx_prod_section_date` on (`section_id`, `date`)
 
@@ -137,8 +142,8 @@ Skeining production record. No spindles — uses skeins (PRD §3.3).
 | `date` | date | |
 | `section_id` | integer | FK → sections.section_id (always Skeining) |
 | `yarn_count_id` | integer | FK → yarn_counts.yarn_count_id |
-| `supervisor_id` | integer | FK → employees.employee_id |
-| `foreman_id` | integer | FK → employees.employee_id (Inventory, PRD §7) |
+| `supervisor_id` | integer | FK → users.user_id |
+| `foreman_id` | integer | FK → users.user_id (Inventory, PRD §7) |
 | `num_skeins` | integer | Number of skeins produced (PRD §3.3) |
 | `weight_per_skein_g` | decimal(6,2) | Estimated weight per skein. 1 bunch = 10 skeins ~ 5kg (PRD §3.3) |
 | `net_weight_kg` | decimal(8,2) | Calculated: num_skeins × weight_per_skein_g / 1000 (PRD §3.3) |
@@ -148,6 +153,7 @@ Skeining production record. No spindles — uses skeins (PRD §3.3).
 | `created_at` | timestamptz | Default now() |
 
 **Indexes:**
+
 - `idx_skn_machine_date` on (`machine_id`, `date`, `shift_code`)
 - `idx_skn_section_date` on (`section_id`, `date`)
 
@@ -167,8 +173,8 @@ Winding and Skeining have no advance (PRD §4.2).
 | `date` | date | |
 | `section_id` | integer | FK → sections.section_id |
 | `yarn_count_id` | integer | FK → yarn_counts.yarn_count_id |
-| `supervisor_id` | integer | FK → employees.employee_id |
-| `foreman_id` | integer | FK → employees.employee_id |
+| `supervisor_id` | integer | FK → users.user_id |
+| `foreman_id` | integer | FK → users.user_id |
 | `sample_gross_weight_g` | decimal(6,2) | Sample spindle gross weight at turn start (PRD §3.2) |
 | `sample_tare_weight_g` | decimal(6,2) | That sample spindle tare weight (PRD §3.2) |
 | `spindle_count` | integer | Total operative spindles (PRD §3.2) |
@@ -181,6 +187,7 @@ Winding and Skeining have no advance (PRD §4.2).
 | `created_at` | timestamptz | Default now() |
 
 **Indexes:**
+
 - `idx_adv_machine_date` on (`machine_id`, `date`, `shift_code`)
 - `idx_adv_section_date` on (`section_id`, `date`)
 - **Unique** on (`machine_id`, `shift_code`, `date`, `yarn_count_id`)
@@ -202,7 +209,7 @@ Quality evaluates ALL sections. Method varies by section (PRD §5.2).
 | `date` | date | |
 | `section_id` | integer | FK → sections.section_id |
 | `yarn_count_id` | integer | FK → yarn_counts.yarn_count_id |
-| `inspector_id` | integer | FK → employees.employee_id (Quality, PRD §5.1) |
+| `inspector_id` | integer | FK → users.user_id (Quality, PRD §5.1) |
 | `method` | varchar(20) | Samples, BodyKmCuts, RandomCheck (PRD §5.2) |
 | `sample_values` | jsonb | Array of individual values (Samples method, PRD §5.2) |
 | `cv_percent` | decimal(5,2) | Coefficient of variation (Samples, PRD §5.2) |
@@ -217,6 +224,7 @@ Quality evaluates ALL sections. Method varies by section (PRD §5.2).
 | `created_at` | timestamptz | Default now() |
 
 **Indexes:**
+
 - `idx_qlty_machine_date` on (`machine_id`, `date`, `shift_code`)
 - `idx_qlty_section_date` on (`section_id`, `date`)
 
@@ -236,12 +244,13 @@ Inventory registers waste for ALL sections (PRD §6.1).
 | `date` | date | |
 | `weight_kg` | decimal(8,2) | Waste weight in kg (PRD §6.2) |
 | `waste_type` | varchar(20) | Actual, Accumulated (PRD §6.3) |
-| `registered_by_id` | integer | FK → employees.employee_id (Inventory, PRD §6.1) |
+| `registered_by_id` | integer | FK → users.user_id (Inventory, PRD §6.1) |
 | `comments` | text | |
 | `edit_version` | integer | Default 1 (PRD YS-TR-01) |
 | `created_at` | timestamptz | Default now() |
 
 **Indexes:**
+
 - `idx_waste_section_date` on (`section_id`, `date`)
 - `idx_waste_group_date` on (`machine_group_id`, `date`)
 
@@ -259,11 +268,11 @@ sections
   │     └──< waste_records
   └── referenced by all transaction tables (section_id)
 
-employees ──< production_discharges (supervisor_id, foreman_id)
-employees ──< advance_trackings (supervisor_id, foreman_id)
-employees ──< quality_controls (inspector_id)
-employees ──< waste_records (registered_by_id)
-employees ──< skeining_productions (supervisor_id, foreman_id)
+users ──< production_discharges (supervisor_id, foreman_id)
+users ──< advance_trackings (supervisor_id, foreman_id)
+users ──< quality_controls (inspector_id)
+users ──< waste_records (registered_by_id)
+users ──< skeining_productions (supervisor_id, foreman_id)
 
 shifts ──< all transaction tables (shift_code)
 yarn_counts ──< production_discharges, advance_trackings, quality_controls, skeining_productions

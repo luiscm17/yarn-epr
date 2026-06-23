@@ -6,8 +6,9 @@
 // SHARED CATALOGS
 // ============================================================
 
-Table employees {
-  employee_id integer [pk]
+// Placeholder — Auth context will design the full users table
+Table users {
+  user_id integer [pk]
   full_name varchar(150)
   role varchar(30)
   is_active boolean
@@ -60,8 +61,8 @@ Table production_discharges {
   date date
   section_id integer [ref: > sections.section_id]
   yarn_count_id integer [ref: > yarn_counts.yarn_count_id]
-  supervisor_id integer [ref: > employees.employee_id]
-  foreman_id integer [ref: > employees.employee_id]
+  supervisor_id integer [ref: > users.user_id]
+  foreman_id integer [ref: > users.user_id]
   gross_weight_kg decimal(8,2)
   spindle_count integer
   tare_per_spindle_g decimal(6,2)
@@ -84,8 +85,8 @@ Table skeining_productions {
   date date
   section_id integer [ref: > sections.section_id]
   yarn_count_id integer [ref: > yarn_counts.yarn_count_id]
-  supervisor_id integer [ref: > employees.employee_id]
-  foreman_id integer [ref: > employees.employee_id]
+  supervisor_id integer [ref: > users.user_id]
+  foreman_id integer [ref: > users.user_id]
   num_skeins integer
   weight_per_skein_g decimal(6,2)
   net_weight_kg decimal(8,2)
@@ -107,8 +108,8 @@ Table advance_trackings {
   date date
   section_id integer [ref: > sections.section_id]
   yarn_count_id integer [ref: > yarn_counts.yarn_count_id]
-  supervisor_id integer [ref: > employees.employee_id]
-  foreman_id integer [ref: > employees.employee_id]
+  supervisor_id integer [ref: > users.user_id]
+  foreman_id integer [ref: > users.user_id]
   sample_gross_weight_g decimal(6,2)
   sample_tare_weight_g decimal(6,2)
   spindle_count integer
@@ -135,7 +136,7 @@ Table quality_controls {
   date date
   section_id integer [ref: > sections.section_id]
   yarn_count_id integer [ref: > yarn_counts.yarn_count_id]
-  inspector_id integer [ref: > employees.employee_id]
+  inspector_id integer [ref: > users.user_id]
   method varchar(20)  // Samples, BodyKmCuts, RandomCheck
   sample_values jsonb  // Array of values (Samples)
   cv_percent decimal(5,2)  // Samples
@@ -163,7 +164,7 @@ Table waste_records {
   date date
   weight_kg decimal(8,2)
   waste_type varchar(20)  // Actual, Accumulated
-  registered_by_id integer [ref: > employees.employee_id]
+  registered_by_id integer [ref: > users.user_id]
   comments text
   edit_version integer [default: 1]
   created_at timestamptz [default: `now()`]
