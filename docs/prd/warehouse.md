@@ -2,6 +2,7 @@
 
 > **Parte de:** Dirección de Producción — Yarn EPR
 > **Dependencias:** `docs/prd.md` (PRD maestro)
+> **Siguiente:** `docs/domain/warehouse.md` (Modelo de Dominio)
 
 ---
 
