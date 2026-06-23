@@ -3,6 +3,7 @@
 > **Parte de:** Unidad Operación — Yarn EPR
 > **Dependencias:** `docs/prd/operation.md` (PRD de Operación), `docs/prd/warehouse.md` (PRD de Almacén)
 > **Documentos relacionados:** `docs/prd/operation/yarn-spinning.md`
+> **Siguiente:** `docs/domain/operation/lot-processing.md` (Modelo de Dominio)
 
 ---
 

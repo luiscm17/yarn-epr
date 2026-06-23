@@ -313,13 +313,13 @@ Esta planificación determina:
 
 ## 6. Subdominios y Archivos
 
-| Subdominio                                         | Archivo                                | Estado       |
-| -------------------------------------------------- | -------------------------------------- | ------------ |
-| **Yarn Spinning** (5 secciones)                    | `docs/prd/operation/yarn-spinning.md`  | Escrito |
-| **Lot Processing** (6 etapas + máquina de estados) | `docs/prd/operation/lot-processing.md` | Por escribir |
-| **Calidad de Proceso**                             | `yarn-spinning.md` (incluido)          | Por escribir |
-| **Desperdicio**                                    | Ambos archivos de detalle              | Por escribir |
-| **Calidad de Lote**                                | `lot-processing.md` (incluido)         | Por escribir |
+| Subdominio                                         | Archivo PRD                            | Modelo de Dominio                         | Estado PRD |
+| -------------------------------------------------- | -------------------------------------- | ----------------------------------------- | ---------- |
+| **Yarn Spinning** (5 secciones)                    | `docs/prd/operation/yarn-spinning.md`  | `docs/domain/operation/yarn-spinning.md`  | Escrito    |
+| **Lot Processing** (6 etapas + máquina de estados) | `docs/prd/operation/lot-processing.md` | `docs/domain/operation/lot-processing.md` | Escrito    |
+| **Calidad de Proceso**                             | `yarn-spinning.md` (incluido)          | `yarn-spinning.md` (incluido)             | Escrito    |
+| **Desperdicio**                                    | Ambos archivos de detalle              | Ambos archivos de dominio                 | Escrito    |
+| **Calidad de Lote**                                | `lot-processing.md` (incluido)         | `lot-processing.md` (incluido)            | Escrito    |
 
 ---
 
