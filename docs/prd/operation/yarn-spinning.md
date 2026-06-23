@@ -7,6 +7,8 @@
 >
 > Pertenece a la Unidad Operación. Para el contexto general, actores y
 > reglas transversales, ver [`docs/prd/operation.md`](../operation.md).
+>
+> **Siguiente:** `docs/domain/operation/yarn-spinning.md` (Modelo de Dominio)
 
 ---
 
