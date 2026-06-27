@@ -50,6 +50,7 @@
 ## Git / PR workflow
 
 See `docs/dev-guide/git-workflow.md` for full rules. TL;DR:
+
 - Branch format: `<layer>/<short-topic>` where layer is `back/`, `front/`, `devops/`, or `docs/`.
 - Conventional Commits: `type(scope): description` — imperative mood, max 200 chars, no period.
 - Squash merge to `main`, one concern per PR.
@@ -71,9 +72,11 @@ See `docs/dev-guide/git-workflow.md` for full rules. TL;DR:
 ## Gentle AI receipts
 
 Gentle AI stores review receipts in `.git/gentle-ai/review-transactions/`. A stale receipt in `reviewing` state can block `git push`. If push is blocked, delete the specific receipt lineage or the entire directory:
+
 ```bash
 rm -rf .git/gentle-ai/review-transactions/v2/<lineage-id>/
 ```
+
 Receipts are not per-branch — they track tree hashes.
 
 ## What does NOT exist (anything not listed above)

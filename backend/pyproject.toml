@@ -1,15 +1,9 @@
 [project]
-name = "yarn-epr"
+name = "backend"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "openpyxl>=3.1.5",
-    "pandas>=3.0.3",
-]
-
-[tool.uv.workspace]
-members = [
-    "backend",
+    "fastapi[standard]>=0.138.1",
 ]
