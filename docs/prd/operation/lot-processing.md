@@ -60,7 +60,7 @@ El código `NN-GGGG-NNN` es asignado por Almacén al recibir la MP y es el mismo
 
 Cada lote atraviesa las siguientes etapas en orden secuencial estricto. No se puede registrar una etapa si la anterior no está completada.
 
-El tiempo total del proceso es de aproximadamente 1 a 2 días, pudiendo cruzar múltiples turnos. Cada registro incluye el turno y responsable correspondiente para mantener trazabilidad multi-turno.
+El tiempo total del proceso es de aproximadamente 1 a 2 días, pudiendo el lote **físicamente** cruzar múltiples turnos (ej: entra a Tintorería en el turno mañana y sale en el turno tarde). Cada turno registra **solo su parte** del proceso al finalizar su jornada. No hay edición concurrente del mismo registro — cada etapa genera un nuevo registro inmutable con el turno y responsable correspondiente, garantizando trazabilidad multi-turno.
 
 ### 2.1 Inventario — Armado del lote
 

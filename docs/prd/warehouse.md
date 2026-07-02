@@ -68,7 +68,7 @@ Dirección de Producción
 
 ### 2.3 Relación con otros roles
 
-- **Jefe de Producción:** planifica la producción (ver `docs/prd/operation.md §5`), autoriza emisiones de MP, recibe reportes de stock y alertas del Jefe de Almacén.
+- **Jefe de Producción:** planifica la producción (ver [sección 5 de operation.md](../prd/operation.md#5-planificación-de-la-producción)), autoriza emisiones de MP, recibe reportes de stock y alertas del Jefe de Almacén.
 - **Supervisores (Operación):** reciben las solicitudes de material desde las secciones productivas y las elevan al Jefe de Almacén. Coordinan la recepción de MP/insumos y la entrega de PT desde las secciones productivas a Almacén.
 - **Comercialización:** recibe PT transferido para venta por unidad o cantidades pequenas. Es un destino de salida, no un usuario del sistema.
 - **Cliente directo:** destino de salida cuando el lote completo se vende al por mayor. No es usuario del sistema.
@@ -158,7 +158,7 @@ En cada cierre, el sistema calcula los saldos con la formula `(Saldo Anterior + 
 |---|---|
 | WH-RM-01 | El sistema debe permitir registrar la recepcion de fardos de MP con: proveedor, factura, peso bruto, titulo, color/fibra y numero de camion. |
 | WH-RM-02 | El sistema debe generar automaticamente el codigo unico `NN-GGGG-NNN` al confirmar la recepcion, donde NN es el numero de camion, GGGG la gestion y NNN el correlativo del ano. |
-| WH-RM-03 | El sistema debe permitir enriquecer el lote con datos del pedido: cliente, color solicitado, titulo, tipo N/CH y observaciones. Este enriquecimiento es el insumo para la planificación de producción que realiza el Jefe de Producción (ver `docs/prd/operation.md §5`). |
+| WH-RM-03 | El sistema debe permitir enriquecer el lote con datos del pedido: cliente, color solicitado, titulo, tipo N/CH y observaciones. Este enriquecimiento es el insumo para la planificación de producción que realiza el Jefe de Producción (ver [sección 5 de operation.md](../prd/operation.md#5-planificación-de-la-producción)). |
 | WH-RM-04 | El sistema debe permitir registrar la emision de MP a Operacion indicando: fecha, supervisor receptor, cantidad emitida (kg) y destino. La emision requiere autorizacion del Jefe de Produccion. |
 | WH-RM-05 | El sistema debe mantener un historial de todos los lotes de MP recibidos, con su estado (pendiente de emision, emitido parcialmente, emitido totalmente). |
 
@@ -189,7 +189,7 @@ En cada cierre, el sistema calcula los saldos con la formula `(Saldo Anterior + 
 | ID | Requerimiento |
 |---|---|
 | WH-TR-01 | El sistema debe generar un numero de movimiento unico y correlativo por tipo de movimiento y gestion. |
-| WH-TR-02 | El sistema debe registrar fecha y hora en cada movimiento. |
+| WH-TR-02 | El sistema debe registrar fecha y hora en cada movimiento. La fecha/hora refleja **cuándo ocurrió físicamente el movimiento** (ej: emisión a las 10:00 AM), no cuándo se registró en el sistema. El registro digital puede ocurrir después (ej: al cierre del turno). Ver [sección 2.4 del PRD maestro](../prd.md#24-modelo-de-captura-de-datos). |
 | WH-TR-03 | El sistema debe impedir la edicion, eliminacion o sobreescritura de movimientos ya registrados. |
 | WH-TR-04 | El sistema debe permitir registrar movimientos correctivos que referencien al movimiento original. |
 | WH-TR-05 | El sistema debe verificar que el usuario que autoriza un movimiento tenga el rol correspondiente (Jefe de Produccion o Supervisor de turno). |

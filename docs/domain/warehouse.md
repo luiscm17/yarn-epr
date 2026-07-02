@@ -86,7 +86,7 @@ This is the core pattern — append-only, tracked, never modified.
 | `movementNumber` | Unique, correlative per type and year |
 | `date` | When the movement occurred |
 | `subdomain` | Which subdomain: `RawMaterial`, `FinishedProduct`, `Supplies` |
-| `movementType` | Specific type within the subdomain (see §5) |
+| `movementType` | Specific type within the subdomain (see [section 5](#5-key-business-rules)) |
 | `direction` | `Entry` or `Exit` |
 | `lot` | Lot code (for MP and PT) |
 | `quantity` | Amount in the subdomain's unit of measure |

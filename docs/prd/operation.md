@@ -265,10 +265,11 @@ por Almacén se reutiliza durante todo este proceso.
 
 ### 4.5 Reporte diario
 
-1. **Consolidado automático:** El Supervisor debe poder visualizar el
-    estado global de su turno: producción por sección, estado de lotes,
-    calidad y desperdicio. Este consolidado alimenta el reporte diario
-    que el Jefe de Producción envía a Administración.
+1. **Consolidado al final del turno:** Al finalizar su turno, el Supervisor
+     debe poder consultar un reporte consolidado con la producción por
+     sección, estado de lotes, calidad y desperdicio de su turno. Este
+     reporte alimenta el consolidado diario que el Jefe de Producción
+     envía a Administración. No es un dashboard en tiempo real.
 
 ---
 

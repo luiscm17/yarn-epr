@@ -102,9 +102,15 @@ MADEJERAS (Skeining)
 
 El registro de producción es **granular, por descarga**. Una misma máquina
 puede tener múltiples descargas en un mismo turno (del mismo o distinto título),
-o puede no tener ninguna. Cada descarga se registra individualmente.
+o puede no tener ninguna.
 
 **Granularidad:** 1 descarga × 1 máquina × 1 turno × 1 fecha × 1 título.
+
+**Momento del registro:** Aunque las descargas ocurren físicamente a lo largo
+del turno (ej: 8:00 AM, 10:30 AM, 1:00 PM), el registro digital de **todas**
+se realiza al finalizar el turno (ej: 2:00 PM) en una sola sesión de captura.
+El sistema captura el timestamp real de cada descarga, pero no es un sistema
+en tiempo real. Ver [sección 2.4 del PRD maestro](../../prd.md#24-modelo-de-captura-de-datos).
 
 ### 3.2 El Número de Husos
 
@@ -409,7 +415,7 @@ sección y el consolidado del Supervisor.
 
 | Métrica | Propósito |
 |---|---|
-| **Producción vs planificación** | Compara lo producido con la base planificada (ver `operation.md §5`). Alerta si hay desviación significativa, especialmente en títulos 2/18 y 2/32 |
+| **Producción vs planificación** | Compara lo producido con la base planificada (ver [sección 5 de operation.md](../operation.md#5-planificación-de-la-producción)). Alerta si hay desviación significativa, especialmente en títulos 2/18 y 2/32 |
 | **Utilización de husos** | Husos operativos / husos totales de la máquina. Porcentaje de capacidad utilizada |
 | **Consolidado por turno** | Producción, calidad y desperdicio agregado por Supervisor para su reporte diario |
 

@@ -9,7 +9,7 @@
 > Los PRD de detalle viven en `docs/prd/`:
 >
 > - [`docs/prd/warehouse.md`](./prd/warehouse.md) — Unidad Almacén
-> - `docs/prd/operation.md` — Unidad Operación
+> - [`docs/prd/operation.md`](./prd/operation.md) — Unidad Operación
 
 ---
 
@@ -79,7 +79,7 @@ consolidado es la persona responsable de Gerencia
 | **Jefe de Producción** | 1 | Autoriza emisiones de MP, supervisa dashboard granular de ambas unidades, verifica coherencia (MP emitida vs lotes producidos), consolida y envía reporte diario a Administración. La Secretaria (parte de su equipo) opera el sistema en conjunto con el Jefe de Produccion, principalmente para tareas de supervisión, análisis y reportes. |
 | **Jefe Unidad Almacén** | 1 | Supervisa recepción de MP, emisiones a Operación, verificación de PT, control de inventarios. Opera el sistema. Reporta al Jefe de Producción. |
 | **Auxiliar Operativo (Almacén)** | — | Ejecuta movimientos físicos: recepción, verificación, embolsado, despacho. Opera el sistema para registrar movimientos. |
-| **Supervisor** | 3 (1 por turno) | Está a cargo de la operación en su turno. Registra producción por sección, control de calidad, lotes y desperdicio **directamente en el sistema**. Reporta al Jefe de Producción. |
+| **Supervisor** | 3 (uno por cada turno: mañana, tarde, noche) | Está a cargo de la operación **exclusivamente en su turno**. Los turnos son secuenciales — solo un Supervisor trabaja a la vez. Al finalizar su turno, registra producción por sección, control de calidad, lotes y desperdicio **directamente en el sistema**. Reporta al Jefe de Producción. |
 | **Gerencia** | 1 | Recibe reporte diario consolidado, valúa inventarios, costea, realiza cierre mensual. |
 | **Operarios** | — | **No usan el sistema.** Operan máquinas. Su producción es registrada por los supervisores en el sistema. |
 
@@ -100,9 +100,10 @@ consolidado es la persona responsable de Gerencia
    6 etapas secuenciales con máquina de estados — sin saltos, con cuarentena
    y reproceso documentados.
 
-5. **La operación es continua por turnos.** 3 turnos, cada uno con un Supervisor
-   a cargo. La producción no se detiene. El sistema debe soportar el traspaso
-   de información entre turnos sin pérdida ni duplicación.
+5. **La operación es continua por turnos secuenciales.** 3 turnos (mañana,
+    tarde, noche). La producción no se detiene, pero la captura digital ocurre
+    al final de cada turno. El sistema debe permitir que el siguiente turno
+    consulte los datos del turno anterior sin pérdida ni duplicación.
 
 6. **La transmisión a Administración es un subproducto del sistema.** Los
    consolidados diarios se generan automáticamente desde los datos operativos.
@@ -111,7 +112,26 @@ consolidado es la persona responsable de Gerencia
    producción, autorizaciones) son inmutables. Las correcciones son trazables.
 
 8. **Diseñado para la incertidumbre.** Los procesos no completamente definidos
-   (insumos, costeo) deben poder agregarse sin reestructurar lo existente.
+    (insumos, costeo) deben poder agregarse sin reestructurar lo existente.
+
+### 2.4 Modelo de Captura de Datos
+
+Este sistema **no es tiempo real ni streaming**. Los datos operativos se
+capturan de la siguiente manera:
+
+| Aspecto | Detalle |
+|---|---|
+| **Turnos** | 3 turnos **secuenciales** (mañana, tarde, noche). Solo un turno opera a la vez. |
+| **Captura física** | Durante el turno, los operarios producen y anotan datos en papel o planillas auxiliares. |
+| **Captura digital** | Al finalizar el turno, el encargado (Supervisor, Calidad o Inventario según el ámbito) **registra todos los datos del turno en el sistema en una sola sesión**. |
+| **Concurrencia** | No hay registros simultáneos entre turnos — cada turno registra cuando el anterior ya terminó. |
+| **Timestamps** | Las fechas y horas registradas reflejan **cuándo ocurrió físicamente el evento** (ej: una descarga a las 10:30 AM), no cuándo se digitalizó (ej: cierre de turno a las 2:00 PM). |
+| **Inmutabilidad** | Una vez registrado, el dato no se modifica. Las correcciones son nuevos registros con trazabilidad al original. |
+
+**Ejemplo:** El turno mañana (6:00 AM - 2:00 PM) opera la planta. A las 2:00 PM,
+el Supervisor de ese turno registra en el sistema todas las descargas, avances
+y movimientos que ocurrieron entre las 6:00 AM y las 2:00 PM. Luego el turno
+tarde (2:00 PM - 10:00 PM) comienza y repite el proceso al finalizar.
 
 ---
 

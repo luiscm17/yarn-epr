@@ -85,7 +85,7 @@ per stage, created sequentially.
 | `exitShift` | Shift when the lot was delivered |
 | `exitResponsible` | Person who delivered the lot |
 | `exitSupervisor` | Supervisor on duty at exit |
-| `stageData` | Stage-specific technical data (see §3) |
+| `stageData` | Stage-specific technical data (see [section 3](#3-stage-specific-data-by-stagetype)) |
 | `observations` | 0..N observations recorded during this stage |
 
 **Rules:**
@@ -104,7 +104,7 @@ Documents an incident or defect found during a stage.
 | Attribute | Description |
 |---|---|
 | `stageRecord` | Reference to the parent StageRecord |
-| `category` | Predefined category for this stage type (see §4) |
+| `category` | Predefined category for this stage type (see [section 4](#4-observation-categories-per-stage-type)) |
 | `details` | Optional free-text context |
 
 **Rules:**
