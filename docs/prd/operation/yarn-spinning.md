@@ -1,6 +1,6 @@
-# Yarn Spinning — Hilatura
+# Hilatura (`Yarn Spinning`)
 
-> **Domain PRD — Yarn Spinning (Producción de Título)**
+> **Domain PRD — Hilatura (`Yarn Spinning`)**
 >
 > Proceso continuo de hilatura que transforma la Materia Prima en hilado
 > de un título específico a través de 5 secciones productivas.
@@ -16,10 +16,12 @@
 
 ### 1.1 Propósito
 
-Documentar el proceso de **Yarn Spinning** (hilatura / producción de título),
+Documentar el proceso de **Hilatura (`Yarn Spinning`)**,
 un flujo continuo y secuencial que transforma los fardos de MP recibidos de
-Almacén en hilado de un título específico, listo para su consolidación en
-Madejeras y posterior ingreso al proceso de Lot Processing.
+Almacén en hilado de un título específico, listo para su salida en madejas
+desde Madejeras y posterior uso en el Proceso por Lotes (`Lot Processing`). En
+este proceso aún no existe el lote como entidad física ni se opera con código
+de lote.
 
 ### 1.2 Alcance
 
@@ -36,7 +38,7 @@ calidad de proceso y desperdicio:
 
 **No incluye:**
 
-- El proceso por lotes posterior (Lot Processing, documentado en `lot-processing.md`)
+- El proceso por lotes posterior (Proceso por Lotes / `Lot Processing`, documentado en `lot-processing.md`)
 - Calidad de lote (evaluación final antes de entrega a Almacén, en `lot-processing.md`)
 - Gestión de insumos o MP (responsabilidad de Almacén)
 
@@ -44,8 +46,8 @@ calidad de proceso y desperdicio:
 
 | Proceso                     | Relación                                                                 |
 | --------------------------- | ------------------------------------------------------------------------ |
-| **Almacén (entrada)**       | Recibe la MP con código `NN-GGGG-NNN` y hoja de ruta                     |
-| **Lot Processing (salida)** | Madejeras consolida el hilado y arma los lotes para el siguiente proceso |
+| **Almacén (entrada)**       | Entrega la MP y la información necesaria para su procesamiento                     |
+| **Proceso por Lotes (`Lot Processing`) (salida)** | Recibe las madejas producidas para el armado posterior de lotes |
 
 ---
 
@@ -62,22 +64,22 @@ PREPARACIÓN
   │  Registro: FIN producen, PSJ solo avance
   ▼
 CONTINUAS (Ring Spinning)
-  │  Máquinas: Ring Spinning frames
+  │  Máquinas: marcos de hilatura
   │  Registro: peso neto, No. husos
   ▼
 BOBINADOS (Winding)
-  │  Máquinas: Winding machines
+  │  Máquinas: bobinadoras
   │  Registro: peso neto, No. husos (sin avance)
   ▼
 RETORCIDO (Twisting)
-  │  Máquinas: Twisting frames
+  │  Máquinas: retorcedoras
   │  Registro: peso neto, No. husos (gestiona Inventario)
   ▼
 MADEJERAS (Skeining)
   │  Producción: madejas (no husos)
-  │  Punto de consolidación de lotes
+  │  Punto de salida hacia el proceso siguiente
   ▼
-  LOT PROCESSING
+  PROCESO POR LOTES (`Lot Processing`)
 ```
 
 ### 2.2 Cuadro por Sección
@@ -85,14 +87,13 @@ MADEJERAS (Skeining)
 | #   | Sección                       | Tipo de máquinas     | Unidad de producción   | Tiene avance | Quién registra prod. | Quién registra avance |
 | --- | ----------------------------- | -------------------- | ---------------------- | ------------ | -------------------- | --------------------- |
 | 1   | **Preparación**               | PSJ (A/B), FIN (A/B) | kg (neto), No. mechas  | Sí           | Calidad              | Calidad               |
-| 2   | **Continuas** (Ring Spinning) | Ring frames          | kg (neto), No. husos   | Sí           | Calidad              | Calidad               |
-| 3   | **Bobinados** (Winding)       | Winding              | kg (neto), No. husos   | No           | —                    | —                     |
-| 4   | **Retorcido** (Twisting)      | Twisting             | kg (neto), No. husos   | Sí           | Inventario           | Inventario            |
-| 5   | **Madejeras** (Skeining)      | Skeining             | No. madejas, peso neto | No           | Inventario           | —                     |
+| 2   | **Continuas** | Marcos de hilatura | kg (neto), No. husos   | Sí           | Calidad              | Calidad               |
+| 3   | **Bobinados** | Bobinadoras        | kg (neto), No. husos   | No           | Calidad              | —                     |
+| 4   | **Retorcido** | Retorcedoras       | kg (neto), No. husos   | Sí           | Inventario           | Inventario            |
+| 5   | **Madejeras** | Madejeras          | No. madejas, peso neto | No           | Inventario           | —                     |
 
-> **Nota:** Bobinados no tiene un responsable fijo de registro de producción
-> en la definición actual — el Supervisor asigna quién registra según el turno.
-> Se definirá en el diseño del sistema.
+> **Nota:** La asignación actual de registro en Bobinados recae en Calidad,
+> aunque puede reasignarse por política de permisos.
 
 ---
 
@@ -143,10 +144,7 @@ Para cada descarga se registra:
 - **Tara por huso** (para el cálculo ajustado)
 - **Número de husos** operativos en la máquina
 - **Peso del carro / contenedor** usado para transportar la descarga
-- **Quién registra** (Calidad excepto las secciond e Retorcido que la registra Inventario)
-
-> [!WARNING]
-> No existe registro de produccion de Preparacion y Bobinados
+- **Registro actual:** Calidad en Preparación, Continuas y Bobinados; Inventario en Retorcido
 
 #### Madejeras
 
@@ -158,11 +156,14 @@ Para cada descarga se registra:
 - **Título**
 - **Número de madejas** producidas
 - **Peso unitario estimado** por monio (1 monio = 10 madejas ~ 5kg, en ocasiones la madeja debe pesar 600g y no 500g de acuerdo a requirimeinto del titulo)
-- **Quién registra** (Inventario)
+- **Registro actual:** Inventario
 
 > [!NOTE] Madejeras
 > La producción es operario-dependiente, no ciclo-máquina.
-> La métrica principal es el número de madejas producidas. No usa husos ni tara. El peso total se estima como: madejas × peso unitario.
+> La métrica principal es el número de madejas producidas. No usa husos ni tara.
+> El peso total se estima como: madejas × peso unitario. En Hilatura, Madejeras
+> todavía no arma lotes: solo produce madejas con determinado peso para el
+> proceso siguiente.
 
 ### 3.4 Reglas de Producción
 
@@ -178,8 +179,19 @@ Para cada descarga se registra:
 5. **Cambio de título durante el turno:** Una máquina puede cambiar de título
    dentro del mismo turno, o trabajar con títulos diferentes simultáneamente
    en distintos husos. Cada descarga lleva el título que le corresponde.
-6. **Inmutabilidad:** Una vez registrada una descarga, no se modifica ni
-   elimina. Las correcciones son nuevos registros con trazabilidad.
+6. **Sin lote en Hilatura:** En este proceso no existe todavía el lote como
+   entidad física ni se registra código de lote. La salida de Hilatura son
+   madejas y registros de producción por sección/máquina/turno/título.
+7. **Edición controlada con auditoría:** Los registros operativos pueden
+   corregirse cuando exista un error de carga, pero toda edición debe dejar
+   trazabilidad completa del cambio, incluyendo usuario, fecha, valores
+   anteriores, valores nuevos y motivo de corrección.
+8. **Ventana de corrección operativa:** La edición puede permitirse durante una
+   ventana definida posterior al turno (por ejemplo 24 o 48 horas, según la
+   política vigente).
+9. **Edición restringida fuera de ventana:** Una vez vencida la ventana de
+   corrección operativa, solo el rol **SysAdmin** puede editar el registro,
+   manteniendo la misma trazabilidad obligatoria.
 
 ---
 
@@ -238,7 +250,7 @@ El avance permite:
 ### 5.1 Responsable
 
 **Calidad** es responsable del control de calidad de proceso en TODAS las
-secciones de Yarn Spinning, sin excepción. La frecuencia y el método varían
+secciones de Hilatura (`Yarn Spinning`), sin excepción. La frecuencia y el método varían
 según la sección.
 
 ### 5.2 Métodos por Sección
@@ -271,11 +283,11 @@ Por cada control de calidad se captura:
    Retorcido y Madejeras tienen muestreo aleatorio. Bobinados usa registro de
    máquina en lugar de muestras.
 3. **Nomenclaturas especiales:** Como resultado de la calidad de proceso y de
-   lote, Calidad asigna nomenclaturas al PT (-AT alta torsión, -FT fuera de
-   tabla, -VARR con varrilla, -D devanado, -SN, -Dev, etc.). Esto aplica al
-   lote completo, no a la máquina individual.
-4. **Registro separado:** La calidad de proceso en Yarn Spinning es distinta e
-   independiente de la calidad de lote (evaluación final en Lot Processing).
+   lote, Calidad puede asignar nomenclaturas al PT según la política vigente.
+   Esto aplica al producto completo que luego se entregará al proceso
+   siguiente, no a la máquina individual.
+4. **Registro separado:** La calidad de proceso en Hilatura (`Yarn Spinning`) es distinta e
+   independiente de la calidad de lote (evaluación final en Proceso por Lotes / `Lot Processing`).
 
 ---
 
@@ -284,7 +296,7 @@ Por cada control de calidad se captura:
 ### 6.1 Responsable
 
 **Inventario** registra el desperdicio real de TODAS las secciones y máquinas
-de la planta, incluyendo Yarn Spinning.
+de la planta, incluyendo Hilatura (`Yarn Spinning`).
 
 ### 6.2 Datos Registrados
 
@@ -306,20 +318,24 @@ Por cada registro de desperdicio se captura:
 3. **Madejeras — desperdicio excepcional:** Las madejas fuera de
    especificación no se registran como desperdicio convencional. Retornan
    a una etapa anterior del proceso para reproceso.
-4. **Inmutabilidad:** Una vez registrado, el desperdicio no se modifica.
-   Las correcciones son nuevos registros.
+4. **Edición controlada del desperdicio:** Si existe un error de carga, el
+   registro puede corregirse con trazabilidad completa de quién editó, cuándo,
+   qué cambió y por qué.
+5. **Restricción temporal:** La corrección del desperdicio sigue la misma
+   ventana operativa definida para los registros de producción. Fuera de esa
+   ventana, solo **SysAdmin** puede editar.
 
 ---
 
 ## 7. Actores y Responsabilidades
 
-| Actor                      | Rol en Yarn Spinning                                                                                                   |
+| Actor                      | Rol en Hilatura (`Yarn Spinning`)                                                                                                   |
 | -------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | **Supervisor**             | Supervisa la producción de su turno. Responsable de la planta y del personal. Verifica coherencia de datos.            |
-| **Control de Calidad**     | Realiza pruebas de calidad en TODAS las secciones y máquinas. Registra producción y avance de Preparación y Continuas. |
+| **Control de Calidad**     | Realiza pruebas de calidad en TODAS las secciones y máquinas. Registra actualmente producción y avance de Preparación, Continuas y Bobinados. |
 | **Inventario**             | Registra producción y avance de Retorcido y Madejeras. Registra desperdicio real de todas las secciones.               |
-| **Embolsado**              | No interviene directamente en Yarn Spinning. Su participación comienza en Lot Processing.                              |
-| **Personal de Tintorería** | No interviene en Yarn Spinning.                                                                                        |
+| **Embolsado**              | No interviene directamente en Hilatura (`Yarn Spinning`). Su participación comienza en Proceso por Lotes (`Lot Processing`).                              |
+| **Personal de Tintorería** | No interviene en Hilatura (`Yarn Spinning`).                                                                                        |
 
 ---
 
@@ -333,7 +349,7 @@ Por cada registro de desperdicio se captura:
 | YS-PR-02 | El sistema debe calcular el peso neto automáticamente (gross - tare).                                                                 |
 | YS-PR-03 | El sistema debe validar que solo las máquinas FIN (A/B) registren producción en Preparación.                                          |
 | YS-PR-04 | El sistema debe permitir el registro de Madejeras con madejas y peso unitario, no peso bruto/tara.                       |
-| YS-PR-05 | El sistema debe asignar quién registra según la sección: Calidad para Preparación y Continuas, Inventario para Retorcido y Madejeras. |
+| YS-PR-05 | El sistema debe soportar una asignación configurable de quién registra por sección. La operación actual registra Calidad para Preparación, Continuas y Bobinados; e Inventario para Retorcido y Madejeras. |
 | YS-PR-06 | El sistema debe permitir al Supervisor consultar la producción de su turno en todas las secciones.                                    |
 
 ### 8.2 Avance
@@ -365,10 +381,12 @@ Por cada registro de desperdicio se captura:
 
 | ID       | Requerimiento                                                                                                              |
 | -------- | -------------------------------------------------------------------------------------------------------------------------- |
-| YS-TR-01 | Todos los registros de producción, avance, calidad y desperdicio son inmutables (append-only).                             |
-| YS-TR-02 | Las correcciones deben ser nuevos registros con trazabilidad al registro original.                                         |
-| YS-TR-03 | El sistema debe validar que el usuario tenga el rol adecuado para cada tipo de registro (Calidad, Inventario, Supervisor). |
-| YS-TR-04 | El Supervisor debe poder visualizar un consolidado de producción, avance, calidad y desperdicio de su turno.               |
+| YS-TR-01 | El sistema debe permitir la edición controlada de registros de producción, avance, calidad y desperdicio cuando exista error de carga, preservando auditoría completa del cambio.                             |
+| YS-TR-02 | El sistema debe registrar para cada corrección: usuario editor, fecha/hora, valores anteriores, valores nuevos y motivo del cambio.                                         |
+| YS-TR-03 | El sistema debe validar que el usuario tenga el permiso correspondiente según la política de acceso vigente para cada tipo de registro. |
+| YS-TR-04 | El sistema debe permitir la edición por roles operativos solo dentro de una ventana definida posterior al turno (por ejemplo 24 o 48 horas).               |
+| YS-TR-05 | Una vez vencida la ventana operativa de corrección, solo el rol **SysAdmin** puede editar registros de Hilatura.               |
+| YS-TR-06 | El Supervisor debe poder visualizar un consolidado de producción, avance, calidad y desperdicio de su turno.               |
 
 ---
 
@@ -429,7 +447,7 @@ sección y el consolidado del Supervisor.
 
 | Decisión                                               | Estado                                                                                                                                                                            |
 | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Responsable de registro de producción en Bobinados** | Pendiente. Actualmente no hay un responsable fijo; el Supervisor asigna según el turno. Definir si lo asume Calidad, Inventario, o queda como asignación dinámica del Supervisor. |
+| **Granularidad exacta de datos por máquina en Bobinados** | Pendiente. Confirmar si el registro body/km/cortes se captura por descarga, por máquina/turno o por otro corte operativo. |
 | **Frecuencia exacta de muestreo aleatorio**            | Pendiente. Definir la frecuencia mínima de pruebas aleatorias en Retorcido y Madejeras (ej. N pruebas por semana, o por cada N kg producidos).                                    |
 
 ---
@@ -440,11 +458,11 @@ sección y el consolidado del Supervisor.
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | **Finisor**         | Máquinas Finisores en Preparación. Las únicas que registran producción en esa sección.                                          |
 | **Pasaje**                   | Máquinas de Preparación A/B. Solo registran avance (entrada/salida), no producción.                                             |
-| **Título**                | Designación del grosor del hilado (ej. 2/18, 2/32, 4/9). Se produce durante Yarn Spinning.                                      |
+| **Título**                | Designación del grosor del hilado (ej. 2/18, 2/32, 4/9). Se produce durante Hilatura (`Yarn Spinning`).                                      |
 | **Huso**                  | Unidad de producción en las máquinas de hilatura (Continuas, Bobinados, Retorcido).                                             |
 | **Madeja**                | Unidad de producción en Madejeras. El hilado se presenta en madejas (ovillos sueltos), no en conos.                             |
 | **Body**                  | Medida de calidad en Bobinados. Registro de imperfecciones por unidad de longitud.                                              |
 | **CV%**                   | Coeficiente de variación — medida de consistencia del hilado en las pruebas de calidad.                                         |
-| **Nomenclatura especial** | Sufijo agregado al código del lote que indica una característica del PT (-AT, -FT, -VARR, -D, -SN, -Dev). Asignado por Calidad. |
+| **Nomenclatura especial** | Sufijo o marca de calidad que luego podrá asociarse al PT en el proceso posterior. Es asignado por Calidad. |
 | **Desperdicio real**      | Desperdicio registrado por Inventario durante el proceso, por grupo de máquinas.                                                |
 | **Desperdicio teórico**   | Suma del desperdicio real + acumulado.                                                                              |
