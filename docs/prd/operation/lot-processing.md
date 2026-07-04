@@ -11,7 +11,7 @@
 
 ### 1.1 Propósito
 
-Definir el proceso de transformación del hilado consolidado en madejas (proveniente de Yarn Spinning) en Producto Terminado (PT) listo para verificación física, a través de un flujo secuencial de 6 etapas con trazabilidad individual por lote.
+Definir el proceso de transformación de las madejas provenientes de Hilatura / `Yarn Spinning` en Producto Terminado (PT) listo para verificación física, a través de un flujo secuencial de 6 etapas con trazabilidad individual por lote.
 
 ### 1.2 Ciclo de vida del lote en el sistema
 
@@ -20,38 +20,38 @@ El lote recorre tres dominios durante su vida en el sistema. Este PRD cubre el t
 ```
 ALMACÉN                        OPERACIÓN (Lot Processing)               ALMACÉN
    │                                │                                       │
-   ├── Asigna NN-GGGG-NNN          │                                       │
+   ├── Asigna código único de lote │                                       │
    ├── Define: título, color,      │                                       │
    │   cliente, especificaciones   │                                       │
    └── Emite a Operación ─────────►│                                       │
-                                   │                                       │
-                                   ├── Inventario (arma lote x título/peso)│
-                                   ├── Tintorería (aplica color)           │
-                                   ├── Secado                              │
-                                   ├── Devanado / Ovillado                 │
-                                   ├── Embolsado                           │
-                                   └── Calidad (clasifica PT)              │
-                                        │                                  │
-                                        └── Entrega a Almacén ────────────►│
-                                      (con documentación de calidad)       │
-                                                                            ├── Verificación física
-                                                                            └── Disposición según calidad
+                                    │                                       │
+                                    ├── Inventario (arma lote físico)       │
+                                    ├── Tintorería (aplica color)           │
+                                    ├── Secado                              │
+                                    ├── Devanado / Ovillado                 │
+                                    ├── Embolsado                           │
+                                    └── Calidad (evalúa y observa)          │
+                                         │                                  │
+                                         └── Entrega a Almacén ────────────►│
+                                       (con documentación de calidad)       │
+                                                                             ├── Verificación física
+                                                                             └── Clasificación y disposición
 ```
 
-El código `NN-GGGG-NNN` es asignado por Almacén al recibir la MP y es el mismo que identifica al lote durante todo el proceso. Operación no genera códigos de lote nuevos. El sistema es la fuente de toda esta información — cualquier respaldo físico (planilla, etiqueta) es solo una representación impresa de los datos del sistema.
+El código único del lote es asignado por Almacén al definir el pedido y se mantiene durante todo este proceso. El formato exacto del código podrá rediseñarse más adelante, pero Operación no genera códigos nuevos. En este proceso el lote nace **físicamente** cuando Inventario arma el conjunto de madejas que será procesado. El sistema es la fuente de toda esta información; cualquier respaldo físico (planilla, etiqueta) es solo una representación impresa de los datos del sistema.
 
 ### 1.3 Límites del sistema
 
 | Límite         | Detalle                                                                                                                                                                                                                                                                                                                                                        |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Entrada**    | MP emitida por Almacén hacia Operación. Almacén define en el sistema el código `NN-GGGG-NNN`, título, color, cliente y especificaciones del pedido. Inventario recibe esa información digitalmente y arma el lote físico a partir de madejas producidas en Madejeras, según el título y peso especificados.                                                    |
+| **Entrada**    | MP emitida por Almacén hacia Operación. Almacén define en el sistema el código único del lote, título, color, cliente y especificaciones del pedido. Inventario recibe esa información digitalmente y arma el lote físico a partir de madejas producidas en Madejeras, según el título y peso especificados.                                                    |
 | **Salida**     | Lote procesado, inspeccionado por Calidad con su documentación completa, entregado a Almacén para verificación física y disposición.                                                                                                                                                                                                                           |
-| **No incluye** | La asignación del código de lote, el enriquecimiento con datos del pedido ni la emisión de MP (documentado en `docs/prd/warehouse.md`). La verificación física final del PT ni su almacenamiento (documentado en `docs/prd/warehouse.md`). La producción de hilado en las 5 secciones de Yarn Spinning (documentado en `docs/prd/operation/yarn-spinning.md`). |
+| **No incluye** | La asignación del código de lote, el enriquecimiento con datos del pedido ni la emisión de MP (documentado en `docs/prd/warehouse.md`). La verificación física final del PT, su clasificación en Almacén ni su almacenamiento/distribución (documentado en `docs/prd/warehouse.md`). La producción de hilado en las 5 secciones de Hilatura (`Yarn Spinning`) (documentado en `docs/prd/operation/yarn-spinning.md`). |
 
 ### 1.4 Dependencias
 
-- **Yarn Spinning:** Madejeras consolida el hilado y produce las madejas crudas que Inventario utiliza para armar los lotes. Sin producción en Madejeras no hay lotes.
-- **Almacén:** Define el código de lote y las especificaciones del pedido (título, color, cliente) en el sistema. Esa información es la que guía el armado del lote y el proceso productivo.
+- **Hilatura (`Yarn Spinning`):** Madejeras produce las madejas crudas que Inventario utiliza para armar los lotes físicos. Sin producción en Madejeras no hay lotes.
+- **Almacén:** Define el código de lote y las especificaciones del pedido (título, color, cliente) en el sistema. Esa información es la que guía el armado físico del lote y el proceso productivo.
 - **Roles de Operación:** Inventario, Personal de Tintorería, Embolsado y Calidad son los actores que registran datos en el sistema a lo largo del proceso.
 
 ---
@@ -64,13 +64,13 @@ El tiempo total del proceso es de aproximadamente 1 a 2 días, pudiendo el lote 
 
 ### 2.1 Inventario — Armado del lote
 
-El lote ingresa formalmente al sistema. Almacén definió previamente en el sistema el código `NN-GGGG-NNN`, el título, el color, el cliente y las especificaciones del pedido. Inventario consulta esa información, busca en las madejas crudas disponibles (producidas por Madejeras) y arma el lote físico según el **título** y **peso** especificados. El color es competencia de Almacén y Tintorería, no de Inventario.
+El lote ingresa formalmente al proceso cuando Inventario arma físicamente el conjunto de madejas. Almacén definió previamente en el sistema el código único del lote, el título, el color, el cliente y las especificaciones del pedido. Inventario consulta esa información, busca en las madejas crudas disponibles (producidas por Madejeras) y arma el lote físico según el **título** y **peso** especificados. El color es competencia de Almacén y Tintorería, no de Inventario.
 
 | Aspecto                     | Descripción                                                                                                                                                                                                                         |
 | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Quién**                   | Inventario                                                                                                                                                                                                                          |
 | **Cuándo**                  | Cuando Almacén emite la MP y hay madejas del título requerido disponibles                                                                                                                                                           |
-| **Qué se registra**         | — Código de lote (desde la emisión de Almacén)<br>— Fecha y turno de armado<br>— Responsable que armó el lote<br>— Supervisor a cargo<br>— Título del hilado<br>— Cantidad de madejas que componen el lote<br>— Peso total del lote |
+| **Qué se registra**         | — Código de lote (definido por Almacén)<br>— Fecha y turno de armado<br>— Responsable que armó el lote<br>— Supervisor a cargo<br>— Título del hilado<br>— Cantidad de madejas que componen el lote<br>— Peso total del lote |
 | **Inconvenientes posibles** | — Madejas insuficientes del título requerido<br>— Peso fuera del rango especificado<br>— Datos de emisión incompletos                                                                                                               |
 | **Resultado**               | El lote armado pasa a Tintorería                                                                                                                                                                                                    |
 
@@ -109,9 +109,9 @@ Las madejas secas se convierten al formato final según el destino del producto.
 
 | Aspecto                     | Descripción                                                                                                                                                                                                       |
 | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Quién**                   | Inventario (organiza a los operadores de devanado/ovillado)                                                                                                                                                       |
+| **Quién**                   | Responsable operativo asignado a Devanado/Ovillado según la política vigente. Hoy puede coincidir con el mismo responsable que atiende Embolsado.                                                               |
 | **Cuándo**                  | Cuando las madejas secas están listas para procesar                                                                                                                                                               |
-| **Qué se registra**         | — Fecha y turno de proceso<br>— Responsable que recibe el lote<br>— Supervisor a cargo<br>— Cantidad de madejas procesadas<br>— Cantidad de conos u ovillos producidos<br>— Desperdicio generado en la conversión |
+| **Qué se registra**         | — Fecha y turno de proceso<br>— Responsable que recibe el lote<br>— Supervisor a cargo<br>— Cantidad de madejas procesadas<br>— Cantidad de conos u ovillos producidos<br>— Desperdicio generado en la conversión, con registro en el historial del lote |
 | **Inconvenientes posibles** | — Conos dañados<br>— Título incorrecto<br>— Equipo no calibrado para el título<br>— Desperdicio excesivo                                                                                                          |
 | **Resultado**               | El lote en conos u ovillos pasa a Embolsado                                                                                                                                                                       |
 
@@ -123,20 +123,20 @@ Los conos u ovillos se empacan en bolsas con sus etiquetas y fichas correspondie
 | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Quién**                   | Embolsado                                                                                                                                                                                      |
 | **Cuándo**                  | Cuando los conos u ovillos están listos para empacar                                                                                                                                           |
-| **Qué se registra**         | — Fecha y turno de empaque<br>— Responsable que recibe el lote<br>— Supervisor a cargo<br>— Cantidad de bolsas utilizadas<br>— Cantidad de conos u ovillos por bolsa<br>— Desperdicio generado |
+| **Qué se registra**         | — Fecha y turno de empaque<br>— Responsable que recibe el lote<br>— Supervisor a cargo<br>— Cantidad de bolsas utilizadas<br>— Cantidad de conos u ovillos por bolsa<br>— Desperdicio generado en Embolsado, con registro en el historial del lote |
 | **Inconvenientes posibles** | — Bolsas dañadas<br>— Etiqueta o ficha incorrecta<br>— Conos dañados detectados al empacar<br>— Cantidad de conos no coincide con lo registrado en Devanado                                    |
 | **Resultado**               | El lote empacado pasa a Control de Calidad                                                                                                                                                     |
 
 ### 2.6 Calidad — Inspección final y clasificación
 
-Calidad inspecciona el lote completo, verifica parámetros, documenta defectos y asigna la clasificación final del PT, incluyendo nomenclaturas especiales si corresponde. El lote sale de Operación hacia Almacén con su historial completo de calidad.
+Calidad inspecciona el lote completo, verifica parámetros, documenta defectos y deja registrado el **estado de calidad** en el que el lote será entregado a Almacén, incluyendo nomenclaturas especiales si corresponde. Si el lote no cumple parámetros mínimos, queda **observado** y dentro de Operación se deben agotar las instancias viables de solución antes de reportar sus condiciones de entrega a Almacén. El lote sale de Operación hacia Almacén con su historial completo de calidad.
 
 | Aspecto             | Descripción                                                                                                                                                                                                                                                                                                                                                                                                          |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Quién**           | Control de Calidad                                                                                                                                                                                                                                                                                                                                                                                                   |
 | **Cuándo**          | Antes de entregar el lote a Almacén                                                                                                                                                                                                                                                                                                                                                                                  |
-| **Qué se registra** | — Fecha y turno de inspección<br>— Responsable que inspecciona<br>— Supervisor a cargo<br>— Defectos visuales detectados (doble tono, manchado, varilla, madejas picadas, colas, flames, baja/alta torsión, mezcla)<br>— Defectos internos detectados (purgado, parafinado, ficha, doble cabo, malos amarres, cantidad de amarres, contaminación, etc)<br>— Nomenclatura especial si corresponde<br>— Clasificación final |
-| **Resultado**       | El lote sale de Operación hacia Almacén con su documentación completa de calidad                                                                                                                                                                                                                                                                                                                                     |
+| **Qué se registra** | — Fecha y turno de inspección<br>— Responsable que inspecciona<br>— Supervisor a cargo<br>— Defectos visuales detectados (doble tono, manchado, varilla, madejas picadas, colas, flames, baja/alta torsión, mezcla)<br>— Defectos internos detectados (purgado, parafinado, ficha, doble cabo, malos amarres, cantidad de amarres, contaminación, etc)<br>— Nomenclatura especial si corresponde<br>— Estado de calidad del lote al momento de entrega<br>— Condiciones de entrega si corresponde |
+| **Resultado**       | El lote sale de Operación hacia Almacén con su documentación completa de calidad y el estado en que se entrega                                                                                                                                                                                                                                                                                                                                     |
 
 ---
 
@@ -167,7 +167,7 @@ Cada etapa captura el momento en que el lote **entra** y el momento en que **sal
 - Identificar cuellos de botella (etapas donde los lotes pasan más tiempo del esperado)
 - Determinar quién fue responsable en cada momento, incluso cuando el lote cruza múltiples turnos
 
-El lote avanza cuando **físicamente** cambia de etapa. No hay estados intermedios — si el lote está en Tintorería esperando una decisión sobre un reteñir, sigue estando en Tintorería hasta que sale a Secado.
+El lote avanza cuando **físicamente** cambia de etapa. No existen estados intermedios formales fuera de estas etapas; si el lote está en Tintorería esperando una decisión sobre un reteñir, sigue estando en Tintorería hasta que sale a Secado. Las demoras, observaciones o decisiones pendientes se registran como parte de la etapa actual.
 
 ---
 
@@ -177,7 +177,7 @@ El lote avanza cuando **físicamente** cambia de etapa. No hay estados intermedi
 
 ```mermaid
 stateDiagram-v2
-    [*] --> En_Almacen: Asignación NN-GGGG-NNN
+    [*] --> En_Almacen: Definición de código único
     En_Almacen --> En_Inventario: Armado del lote
     En_Inventario --> En_Tintoreria
     En_Tintoreria --> En_Secado
@@ -192,7 +192,7 @@ stateDiagram-v2
 
 | Estado            | Significado                                                                                     |
 | ----------------- | ----------------------------------------------------------------------------------------------- |
-| **En_Almacen**    | Lote registrado por Almacén, con código NN-GGGG-NNN asignado. Pendiente de emisión a Operación. |
+| **En_Almacen**    | Lote registrado por Almacén, con código asignado. Pendiente de emisión a Operación. |
 | **En_Inventario** | Lote armado por Inventario, primer registro en el sistema de Operación.                         |
 | **En_Tintoreria** | Lote en proceso de teñido.                                                                      |
 | **En_Secado**     | Lote en proceso de secado.                                                                      |
@@ -205,19 +205,20 @@ stateDiagram-v2
 
 1. **Secuencial obligatorio:** No se puede registrar una etapa si el lote no completó la anterior. Para registrar en Devanado, el estado actual debe ser `En_Secado`.
 2. **Sin retroceso:** Una vez que el lote avanza a la siguiente etapa, no se retrocede. El lote siempre sigue adelante en el flujo.
-3. **Inmutabilidad:** Una vez que el lote avanza a la siguiente etapa, los datos de la etapa anterior no se modifican. Si se requiere documentar información adicional, se registra como una nueva observación asociada a esa etapa. El dato original permanece visible.
-4. **Entrega a Almacén obligatoria:** Todo lote que completa las 6 etapas sale de Operación hacia Almacén con su documentación completa, independientemente de los defectos registrados.
+3. **Edición controlada con auditoría:** Los datos de una etapa pueden corregirse si hubo error de carga, pero toda edición debe dejar trazabilidad completa de quién editó, cuándo, qué cambió y por qué.
+4. **Ventana operativa de corrección:** La edición puede permitirse durante una ventana definida posterior al turno o al cierre de la etapa (por ejemplo 24 o 48 horas, según la política vigente).
+5. **Edición restringida fuera de ventana:** Una vez vencida la ventana operativa, solo el rol **SysAdmin** puede editar registros de etapas, manteniendo la misma trazabilidad obligatoria.
+6. **Entrega a Almacén obligatoria:** Todo lote que completa las 6 etapas sale de Operación hacia Almacén con su documentación completa, incluyendo defectos y condiciones de entrega si existieran.
 
 ### 4.4 Clasificación de Calidad
 
-Calidad clasifica el estado final del lote. Esta clasificación documenta la calidad del PT que recibe Almacén y es la base para que Almacén decida su disposición (stock normal, venta con descuento, etc.). El lote siempre se entrega a Almacén, independientemente de su clasificación.
+Calidad documenta el estado de calidad del lote al momento de la entrega. Esa información permite que Almacén verifique lo recibido y luego defina, por separado, su disponibilidad operativa, su disposición y su presentación física según corresponda. El lote siempre se entrega a Almacén, aun cuando llegue con observaciones o condiciones especiales.
 
 | Clasificación         | Significado                                                                                     | Ejemplo de uso                                                                |
 | --------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | **Estándar**          | PT sin defectos o con defectos menores dentro de tolerancia                                     | Lote que cumple especificaciones                                              |
-| **Con nomenclatura**  | PT con características especiales que modifican su clasificación o valor                        | -AT (alta torsión), -FT (fuera de tabla), -VARR (con varilla), -D (degradado) |
-| **Con observaciones** | PT con defectos documentados que no impiden su uso pero afectan su calidad percibida            | Doble tono leve, manchado superficial, conos con pequeñas imperfecciones      |
-| **Rechazado**         | PT con defectos significativos que impiden su comercialización como producto de primera calidad | Contaminación, mezcla irreversible, defectos estructurales                    |
+| **Con nomenclatura**  | PT con características especiales que modifican su clasificación o valor                        | Lote con una designación especial definida por calidad según la política vigente |
+| **Observado**         | PT con defectos o condiciones documentadas que obligan a tomar decisiones dentro de Operación o a informar condiciones de entrega a Almacén | Doble tono, manchado, conos dañados, defectos que requieren definir salida    |
 
 ---
 
@@ -239,36 +240,36 @@ Esto garantiza que en cualquier momento se pueda responder: ¿quién hizo qué, 
 
 El peso del lote se mide al inicio de cada etapa para calcular la merma acumulada. La diferencia entre etapas consecutivas revela pérdidas de material durante el proceso.
 
-### 5.3 Inmutabilidad
+### 5.3 Corrección de registros
 
-Los registros de cada etapa (fechas, responsables, datos técnicos) son inmutables una vez que el lote avanza. Si se requiere corregir información, se registra una observación que referencia al registro original. El dato original permanece visible.
+Los registros de cada etapa (fechas, responsables, datos técnicos) pueden corregirse si hubo error de carga, pero toda corrección debe dejar auditoría completa: usuario editor, fecha/hora, valores anteriores, valores nuevos y motivo del cambio. La edición operativa puede permitirse dentro de una ventana definida; fuera de esa ventana, solo **SysAdmin** puede editar.
 
 ### 5.4 Validación antes de avanzar
 
 Antes de registrar una etapa, el sistema verifica:
 
-- Que el lote existe y tiene un código `NN-GGGG-NNN` válido
+- Que el lote existe y tiene un código válido
 - Que la etapa anterior está completada
 - Que los datos obligatorios están presentes (turno, supervisor, responsable, peso/cantidad)
 
 ### 5.5 Cierre del ciclo del lote en Operación
 
-El ciclo del lote en Operación se cierra cuando Calidad completa su inspección y el lote es entregado a Almacén. A partir de ese momento, Almacén recibe el lote con su documentación completa de calidad y decide su disposición (almacenamiento como PT estándar, venta con descuento, reproceso externo, etc.). Esa decisión ya corresponde al dominio de Almacén, no al de Operación.
+El ciclo del lote en Operación se cierra cuando Calidad completa su inspección y el lote es entregado a Almacén. A partir de ese momento, Almacén recibe el lote con su documentación completa de calidad, verifica lo recibido, clasifica el estado del PT y decide su disposición. Esa decisión ya corresponde al dominio de Almacén, no al de Operación.
 
 ---
 
 ## 6. Visibilidad por Rol
 
-Cada rol ve la información necesaria para su trabajo, más la etapa inmediatamente anterior para validar consistencia. Calidad ve el historial completo del lote.
+La siguiente visibilidad describe la operación actual esperada. La política exacta de permisos puede cambiar según RBAC. Cada rol ve la información necesaria para su trabajo, más la etapa inmediatamente anterior para validar consistencia. Calidad ve el historial del lote y sus características de calidad; Supervisor puede ver la información de ambos procesos para consolidación operativa.
 
 | Rol                          | Ve sus datos          | Ve (lectura)                                     |
 | ---------------------------- | --------------------- | ------------------------------------------------ |
-| **Inventario**               | Inventario (armado)   | Información de Almacén: código, título, cliente  |
+| **Inventario**               | Inventario (armado y seguimiento)   | Información de Almacén: código, título, cliente  |
 | **Personal de Tintorería**   | Tintorería, Secado    | Inventario: madejas, peso total                  |
-| **Inventario (en Devanado)** | Devanado/Ovillado     | Secado: madejas, peso total                      |
+| **Responsable operativo de Devanado/Ovillado** | Devanado/Ovillado     | Secado: madejas, peso total                      |
 | **Embolsado**                | Embolsado             | Devanado/Ovillado: conos, desperdicio            |
-| **Calidad**                  | Calidad               | **Historial completo:** todas las etapas previas |
-| **Supervisor**               | Todas (solo lectura)  | Todas (solo lectura). No registra, supervisa.    |
+| **Calidad**                  | Calidad               | Historial del lote y sus características registradas |
+| **Supervisor**               | Todas (solo lectura)  | Todas (solo lectura). No registra como regla general; supervisa y consolida.    |
 | **Jefe de Producción**       | Dashboard consolidado | Todas las etapas de todos los lotes activos      |
 | **Almacén**                  | Sus movimientos       | Datos productivos del lote (solo lectura)        |
 
@@ -278,12 +279,12 @@ Cada rol ve la información necesaria para su trabajo, más la etapa inmediatame
 
 | Término                       | Definición                                                                                                                                |
 | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| **Lote**                      | Conjunto de madejas que comparten título, color y cliente, identificado por el código `NN-GGGG-NNN`                                       |
-| **Código de lote**            | Formato `NN-GGGG-NNN` asignado por Almacén al recibir la MP                                                                               |
-| **Especificaciones del lote** | Información definida por Almacén en el sistema: código `NN-GGGG-NNN`, título, color, cliente y datos del pedido                           |
+| **Lote**                      | Conjunto físico de madejas que comparten título, color y destino, armado en este proceso e identificado por el código definido por Almacén                                       |
+| **Código de lote**            | Identificador único asignado por Almacén al definir el pedido. Su formato podrá rediseñarse más adelante                                                                               |
+| **Especificaciones del lote** | Información definida por Almacén en el sistema: código de lote, título, color, cliente y datos del pedido                           |
 | **Armado de lote**            | Proceso por el cual Inventario selecciona madejas crudas producidas en Madejeras para formar un lote según el título y peso especificados |
-| **Clasificación de calidad**  | Categoría asignada por Calidad al PT (estándar, con nomenclatura, con observaciones, rechazado) que documenta su estado                   |
-| **Nomenclatura**              | Designación especial asignada por Calidad al PT (-AT, -FT, -VARR, -D) que modifica su clasificación                                       |
+| **Clasificación de calidad**  | Categoría asignada por Calidad al PT (estándar, con nomenclatura u observado) que documenta su estado de calidad al momento de la entrega                   |
+| **Nomenclatura**              | Designación especial asignada por Calidad al PT que modifica su clasificación según la política vigente                                       |
 | **Merma**                     | Diferencia de peso entre etapas consecutivas que revela pérdida de material                                                               |
 | **Devanado**                  | Conversión de madejas en conos (formato para cliente industrial)                                                                          |
 | **Ovillado**                  | Conversión de madejas en ovillos (formato para venta directa)                                                                             |
