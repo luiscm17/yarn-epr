@@ -10,24 +10,30 @@
 
 ### 1.1 Propósito
 
-Definir los subdominios, reglas de negocio y requerimientos de la **Unidad Almacén**, responsable de gestionar las existencias de materia prima, producto terminado e insumos de producción, así como el registro de todos los movimientos de entrada y salida. Este PRD establece el ciclo de vida del lote desde la perspectiva de Almacén.
+Definir los subdominios, reglas de negocio y requerimientos de la **Unidad Almacén**, responsable de gestionar las existencias de fardos de materia prima, producto terminado e insumos de producción, así como el registro de todos los movimientos de entrada y salida. Este PRD establece la perspectiva de Almacén sobre la identidad de producción, el movimiento de existencias y la continuidad del historial del lote.
 
 ### 1.2 Alcance
 
 Cubre los siguientes subdominios operativos:
 
-- **Materia Prima (MP):** recepción de fardos, registro de camiones/lotes entrantes, asignación del código único `NN-GGGG-NNN`, enriquecimiento con datos del pedido (título, color, cliente, etc), y emisión a Operación.
+- **Materia Prima (MP / fardos):** recepción de fardos, registro de camiones entrantes, control de existencias de MP y emisión a Operación.
 - **Producto Terminado (PT):** recepción desde Operación, almacenamiento (bolsa / suelto), salidas por venta directa a cliente o transferencia a Comercialización, devoluciones, y control de existencias con la fórmula `(Saldo Anterior + Entradas) − Salidas = Saldos`.
-- **Insumos de Producción (Supplies):** todo insumo que consume producción: colorantes, químicos, bolsas, etiquetas, fichas de devanado, talonarios, repuestos, lubricantes, conos, tubos, etc. Se organiza por categorías según el tipo de insumo.
+- **Insumos de Producción:** todo insumo que consume producción: colorantes, químicos, bolsas, etiquetas, fichas de devanado, talonarios, repuestos, lubricantes, conos, tubos, etc. Se organiza por categorías según el tipo de insumo.
+
+Además, Almacén participa en la **definición de identidad de producción** que
+acompaña al flujo posterior del lote, pero esa definición no debe confundirse
+con la recepción física inicial de fardos.
 
 ### 1.3 Límite con otros dominios
 
-El sistema tendrá un **historial único por lote** identificado por el código `NN-GGGG-NNN`, pero cada dominio escribe y consulta solo su propia información:
+El sistema tendrá un **historial único por lote**, pero cada dominio escribe y
+consulta solo su propia información. Almacén inicia la identidad y luego
+continúa el historial cuando recibe Producto Terminado desde Operación:
 
 | Dominio | Escribe | No ve |
 |---|---|---|
-| **Almacén** | Recepción de MP, enriquecimiento, emisión, recepción de PT, salidas, devoluciones | Las 6 etapas productivas, calidad, desperdicio real |
-| **Operación** | 6 etapas del lote, calidad, nomenclaturas, desperdicio real | Movimientos de almacén, clientes, saldos |
+| **Almacén** | Recepción de fardos, definición de identidad para producción, emisión a Operación, recepción de PT, salidas, devoluciones | Las 6 etapas productivas, calidad, desperdicio real |
+| **Operación** | 6 etapas del lote, calidad, nomenclaturas, desperdicio real | Movimientos internos de existencias de Almacén, clientes, saldos |
 
 ### 1.4 Fuera de alcance
 
@@ -63,8 +69,13 @@ Dirección de Producción
 
 | Rol | Responsabilidades en el sistema |
 |---|---|
-| **Jefe de Unidad Almacén** | Supervisa recepción de MP, emisiones a Operación, verificación de PT, control de existencias. Opera el sistema. Reporta al Jefe de Producción. |
-| **Auxiliar Operativo** | Ejecuta movimientos físicos: recepción, verificación, embolsado, despacho. Opera el sistema para registrar movimientos. |
+| **Jefe de Unidad Almacén** | Supervisa recepción de MP, emisiones a Operación, verificación de PT y control de existencias. Reporta al Jefe de Producción. |
+| **Auxiliar Operativo** | Ejecuta movimientos físicos como recepción, verificación, embolsado y despacho. |
+
+> **Nota sobre permisos:** estas responsabilidades describen la operación actual
+> de Almacén, pero la asignación de quién registra, valida, autoriza o corrige
+> movimientos puede cambiar por política organizacional. La autorización del
+> sistema se define de forma transversal en `docs/prd/access-control.md`.
 
 ### 2.3 Relación con otros roles
 
@@ -75,25 +86,36 @@ Dirección de Producción
 
 ### 2.4 Principios operativos
 
-1. **Código único como eje transversal.** Almacén asigna el código `NN-GGGG-NNN` al recibir la MP. Ese código es el identificador único del lote durante todo el proceso.
-2. **Trazabilidad obligatoria.** Todo lote de MP ingresado debe tener su correspondiente PT procesado. No se admiten lotes huérfanos.
-3. **Consistencia de saldos.** El stock reflejado en el sistema debe coincidir con las existencias físicas. Cualquier discrepancia requiere ajuste documentado.
-4. **Cada dominio escribe su historial.** Almacén registra sus movimientos y no interfiere con los datos de Operación. El código del lote es el único vínculo.
-5. **Dos canales de salida de PT.** El PT puede salir por venta directa a cliente (lote completo) o por transferencia a Comercialización. Ambos se registran en kilogramos en el historial del lote.
+1. **Recepción de MP como fardos.** Almacén recibe materia prima desde proveedor en forma de fardos. Esa recepción no debe confundirse con el lote físico que nace más adelante en Operación.
+2. **Identidad de producción como acto separado.** La definición del código o identificador que acompaña a producción, junto con título, color, cliente y demás requerimientos, es un acto separado de la recepción física de fardos. El formato del identificador podrá rediseñarse más adelante.
+3. **Trazabilidad obligatoria.** Todo lote de producción debe conservar un historial auditable de su recorrido, incluyendo definición inicial, emisión a Operación, recepción de PT, salidas, devoluciones y ajustes documentados. El historial no se elimina y su continuidad pasa entre Almacén y Operación bajo la misma identidad.
+4. **Consistencia de saldos.** El stock reflejado en el sistema debe coincidir con las existencias físicas. Cualquier discrepancia requiere ajuste documentado.
+5. **Cada dominio escribe su historial.** Almacén registra sus movimientos y no interfiere con los datos de Operación. La historia del lote es única, pero se compone con aportes de ambos dominios.
+6. **Dos canales de salida de PT.** El PT puede salir por venta directa a cliente o por transferencia a Comercialización. Además, Almacén necesita distinguir por separado el estado de calidad informado por Operación, la disponibilidad o disposición operativa dentro de Almacén, y la presentación física o modalidad del producto (por ejemplo bolsa/suelto, industrial/ovillado cuando aplique).
+7. **Permisos configurables.** La asignación de capacidades de registro, validación, autorización, corrección y consulta no se fija rígidamente por cargo. El sistema debe permitir reasignarlas sin rediseñar los procesos de Almacén.
+
+**Estados operativos iniciales del PT en Almacén:**
+
+- **Disponible**: puede distribuirse normalmente.
+- **Observado**: tiene observaciones o defectos reportados que requieren decisión antes de su salida.
+- **Disponible con condición**: puede distribuirse, pero bajo condiciones explícitas documentadas.
+- **Defectuoso**: estado terminal gestionado por Almacén para PT con defectos significativos. No es desperdicio y no vuelve normalmente a estados disponibles.
+- **Entregado / Despachado**: ya salió de Almacén.
 
 ---
 
 ## 3. Subdominios
 
-La Unidad Almacén opera sobre tres subdominios. El detalle completo de cada uno (ciclo operativo, campos de entrada/salida, catálogos) está documentado en:
+La Unidad Almacén opera sobre tres subdominios. El detalle funcional de sus
+registros, actos de negocio y flujos documentales está desarrollado en:
 
-> Ver [`docs/prd/warehouse/subdomains.md`](subdomains.md)
+> Ver [`docs/prd/warehouse/warehouse-records.md`](warehouse/warehouse-records.md)
 
 | # | Subdominio | Propósito | Unidad |
 |---|---|---|---|
-| 3.1 | **Raw Material (MP)** | Recepción de fardos, registro de lotes/camiones entrantes, asignación del código `NN-GGGG-NNN`, enriquecimiento con datos del pedido, emisión a Operación | kg |
-| 3.2 | **Finished Product (PT)** | Recepción desde Operación, almacenamiento (bolsa / suelto), salida por venta directa o transferencia a Comercialización | kg |
-| 3.3 | **Supplies** | Todo insumo de producción: colorantes, químicos, empaque, repuestos, lubricantes, etc. Organizado por categorías. | según categoría (kg, piezas, L) |
+| 3.1 | **Materia Prima (MP / fardos)** | Recepción de fardos, registro de camiones entrantes, control de stock de MP y emisión a Operación | kg |
+| 3.2 | **Producto Terminado (PT)** | Recepción desde Operación, almacenamiento (bolsa / suelto), salida por venta directa o transferencia a Comercialización | kg |
+| 3.3 | **Insumos de Producción** | Todo insumo de producción: colorantes, químicos, empaque, repuestos, lubricantes, etc. Organizado por categorías. | según categoría (kg, piezas, L) |
 
 ---
 
@@ -101,42 +123,51 @@ La Unidad Almacén opera sobre tres subdominios. El detalle completo de cada uno
 
 ### 4.1 Historial de movimientos
 
-Todo movimiento en Almacen genera un **registro inmutable** en el historial del lote o item. El historial es de solo agregar (append-only):
+Todo movimiento en Almacen debe conservar **trazabilidad completa**. Si existe
+un error de carga, la corrección debe dejar auditoría completa del cambio,
+incluyendo usuario editor, fecha/hora, valores anteriores, valores nuevos y
+motivo de corrección.
 
-- No se eliminan movimientos existentes.
-- No se sobreescriben movimientos existentes.
-- No se editan campos de un movimiento ya registrado.
-- Si se requiere corregir una situacion, se registra un nuevo movimiento que referencia al movimiento anterior.
+La edición puede permitirse durante una ventana operativa definida por la
+política vigente. Fuera de esa ventana, solo **SysAdmin** puede editar.
 
 ### 4.2 Tipos de movimiento
 
 Cada subdominio define sus propios tipos de movimiento. No son intercambiables entre subdominios.
 
-La unidad de medida del movimiento depende del subdominio: Raw Material y Finished Product usan **kilogramos (kg)**; Supplies usa la unidad que corresponda a cada categoria (kg, L, piezas, etc.).
+La unidad de medida del movimiento depende del subdominio: Materia Prima y Producto Terminado usan **kilogramos (kg)**; Insumos de Producción usa la unidad que corresponda a cada categoria (kg, L, piezas, etc.).
 
 | Subdominio | Tipo de movimiento | Direccion | Autoriza |
 |---|---|---|---|
-| Raw Material | Reception | Entrada | — |
-| Raw Material | Emission to Production | Salida | Jefe de Produccion |
-| Finished Product | Reception from Production | Entrada | — |
-| Finished Product | Direct sale | Salida | Jefe de Produccion |
-| Finished Product | Comercializacion transfer | Salida | Jefe de Produccion |
-| Finished Product | Return | Entrada | — |
-| Supplies | Reception from supplier | Entrada | — |
-| Supplies | Production consumption | Salida | Supervisor de turno |
-| Supplies | Return to supplier | Salida | — |
+| Materia Prima | Recepción de fardos | Entrada | — |
+| Materia Prima | Emisión a Producción | Salida | Jefe de Producción |
+| Producto Terminado | Recepción desde Producción | Entrada | — |
+| Producto Terminado | Venta directa | Salida | Jefe de Producción |
+| Producto Terminado | Transferencia a Comercialización | Salida | Jefe de Producción |
+| Producto Terminado | Devolución | Entrada | — |
+| Insumos de Producción | Recepción desde proveedor | Entrada | — |
+| Insumos de Producción | Consumo de Producción | Salida | Supervisor de turno |
+| Insumos de Producción | Devolución a proveedor | Salida | — |
 
-Toda solicitud sigue el orden jerarquico. Para los movimientos que requieren autorizacion, la solicitud llega a Almacen con el visto bueno del rol correspondiente:
+Toda solicitud sigue el orden jerarquico. Para los movimientos que requieren autorizacion, la solicitud llega a Almacen con el visto bueno del rol correspondiente segun la politica vigente de permisos:
 
 - **Jefe de Produccion** autoriza emisiones de MP y salidas de PT.
-- **Supervisor de turno** autoriza consumos de Supplies.
+- **Supervisor de turno** autoriza consumos de Insumos de Producción.
+
+Estas asignaciones representan la operacion actual esperada. El sistema debe
+permitir que la empresa reasigne estas autorizaciones a otros roles habilitados
+sin cambiar la estructura funcional del proceso.
+
+**Nota conceptual:** la recepción física de fardos, la definición de identidad
+para producción y la recepción posterior de Producto Terminado son actos de
+negocio distintos. No deben modelarse como un único evento.
 
 Casos particulares:
 
-- **Finished Product / Return**: puede ser total o parcial. El lote devuelto se reincorpora a existencias y puede tener una salida posterior. El movimiento referencia a la venta original.
-- **Finished Product / Comercializacion transfer**: la cantidad se registra en kilogramos. El precio unitario lo define Comercializacion.
-- **Finished Product / Direct sale**: la cantidad se registra en kilogramos.
-- **Datos verificados**: Almacen solo registra informacion que llega verificada desde Operacion. Si un lote llega con datos incorrectos, se rechaza la recepcion. Las discrepancias entre sistema y existencias fisicas se resuelven en Operacion.
+- **Producto Terminado / Devolución**: puede ser total o parcial. El lote devuelto se reincorpora a existencias y puede tener una salida posterior. El movimiento referencia a la venta original.
+- **Producto Terminado / Transferencia a Comercialización**: la cantidad se registra en kilogramos. El precio unitario lo define Comercialización.
+- **Producto Terminado / Venta directa**: la cantidad se registra en kilogramos.
+- **Datos verificados**: Almacen registra la recepción de PT a partir de la información entregada por Operación y de su propia verificación física. Si un lote llega con datos inconsistentes, se documenta la incidencia antes de aceptarlo o clasificarlo para disponibilidad.
 
 ### 4.3 Cierre de existencias
 
@@ -152,7 +183,7 @@ En cada cierre, el sistema calcula los saldos con la formula `(Saldo Anterior + 
 
 ## 5. Requerimientos funcionales
 
-### 5.1 Raw Material
+### 5.1 Materia Prima
 
 | ID | Requerimiento |
 |---|---|
@@ -160,21 +191,22 @@ En cada cierre, el sistema calcula los saldos con la formula `(Saldo Anterior + 
 | WH-RM-02 | El sistema debe generar automaticamente el codigo unico `NN-GGGG-NNN` al confirmar la recepcion, donde NN es el numero de camion, GGGG la gestion y NNN el correlativo del ano. |
 | WH-RM-03 | El sistema debe permitir enriquecer el lote con datos del pedido: cliente, color solicitado, titulo, tipo N/CH y observaciones. Este enriquecimiento es el insumo para la planificación de producción que realiza el Jefe de Producción (ver [sección 5 de operation.md](../prd/operation.md#5-planificación-de-la-producción)). |
 | WH-RM-04 | El sistema debe permitir registrar la emision de MP a Operacion indicando: fecha, supervisor receptor, cantidad emitida (kg) y destino. La emision requiere autorizacion del Jefe de Produccion. |
-| WH-RM-05 | El sistema debe mantener un historial de todos los lotes de MP recibidos, con su estado (pendiente de emision, emitido parcialmente, emitido totalmente). |
+| WH-RM-05 | El sistema debe mantener un historial de fardos recibidos y de las definiciones de producción asociadas, con su estado operativo correspondiente. |
 
-### 5.2 Finished Product
+### 5.2 Producto Terminado
 
 | ID | Requerimiento |
 |---|---|
-| WH-PT-01 | El sistema debe permitir registrar la recepcion de PT desde Operacion con: codigo de lote, descripcion, cantidad (kg), valor, categoria, subcategoria, estado (bolsa/suelto) y supervisor de origen. |
-| WH-PT-02 | El sistema debe rechazar la recepcion de un PT si los datos del lote no coinciden con la informacion registrada por Operacion. |
+| WH-PT-01 | El sistema debe permitir registrar la recepción de PT desde Operación con: identificador de lote, descripción, cantidad (kg), valor, categoría, subcategoría, estado de calidad informado por Operación, presentación física recibida (por ejemplo bolsa/suelto) y supervisor de origen. |
+| WH-PT-02 | El sistema debe permitir documentar inconsistencias entre lo entregado por Operación y la verificación física realizada por Almacén antes de aceptar o clasificar el PT para disponibilidad. |
 | WH-PT-03 | El sistema debe permitir registrar la salida de PT por venta directa a cliente con: cliente, cantidad (kg), fecha y numero de factura. Requiere autorizacion del Jefe de Produccion. |
 | WH-PT-04 | El sistema debe permitir registrar la transferencia de PT a Comercializacion con: cantidad (kg), fecha. Requiere autorizacion del Jefe de Produccion. |
 | WH-PT-05 | El sistema debe permitir registrar devoluciones de PT (totales o parciales) referenciando a la venta original. El lote devuelto se reincorpora a existencias. |
-| WH-PT-06 | El sistema debe permitir registrar el cambio de estado de un lote entre bolsa y suelto, dejando registro en el historial. |
+| WH-PT-06 | El sistema debe permitir registrar el cambio de presentación física de un lote (por ejemplo bolsa/suelto) dejando registro en el historial. |
 | WH-PT-07 | El sistema debe mostrar el historial completo de movimientos de cada lote de PT, desde su recepcion hasta su salida final. |
+| WH-PT-08 | El sistema debe permitir gestionar el estado operativo del PT en Almacén separadamente del estado de calidad informado por Operación y de la presentación física del producto. |
 
-### 5.3 Supplies
+### 5.3 Insumos de Producción
 
 | ID | Requerimiento |
 |---|---|
@@ -182,7 +214,7 @@ En cada cierre, el sistema calcula los saldos con la formula `(Saldo Anterior + 
 | WH-SU-02 | El sistema debe permitir registrar la recepcion de insumos con: categoria, proveedor, cantidad y unidad de medida (kg, L, piezas, metros, etc.). |
 | WH-SU-03 | El sistema debe permitir registrar el consumo de insumos por parte de Produccion con: categoria, cantidad, area de destino y supervisor que autoriza. |
 | WH-SU-04 | El sistema debe permitir registrar devoluciones de insumos a proveedor. |
-| WH-SU-05 | Cada item de Supplies debe tener su propia unidad de medida, definida por categoria. |
+| WH-SU-05 | Cada ítem de Insumos de Producción debe tener su propia unidad de medida, definida por categoría. |
 
 ### 5.4 Transversales
 
@@ -197,6 +229,7 @@ En cada cierre, el sistema calcula los saldos con la formula `(Saldo Anterior + 
 | WH-TR-07 | El sistema debe facilitar el cierre mensual, anual y extraordinario de existencias, poniendo los movimientos del periodo cerrado en solo lectura. |
 | WH-TR-08 | El sistema debe permitir consultar el historial completo de movimientos de cualquier lote o item. |
 | WH-TR-09 | El sistema debe permitir a Almacen leer los datos productivos del lote (codigo, descripcion) desde el historial de Operacion, sin poder modificarlos. |
+| WH-TR-10 | El sistema debe permitir que los permisos de registro, validacion, autorizacion y correccion en Almacen se configuren sin alterar el flujo funcional definido en este PRD. |
 
 ---
 
@@ -205,16 +238,19 @@ En cada cierre, el sistema calcula los saldos con la formula `(Saldo Anterior + 
 | Termino | Definicion |
 |---|---|
 | **Almacen** | Unidad organizacional responsable de gestionar las existencias de materia prima, producto terminado e insumos de produccion. Depende de la Direccion de Produccion. |
-| **Lote** | Identificador unico de un conjunto de materia prima que sera procesado como una unidad. Se identifica con el codigo `NN-GGGG-NNN`. |
-| **Codigo de lote** | Formato `NN-GGGG-NNN` asignado por Almacen al recibir MP. Acompania al lote durante todo su ciclo de vida. |
-| **Movimiento** | Registro inmutable de una entrada o salida de existencias en Almacen. Cada movimiento pertenece a un tipo especifico (reception, emission, sale, etc.). |
+| **Fardo** | Unidad física de materia prima recibida desde proveedor. La recepción inicial de MP ocurre en fardos, no en lotes de proceso. |
+| **Lote** | Unidad de producción cuya identidad es definida por Almacén y cuyo armado físico ocurre más adelante en Operación. |
+| **Codigo de lote** | Identificador único definido por Almacén para acompañar la producción y el historial del lote. Su formato podrá rediseñarse más adelante. |
+| **Movimiento** | Registro auditable de una entrada o salida de existencias en Almacen. Puede corregirse mediante edición controlada con trazabilidad completa. Cada movimiento pertenece a un tipo especifico (reception, emission, sale, etc.). |
 | **Existencias** | Cantidad de un producto disponible en Almacen en un momento dado. Se calcula con la formula `(Saldo Anterior + Entradas) − Salidas`. |
+| **Estado operativo del PT** | Situación del Producto Terminado dentro de Almacén para efectos de disponibilidad y distribución: disponible, observado, disponible con condición, defectuoso o entregado/despachado. |
+| **Presentación física** | Forma en que Almacén mantiene o recibe el PT, por ejemplo bolsa/suelto o modalidad industrial/ovillado cuando corresponda. |
 | **Recepcion** | Movimiento de entrada de MP o PT a Almacen, proveniente de proveedor o de Operacion respectivamente. |
 | **Emision** | Movimiento de salida de MP desde Almacen hacia Operacion para su procesamiento. |
 | **Salida** | Movimiento de salida de PT hacia cliente directo (venta) o Comercializacion. |
-| **Devolucion** | Movimiento de entrada de PT o Supplies que retorna a Almacen despues de haber salido. Puede ser total o parcial. |
-| **Consumo** | Movimiento de salida de Supplies desde Almacen hacia Produccion para su uso en el proceso productivo. |
-| **Operacion** | Unidad organizacional responsable del proceso productivo (Yarn Spinning + Lot Processing, documentado en `docs/prd/operation.md`). Recibe MP e insumos de Almacen y devuelve PT verificado. |
+| **Devolucion** | Movimiento de entrada de PT o Insumos de Producción que retorna a Almacen despues de haber salido. Puede ser total o parcial. |
+| **Consumo** | Movimiento de salida de Insumos de Producción desde Almacen hacia Produccion para su uso en el proceso productivo. |
+| **Operacion** | Unidad organizacional responsable del proceso productivo (Hilatura / `Yarn Spinning` + Proceso por Lotes / `Lot Processing`, documentado en `docs/prd/operation.md`). Recibe MP e insumos de Almacen y devuelve PT verificado. |
 | **Comercializacion** | Area que recibe PT desde Almacen para su venta por unidades. No es usuario del sistema de Almacen; es un destino de salida. |
 | **Supervisor de turno** | Rol en Operacion que autoriza solicitudes de material y coordina la entrega de PT a Almacen. |
 | **Jefe de Produccion** | Rol que autoriza emisiones de MP y salidas de PT. Reporta a la Direccion de Produccion. |
