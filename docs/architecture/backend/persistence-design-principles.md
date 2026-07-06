@@ -78,7 +78,7 @@ Do **not** use them as the canonical write target for corrections or workflow tr
 | Concept | Owner | Meaning | Persistence rule |
 |---|---|---|---|
 | **production identity** | Warehouse | Cross-context business identity defined before physical lot assembly | Persist as a Warehouse-owned concept that downstream contexts reference |
-| **lot** | Lot Processing | Physical batch assembled later from skeins | Persist only when the Inventory stage creates the physical lot |
+| **lot** | Lot Processing | Physical batch assembled from skeins during operation | Persist only when the Inventory stage creates the physical lot |
 
 Rules:
 
@@ -91,6 +91,18 @@ Rules:
 - Prefer **stable IDs / codes** for cross-context references.
 - Use references to connect lifecycle segments across contexts.
 - Keep reference direction explicit: downstream contexts consume upstream identity; upstream contexts do not own downstream stage history.
+
+| Identifier role | Canonical field family | Meaning | Usage rule |
+|---|---|---|---|
+| Visible lot code | `lotCode`, `lot_code`, `lot_code_snapshot` | Human-visible shared business code | Use for business-facing traceability and snapshots that must preserve the visible code. |
+| Warehouse production identity technical ID | `productionIdentityId`, `production_identity_id` | Technical identifier of the Warehouse-owned production identity | Use when a downstream context needs a technical link to the Warehouse identity record. |
+| Lot Processing physical lot technical ID | `lotId`, `lot_id`, `batchId`, `batch_id` | Technical identifier of the physical lot owned by Lot Processing | Use only inside the Lot Processing write model or when a concrete technical link to that lot record is required. |
+
+Rules:
+
+- Do not name a technical ID as `*_ref` when the field is semantically a concrete persisted record ID.
+- Do not name a visible business code as a generic `reference` field.
+- Keep the visible code and the technical IDs explicit even when both travel together in the same workflow.
 
 ### 5.3 IDs vs denormalized snapshots
 
