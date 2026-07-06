@@ -67,12 +67,35 @@ Use these names for **operation section/stage identifiers** so process names sta
 
 ---
 
+## Canonical identifier roles
+
+Use these identifiers consistently across docs, code, APIs, and database design.
+
+| Business concept | Canonical doc term | Canonical code term | Meaning | Rule |
+|---|---|---|---|---|
+| Visible lot/business code | **lot code** | `lotCode` / `lot_code` | Human-visible code used by operators and business users to track the lot across contexts | Use for business navigation and traceability. Do not use it as the local technical primary key. |
+| Warehouse production identity technical ID | **production identity ID** | `productionIdentityId` / `production_identity_id` | Internal technical identifier of the Warehouse-owned production identity record | Use for Warehouse ownership and technical references to the Warehouse identity. |
+| Physical lot technical ID | **lot ID** | `lotId` / `lot_id` | Internal technical identifier of the Lot Processing physical lot record | Use only for the Lot Processing aggregate and its owned records. |
+| Physical batch technical ID | **batch ID** | `batchId` / `batch_id` | Optional synonym only when a local model truly names the physical lot as a batch | Do not use together with `lotId` for the same concept in one model. Prefer `lotId` in current artifacts. |
+
+### Stable rule
+
+- `lotCode` is the visible shared business code.
+- `productionIdentityId` is the Warehouse technical ID.
+- `lotId` / `batchId` is the Lot Processing technical ID for the physical lot.
+- Never use `_ref` naming when the column actually stores one of these technical IDs.
+
+---
+
 ## Intentional distinctions
 
 ### Production identity vs lot
 
 - **Production identity** = the Warehouse-defined cross-context identity.
 - **Lot** = the physical batch assembled later in the Inventory stage.
+- **Lot code** = the visible business code shared across contexts.
+- **Production identity ID** = the internal Warehouse technical ID.
+- **Lot ID** = the internal Lot Processing technical ID.
 
 These must never be merged into one premature model.
 
