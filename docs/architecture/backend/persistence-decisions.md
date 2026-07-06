@@ -40,6 +40,20 @@ Visible business codes and internal technical IDs are separate by default.
 - Use **visible business codes** for business navigation, operator recognition, and cross-context references when the code is intentionally shared.
 - A shared code is a **reference**, not proof of shared ownership.
 
+### Canonical identifier roles
+
+| Identifier role | Canonical name | Persistence meaning | Stable persistence rule |
+|---|---|---|---|
+| Visible business code | `lotCode` / `lot_code` | Human-visible code used to identify and track the lot across contexts | Keep separate from technical primary keys. Use when the business contract requires a visible shared code. |
+| Warehouse technical identity | `productionIdentityId` / `production_identity_id` | Internal technical ID of the Warehouse production identity record | Use for Warehouse-owned identity persistence and downstream technical links to that record. |
+| Lot Processing technical identity | `lotId` / `lot_id` or `batchId` / `batch_id` | Internal technical ID of the physical lot record in Lot Processing | Use for the Lot Processing aggregate and its owned child records. Do not replace it with `lotCode`. |
+
+### Naming rule
+
+- A column named with `_ref` should represent a generic external/shared reference only.
+- If a column actually stores a technical ID for a concrete persisted record such as the Warehouse production identity or Lot Processing lot, name it with `_id`.
+- If a column stores the visible business code, name it `lot_code`, `lot_code_snapshot`, or another equally explicit visible-code name.
+
 ---
 
 ## 3. Snapshot vs live reference policy
