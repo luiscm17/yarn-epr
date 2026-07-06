@@ -82,7 +82,7 @@ Every commit message **title** must follow these rules:
 |------|-----|
 | **Imperative mood** — "Add shift form", not "Added" or "Adds" | Reads like an instruction, consistent with generated merge commits |
 | **No period at the end** | Terse, scannable |
-| **Max 50 characters** for the title | Truncation-safe in `git log --oneline` |
+| **Max 200 characters** for the title | Long enough to capture the functional change without truncation |
 | **Blank line before body** (if body exists) | Standard convention, tools rely on it |
 
 ```
@@ -92,8 +92,8 @@ fix(wh): validate receipt date range
 
 # Bad
 feat(op): Added production shift form.  ← past tense + period
-feat(op): add production shift form with machine grid,
-section selector, and weight calculation           ← over 50 chars
+feat(op): add production shift form with machine grid and section selector  ← describes implementation, not functional change
+refactor(op): replace ProductionDischarge.py with discharge.py  ← names the file, not the functional change
 ```
 
 ### 2.3 Types
@@ -144,6 +144,18 @@ chore: configure eslint and prettier
 | `feat(warehouse): fix` | Type says feat, description says fix — inconsistent |
 | `WIP` | Useless on its own; use `chore: wip` or squash before merge |
 | `asdflkj` | Zero information |
+| `refactor(wh): replace schema-design.md with warehouse.dbml` | Names the file instead of the functional change |
+
+> **Principio — describe el cambio funcional, no el archivo.**
+> El título debe responder **qué cambió en el sistema**, no qué archivo se tocó.
+>
+> | Archivo | Cambio funcional |
+> |---|---|
+> | `docs(arch): replace warehouse schema doc with DBML` | `docs(arch): codify warehouse schema as DBML replacing prose design` |
+> | `docs(db): replace spinning schemas with warehouse DBML` | `docs(db): restructure DBML schemas per bounded context` |
+> | `refactor(wh): rename ProductionDischarge.py` | `refactor(wh): extract yarn-spinning discharge into independent module` |
+>
+> Si cuesta describirlo sin nombrar archivos, probablemente el commit no sea atómico.
 
 ### 2.7 Body (when to use)
 
