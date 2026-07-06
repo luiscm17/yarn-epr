@@ -8,8 +8,9 @@
 > [Backend Technical Design Baseline](./backend/backend-technical-design.md).
 > Conceptual persistence rules now live in
 > [Persistence Design Principles](./backend/persistence-design-principles.md).
-> The first context-level schema design artifact now lives in
-> [Warehouse Schema Design](./backend/warehouse/schema-design.md).
+> The Warehouse schema source of truth now lives in
+> [Warehouse DBML](../db/warehouse.dbml), with a short
+> [Warehouse Notes](../db/warehouse-notes.md) companion for rules DBML does not express well.
 > This document remains the higher-level backend view.
 
 ---
@@ -462,7 +463,8 @@ integration contracts that preserve ownership.
 - [Architecture](./ARCHITECTURE.md)
 - [Backend Technical Design Baseline](./backend/backend-technical-design.md)
 - [Persistence Design Principles](./backend/persistence-design-principles.md)
-- [Warehouse Schema Design](./backend/warehouse/schema-design.md)
+- [Warehouse DBML](../db/warehouse.dbml)
+- [Warehouse Notes](../db/warehouse-notes.md)
 - [Context Boundaries and Ownership](./context-boundaries-and-ownership.md)
 - [Master PRD](../prd.md)
 - [Access Control PRD](../prd/access-control.md)

@@ -46,7 +46,8 @@ This document belongs to the detailed backend-design layer within the current ar
 | Stable overview | [Backend Architecture](../backend.md) | High-level backend-oriented architecture view |
 | Detailed backend design | [Backend Technical Design](./backend-technical-design.md) | Technical backend module design baseline |
 | Detailed backend design | [Persistence Design Principles](./persistence-design-principles.md) | Conceptual persistence ownership, identity, correction, and time-model rules |
-| Context-level schema design | [Warehouse Schema Design](./warehouse/schema-design.md) | First Warehouse-focused schema-design artifact above SQL |
+| Context-level schema design | [Warehouse DBML](../../db/warehouse.dbml) | Canonical Warehouse schema artifact |
+| Context-level schema notes | [Warehouse Notes](../../db/warehouse-notes.md) | Short companion for decisions DBML does not express cleanly |
 
 ---
 
