@@ -3,6 +3,14 @@
 > Backend design reference aligned with the current PRDs and the boundary decisions in
 > [Architecture](./ARCHITECTURE.md) and
 > [Context Boundaries and Ownership](./context-boundaries-and-ownership.md).
+>
+> Detailed backend technical design now lives in
+> [Backend Technical Design Baseline](./backend/backend-technical-design.md).
+> Conceptual persistence rules now live in
+> [Persistence Design Principles](./backend/persistence-design-principles.md).
+> The first context-level schema design artifact now lives in
+> [Warehouse Schema Design](./backend/warehouse/schema-design.md).
+> This document remains the higher-level backend view.
 
 ---
 
@@ -33,8 +41,8 @@ It does **not** define:
    **Warehouse**, **Yarn Spinning**, **Lot Processing**, **Access Control**, and
    **Shared Reference Data**.
 2. **Production identity and physical lot are different concepts.** Warehouse
-   defines production identity; the physical lot is born later in Lot Processing
-   Inventory.
+   defines production identity; the physical lot is born later in the Lot Processing
+   Inventory stage.
 3. **Yarn Spinning and Lot Processing must stay separate.** They do not share
    the same aggregate root, timeline, or record semantics.
 4. **Business records support controlled edits with audit trail.** The backend
@@ -103,7 +111,7 @@ reception, and downstream warehouse lifecycle decisions.
 
 ### Core aggregates / record families
 
-- **Raw Material Reception** — receipt of raw material as **fardos**
+- **Raw Material Reception** — receipt of raw material as **bales**
 - **Production Identity Definition** — documentary/commercial identity later
   reused across contexts
 - **Material Emission to Production** — stock movement and production handoff
@@ -112,12 +120,12 @@ reception, and downstream warehouse lifecycle decisions.
   handling decisions
 - **PT Exit / Return Records** — sale, transfer, return, and similar warehouse
   lifecycle records
-- **Supply Movement Records** — non-lot warehouse inventory for production inputs
+- **Supply Movement Records** — non-lot warehouse stock for production inputs
 
 ### Important invariants / business rules
 
-- Raw material is received as **fardos**, not as a production lot.
-- Production identity is defined **after** fardo reception as a separate business
+- Raw material is received as **bales**, not as a production lot.
+- Production identity is defined **after** raw-material reception as bales, as a separate business
   act.
 - Warehouse owns the production identity, but **does not** own the physical lot
   birth.
@@ -145,10 +153,10 @@ reception, and downstream warehouse lifecycle decisions.
 ### Consumes from other contexts
 
 - **Access Control**: action + scope authorization
-- **Shared Reference Data**: employees, shifts, yarn titles, movement types,
+- **Shared Reference Data**: employees, shifts, yarn counts, movement types,
   units, destinations, suppliers
 - **Lot Processing**: delivery condition, lot quality state, delivery history,
-  delivered quantities/presentation references
+  delivered quantities/physical presentation
 - **Yarn Spinning**: no direct ownership dependency; usually only indirect
   planning/reference effects through Warehouse identity and Lot Processing output
 
@@ -162,18 +170,18 @@ Own continuous production records before any physical lot exists.
 
 ### Core aggregates / record families
 
-- **Production Discharge Records** by machine / shift / title
-- **Advance / Progress Records** for sections that summarize input-output flow
+- **Production Discharge Records** by machine / shift / yarn count
+- **Progress Records** for sections that summarize input-output flow
 - **Process Quality Records** for section/machine quality control
 - **Spinning Waste Records** by machine group / section
-- **Madeja Output Availability** as the business output that feeds lot assembly
+- **Skein Output Availability** as the business output that feeds lot assembly
 
 ### Important invariants / business rules
 
 - Yarn Spinning has **no lot aggregate** and **no lot timeline**.
 - Its continuity is organized by section, machine, shift, business date, and
-  yarn title — not by physical lot history.
-- The backend must model Madejeras output as availability for later assembly,
+   yarn count — not by physical lot history.
+- The backend must model Madejeras (Skeining) output as skein availability for later assembly,
   not as the birth of the physical lot.
 - Net weights and derived production values should be computed/validated by
   domain rules rather than treated as arbitrary user-entered facts.
@@ -187,10 +195,10 @@ Own continuous production records before any physical lot exists.
 ### Likely ports / contracts
 
 - `ProductionRecordRepository`
-- `AdvanceRecordRepository`
+- `ProgressRecordRepository`
 - `ProcessQualityRepository`
 - `WasteRecordRepository`
-- `MadejaAvailabilityReadModelPort`
+- `SkeinAvailabilityReadModelPort`
 - `YarnSpinningAuthorizationPolicyPort`
 - `AuditTrailWriterPort`
 
@@ -198,8 +206,8 @@ Own continuous production records before any physical lot exists.
 
 - **Access Control**: who may register, validate, approve, or correct records
 - **Shared Reference Data**: machines, machine groups, sections, shifts,
-  employees, yarn titles
-- **Warehouse**: production identity, title/color/client/specification context,
+  employees, yarn counts
+- **Warehouse**: production identity, yarn-count/color/client/specification context,
   and material availability references
 
 ---
@@ -208,21 +216,21 @@ Own continuous production records before any physical lot exists.
 
 ### Purpose
 
-Own the physical lot from Inventory assembly through the stage history during
+Own the physical lot from assembly in the Inventory stage through the stage history during
 operation until delivery back to Warehouse.
 
 ### Core aggregates / record families
 
-- **Physical Lot** — born in Inventory under a Warehouse-defined production identity
-- **Lot Stage Record** — the main record family for Inventory, Dyeing, Drying,
-  Winding/Ovilling, Bagging, and Quality
-- **Stage Observation / Inconvenience Records**
+- **Physical Lot** — born in the Inventory stage under a Warehouse-defined production identity
+- **Lot Stage Record** — the main record family for Inventory stage, Dyeing, Drying,
+  Winding, Ball Winding, Bagging, and Quality stage
+- **Stage Note / Inconvenience Records**
 - **Stage Waste Records**
 - **Delivery-to-Warehouse Record** with lot condition and handoff metadata
 
 ### Important invariants / business rules
 
-- The physical lot is born in **Inventory**, not in Warehouse and not in Yarn
+- The physical lot is born in the **Inventory stage**, not in Warehouse and not in Yarn
   Spinning.
 - The lot reuses the Warehouse production identity / shared lot-code reference,
   but Lot Processing owns the physical batch lifecycle.
@@ -230,11 +238,11 @@ operation until delivery back to Warehouse.
   - inherited data from Warehouse or the previous stage
   - locally verified data
   - stage-generated data
-  - observations, waste, and output condition
+  - stage notes/exceptions, waste, and output condition
 - The lot history is sequential by stage, but stage records are not separate
   delivery/receipt document pairs unless later design proves that necessary.
 - No lot history should be flattened into generic “Operation” records.
-- Quality documents the lot condition for delivery; Warehouse later decides its
+- The Quality stage documents the lot condition for delivery; Warehouse later decides its
   own operational disposition.
 - Critical stage records support controlled edits with audit trail; within the
   operational correction window, edits follow scoped RBAC/policy, and outside
@@ -245,7 +253,7 @@ operation until delivery back to Warehouse.
 - `PhysicalLotRepository`
 - `LotStageRecordRepository`
 - `LotStageSequencePolicyPort`
-- `MadejaAvailabilityPort`
+- `SkeinAvailabilityPort`
 - `WarehouseIdentityReadPort`
 - `LotProcessingAuthorizationPolicyPort`
 - `AuditTrailWriterPort`
@@ -256,9 +264,9 @@ operation until delivery back to Warehouse.
 - **Access Control**: stage-level authorization and correction permissions
 - **Shared Reference Data**: employees, shifts, stages, machines/equipment,
   defect catalogs, controlled vocabularies
-- **Warehouse**: production identity, lot code, title, color, client/destination,
+- **Warehouse**: production identity, lot code, yarn count, color, client/destination,
   and order specifications
-- **Yarn Spinning**: madeja output availability and readiness for lot assembly
+- **Yarn Spinning**: skein output availability and readiness for lot assembly
 
 ---
 
@@ -315,7 +323,7 @@ contexts.
 - **Employee / User Reference**
 - **Machine / Machine Group**
 - **Section / Stage / Shift**
-- **Yarn Title / Count**
+- **Yarn Count**
 - **Movement Type / Unit / Catalog Value**
 - **Other controlled vocabularies shared across contexts**
 
@@ -345,8 +353,8 @@ The backend must model these as separate concepts.
 
 | Concept | Owner | Backend meaning |
 |---|---|---|
-| **Production identity** | **Warehouse** | Cross-context reference defined after fardo reception and before later production execution |
-| **Physical lot** | **Lot Processing** | Real batch assembled in Inventory from madejas and tracked through the stage history |
+| **Production identity** | **Warehouse** | Cross-context reference defined after raw-material reception as bales and before later production execution |
+| **Physical lot** | **Lot Processing** | Real batch assembled in the Inventory stage from skeins and tracked through the stage history |
 
 ### Design consequence
 
@@ -357,7 +365,7 @@ The backend must model these as separate concepts.
 
 ```mermaid
 flowchart LR
-    F[Fardo reception\nWarehouse] --> ID[Production identity defined\nWarehouse]
+    F[Raw-material reception as bales\nWarehouse] --> ID[Production identity defined\nWarehouse]
     ID --> YS[Yarn Spinning\ncontinuous records only]
     ID --> INV[Inventory stage\nLot Processing]
     YS --> INV
@@ -438,7 +446,7 @@ flowchart TD
 | Shared Reference Data | All business contexts | canonical IDs, catalogs, and validations |
 | Warehouse | Yarn Spinning | production identity and material context |
 | Warehouse | Lot Processing | production identity, specifications, and shared lot-code reference |
-| Yarn Spinning | Lot Processing | madeja output availability for physical lot assembly |
+| Yarn Spinning | Lot Processing | skein output availability for physical lot assembly |
 | Lot Processing | Warehouse | processed lot delivery, quality state, and handoff condition |
 
 ### Architectural constraint
@@ -452,6 +460,9 @@ integration contracts that preserve ownership.
 ## 13. Related documents
 
 - [Architecture](./ARCHITECTURE.md)
+- [Backend Technical Design Baseline](./backend/backend-technical-design.md)
+- [Persistence Design Principles](./backend/persistence-design-principles.md)
+- [Warehouse Schema Design](./backend/warehouse/schema-design.md)
 - [Context Boundaries and Ownership](./context-boundaries-and-ownership.md)
 - [Master PRD](../prd.md)
 - [Access Control PRD](../prd/access-control.md)

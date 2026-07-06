@@ -81,7 +81,7 @@ flowchart LR
     SRD[Shared Reference Data<br/>Catalogs and IDs]
     W[Warehouse<br/>Custody, stock, production identity,<br/>PT reception and distribution]
     YS[Yarn Spinning<br/>Continuous section records<br/>before lot birth]
-    LP[Lot Processing<br/>Physical lot birth in Inventory<br/>and unified stage history]
+    LP[Lot Processing<br/>Physical lot birth in the Inventory stage<br/>and unified stage history]
     W2[Warehouse<br/>Same identity continues for PT]
 
     AC --> W
@@ -100,9 +100,9 @@ flowchart LR
 
 | Context | Owns | Does not own |
 |---|---|---|
-| **Warehouse** | Raw-material reception as **fardos**, production identity definition, emissions to production, PT reception, warehouse availability/disposition, physical presentation, stock lifecycle | Spinning section records, lot-stage progression, operation quality execution |
-| **Yarn Spinning** | Continuous production records by section / machine / shift / title, process quality in spinning, spinning waste, madeja output | Physical lot, lot timeline, warehouse stock |
-| **Lot Processing** | Physical lot birth in Inventory, stage-by-stage lot history, stage observations, stage waste, final lot quality at delivery | Warehouse stock balances, warehouse disposition, spinning records |
+| **Warehouse** | Raw-material reception as **bales**, production identity definition, emissions to production, PT reception, warehouse availability/disposition, physical presentation, stock lifecycle | Spinning section records, lot-stage progression, operation quality execution |
+| **Yarn Spinning** | Continuous production records by section / machine / shift / yarn count, process quality in spinning, spinning waste, skein output | Physical lot, lot timeline, warehouse stock |
+| **Lot Processing** | Physical lot birth in the Inventory stage, stage-by-stage lot history, stage notes/exceptions, stage waste, final lot quality at delivery | Warehouse stock balances, warehouse disposition, spinning records |
 | **Access Control** | Authorization policy, scopes, permissions, exceptions, auditability of permission changes | Business workflow meaning |
 | **Shared Reference Data** | Shared catalogs and canonical references reused across contexts | Transactional records and workflow rules |
 
@@ -111,7 +111,7 @@ flowchart LR
 | From | To | Handoff |
 |---|---|---|
 | Warehouse | Yarn Spinning | Production identity and material availability |
-| Yarn Spinning | Lot Processing | Madeja output ready for physical lot assembly |
+| Yarn Spinning | Lot Processing | skein output ready for physical lot assembly |
 | Warehouse | Lot Processing | Shared production identity, specifications, lot code |
 | Lot Processing | Warehouse | Same production identity / shared lot-code reference with delivery condition and quality state |
 | Access Control | All business contexts | Authorization decisions by action and scope |
@@ -130,7 +130,7 @@ flowchart LR
 
 3. **Production identity and physical lot are different concepts.**
    Warehouse defines the production identity first; the physical lot is born
-   later in Lot Processing Inventory under that same shared identity.
+   later in the Lot Processing Inventory stage under that same shared identity.
 
 4. **One traceability view, multiple owners.** The system may expose a broader
    cross-context traceability view, but each context writes only its own
@@ -164,11 +164,11 @@ single internal workflow owned by one model.
 ```mermaid
 flowchart LR
     S[Supplier]
-    W1[Warehouse<br/>Receive raw material as fardos]
+    W1[Warehouse<br/>Receive raw material as bales]
     W2[Warehouse<br/>Define production identity and specifications]
     W3[Warehouse<br/>Emit material to production]
-    YS[Yarn Spinning<br/>Continuous production and madeja output]
-    LP1[Lot Processing Inventory<br/>Assemble the physical lot under the same production identity / shared lot-code reference]
+    YS[Yarn Spinning<br/>Continuous production and skein output]
+    LP1[Lot Processing Inventory stage<br/>Assemble the physical lot under the same production identity / shared lot-code reference]
     LP2[Lot Processing<br/>Carry the lot through its stage history]
     W4[Warehouse<br/>Receive PT and continue custody, availability,<br/>distribution, transfer, sale, or return]
 
@@ -177,10 +177,10 @@ flowchart LR
 
 ### Lifecycle notes
 
-- **Raw material starts as fardos in Warehouse**, not as a production lot.
+- **Raw material starts as bales in Warehouse**, not as a production lot.
 - **Production identity is defined later** by Warehouse / Production Chief.
 - **Yarn Spinning has no lot entity or lot timeline.**
-- **The physical lot is born in Lot Processing Inventory.**
+- **The physical lot is born in the Lot Processing Inventory stage.**
 - **Lot Processing owns the stage history during operation.**
 - **Warehouse owns its own records after PT reception**, while the system may
   still expose a broader cross-context traceability view.

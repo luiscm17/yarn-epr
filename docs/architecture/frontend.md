@@ -41,12 +41,12 @@ Backend decisions always remain authoritative.
    forms, and read models when their business concepts differ.
 
 2. **Do not collapse identity and lot.** Warehouse receives raw material as
-   **fardos** first. Production identity is defined later. The frontend must not
+   **bales** first. Production identity is defined later. The frontend must not
    present MP reception as “generate lot code” or imply that the physical lot
    already exists at reception time.
 
 3. **Do not force a lot mental model into Yarn Spinning.** Yarn Spinning is
-   organized around **section, machine, shift, business date, and title**. Its
+   organized around **section, machine, shift, business date, and yarn count**. Its
    UI should prioritize those slices, not a fake lot timeline.
 
 4. **Treat Lot Processing as a unified stage-history flow.** The main UI model
@@ -137,7 +137,7 @@ flowchart LR
 
 Main page families should include:
 
-- **Raw material reception** for fardos and inbound custody records
+- **Raw material reception** for bales and inbound custody records
 - **Production identity definition** as a separate workflow after reception
 - **Emission to production** with references to upstream identity and stock
 - **Finished-product reception** from Lot Processing under the same production
@@ -157,13 +157,13 @@ lot.
 
 Main page families should include:
 
-- **Section dashboards** by shift/date/title
-- **Production discharge entry** by machine and title
-- **Advance/progress entry** only for sections that actually use it
+- **Section dashboards** by shift/date/yarn count
+- **Production discharge entry** by machine and yarn count
+- **Progress entry** only for sections that actually use it
 - **Process quality entry** by section/machine with section-specific patterns
 - **Waste entry** by machine group / section
 - **Shift consolidations** for supervisory review
-- **Madeja output availability views** for downstream lot assembly readiness
+- **Skein output availability views** for downstream lot assembly readiness
 
 Yarn Spinning screens should be optimized for continuous-process capture, not
 for lot tracking. Avoid lot-centric route names, labels, or breadcrumbs here.
@@ -174,11 +174,11 @@ Main page families should include:
 
 - **Lot queue / worklist** by current stage and readiness
 - **Lot detail / unified history**
-- **Stage record entry/edit** for Inventory, Dyeing, Drying,
-  Winding/Ovilling, Bagging, and Quality
-- **Observation and inconvenience capture** inside the relevant stage record
+- **Stage record entry/edit** for Inventory stage, Dyeing, Drying,
+  Winding, Ball Winding, Bagging, and Quality stage
+- **Stage note and inconvenience capture** inside the relevant stage record
 - **Stage waste capture** inside or adjacent to the stage record
-- **Delivery-to-Warehouse summary** driven by the final Quality/hand-off record
+- **Delivery-to-Warehouse summary** driven by the final Quality stage/hand-off record
 
 The primary abstraction is **one record per stage in the shared lot history**.
 If sub-steps are needed in the UI, they should still resolve into one stage
@@ -191,7 +191,7 @@ Cross-context reporting may combine data from multiple contexts, but it must not
 erase ownership boundaries. Typical page families include:
 
 - Production Chief consolidated daily view
-- Production vs plan by title/period
+- Production vs plan by yarn count/period
 - Warehouse stock and PT lifecycle views
 - Lot history read views across Warehouse and Lot Processing segments
 - Operational summaries by shift, section, or stage
@@ -212,7 +212,7 @@ Use spreadsheet-style capture where operators close a shift/session with many
 rows of structured data, especially in Yarn Spinning:
 
 - production discharges
-- section advance/progress
+- section progress
 - repetitive process-quality records
 - grouped waste records
 
@@ -355,7 +355,7 @@ of a shift rather than in real time.
 
 ### 8.3 Cross-context nuance
 
-- In **Yarn Spinning**, date/shift/time belong to machine/section/title records,
+- In **Yarn Spinning**, date/shift/time belong to machine/section/yarn-count records,
   not to a lot timeline.
 - In **Lot Processing**, date/shift/time belong to each stage record within the
   unified lot history.
