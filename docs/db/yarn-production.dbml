@@ -1,0 +1,224 @@
+// Yarn Production context only.
+// This DBML models Yarn Production-owned write records and correction auditability.
+// It intentionally does NOT fabricate a lot aggregate or a lot timeline.
+
+Project yarn_production {
+  database_type: 'PostgreSQL'
+  Note: 'Canonical Yarn Production schema artifact. Shared catalogs, actor refs, and Warehouse references stay as reference fields until their owning contexts are modeled.'
+}
+
+Enum production_section_kind {
+  preparation
+  ring_spinning
+  bobbin_winding
+  twisting
+  skeining
+}
+
+Enum production_discharge_kind {
+  spindle_output
+  skein_output
+}
+
+Enum process_quality_method {
+  sample
+  body_km_cuts
+  random_check
+}
+
+Enum waste_kind {
+  real_waste
+  accumulated_waste
+}
+
+Enum skein_availability_status {
+  available
+  reserved
+  consumed
+  blocked
+  corrected
+}
+
+Enum audit_action_type {
+  create
+  correct
+  cancel
+  reopen
+}
+
+Table production_discharges {
+  id uuid [pk]
+  discharge_number varchar [not null, unique, note: 'Visible discharge identifier. Separate from technical id.']
+  section_kind production_section_kind [not null]
+  machine_ref uuid [not null, note: 'External/shared machine reference.']
+  machine_group_ref uuid [note: 'External/shared machine-group reference when reporting or waste reconciliation needs it.']
+  business_date date [not null, note: 'Operational business date entered by the user. Separate from system timestamps.']
+  business_shift_ref varchar [not null, note: 'External/shared shift reference selected operationally.']
+  discharged_at timestamp [note: 'Operational event timestamp for the physical discharge when captured.']
+  yarn_count_ref varchar [not null, note: 'External/shared yarn-count reference. Keep explicit in continuity.']
+  supervisor_actor_ref uuid [note: 'External/shared actor reference.']
+  recorded_by_actor_ref uuid [not null, note: 'External/shared actor reference for the current registrant.']
+  production_identity_id uuid [note: 'Optional Warehouse production identity technical ID. Not part of Yarn Production continuity.']
+  discharge_kind production_discharge_kind [not null]
+  gross_weight_kg decimal(12,3)
+  tare_per_spindle_kg decimal(12,3)
+  spindle_count integer
+  carriage_weight_kg decimal(12,3)
+  calculated_net_weight_kg decimal(12,3) [note: 'Calculated by policy. Not manually entered business truth.']
+  roving_unit_count integer [note: 'Optional complementary count used mainly in Preparation when mechas/roving counts matter.']
+  skein_count integer
+  estimated_unit_weight_kg decimal(12,3) [note: 'Used by Skeining when operational weight is estimated per skein or grouping rule.']
+  estimated_total_weight_kg decimal(12,3)
+  operational_note text
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  Note: 'One production discharge per machine × shift × business date × yarn count × discharge event. Skeining uses skein fields instead of spindle/tare fields and still does not create a physical lot.'
+
+  Indexes {
+    (section_kind, machine_ref, business_date, business_shift_ref, yarn_count_ref)
+    (production_identity_id)
+  }
+}
+
+Table progress_records {
+  id uuid [pk]
+  section_kind production_section_kind [not null]
+  machine_ref uuid [not null, note: 'External/shared machine reference.']
+  business_date date [not null]
+  business_shift_ref varchar [not null, note: 'External/shared shift reference selected operationally.']
+  yarn_count_ref varchar [not null, note: 'External/shared yarn-count reference. Keep explicit in continuity.']
+  recorded_by_actor_ref uuid [not null, note: 'External/shared actor reference for the current registrant.']
+  production_identity_id uuid [note: 'Optional Warehouse production identity technical ID for contextual navigation only.']
+  input_weight_kg decimal(12,3) [not null]
+  in_process_weight_kg decimal(12,3) [note: 'Weight currently on the machine when the section records it.']
+  total_discharge_weight_kg decimal(12,3) [not null, note: 'Summary value expected to reconcile with production discharges for the same continuity slice.']
+  output_weight_kg decimal(12,3) [not null]
+  calculated_waste_kg decimal(12,3) [note: 'Derived difference between input and output when policy exposes it.']
+  spindle_count integer [note: 'Only for sections where progress is spindle-based.']
+  worked_hours decimal(8,2)
+  consistency_note text
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  Note: 'Progress is a section summary by machine × shift × business date × yarn count. It exists only for sections that operationally track progress: Preparation, Ring Spinning, and Twisting.'
+
+  Indexes {
+    (section_kind, machine_ref, business_date, business_shift_ref, yarn_count_ref) [unique]
+    (production_identity_id)
+  }
+}
+
+Table process_quality_records {
+  id uuid [pk]
+  section_kind production_section_kind [not null]
+  machine_ref uuid [note: 'External/shared machine reference. Optional because some Skeining controls may be shift-level rather than machine-level.']
+  business_date date [not null]
+  business_shift_ref varchar [not null, note: 'External/shared shift reference selected operationally.']
+  yarn_count_ref varchar [note: 'External/shared yarn-count reference when the control is tied to one yarn count.']
+  recorded_by_actor_ref uuid [not null, note: 'External/shared actor reference for Quality.']
+  production_identity_id uuid [note: 'Optional Warehouse production identity technical ID for contextual navigation only.']
+  quality_method process_quality_method [not null]
+  controlled_at timestamp [note: 'Operational datetime when the quality control happened, when captured.']
+  sample_type_ref varchar [note: 'External/shared sample-type or yarn-type reference.']
+  sample_count integer
+  sample_results_payload jsonb [note: 'Structured sample values when the method is sample-based.']
+  cv_percent decimal(8,3)
+  tenacity_value decimal(12,4)
+  elongation_percent decimal(8,3)
+  body_value decimal(12,4)
+  kilometers_processed decimal(12,3)
+  cuts_per_bobbin decimal(12,3)
+  random_check_results_payload jsonb [note: 'Structured results when the control is a random check.']
+  out_of_tolerance boolean
+  operational_note text
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  Note: 'Process quality remains separate from lot quality. Bobbin Winding body/km/cuts cadence is intentionally left open at the control-event level until operational granularity is finalized.'
+
+  Indexes {
+    (section_kind, business_date, business_shift_ref)
+    (machine_ref, business_date, business_shift_ref)
+    (production_identity_id)
+  }
+}
+
+Table waste_records {
+  id uuid [pk]
+  section_kind production_section_kind [not null]
+  machine_group_ref uuid [note: 'External/shared machine-group reference. Waste is normally recorded by group, not by individual machine.']
+  business_date date [not null]
+  business_shift_ref varchar [not null, note: 'External/shared shift reference selected operationally.']
+  yarn_count_ref varchar [note: 'Optional external/shared yarn-count reference when the waste registration is tied to one yarn count.']
+  recorded_by_actor_ref uuid [not null, note: 'External/shared actor reference for the current registrant.']
+  waste_kind waste_kind [not null]
+  measured_at timestamp [note: 'Operational datetime when the waste was weighed or captured, when available.']
+  waste_weight_kg decimal(12,3) [not null]
+  accumulated_waste_basis_note text [note: 'Clarifies how accumulated waste was determined when the record is not direct weighing.']
+  operational_note text
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  Note: 'Waste does not depend on a lot aggregate. Continuity is explicit by section, machine group when applicable, shift, and business date; yarn count remains optional because the operation does not always register waste that way.'
+
+  Indexes {
+    (section_kind, machine_group_ref, business_date, business_shift_ref)
+    (yarn_count_ref)
+  }
+}
+
+Table skein_availability_records {
+  id uuid [pk]
+  availability_number varchar [not null, unique, note: 'Visible Yarn Production availability identifier. Separate from technical id.']
+  source_discharge_id uuid [not null, note: 'Skeining discharge that originated this availability record.']
+  business_date date [not null]
+  business_shift_ref varchar [not null, note: 'External/shared shift reference selected operationally.']
+  section_kind production_section_kind [not null, default: 'skeining']
+  machine_ref uuid [not null, note: 'External/shared machine reference.']
+  yarn_count_ref varchar [not null, note: 'External/shared yarn-count reference. Keep explicit in continuity.']
+  production_identity_id uuid [note: 'Optional Warehouse production identity technical ID when upstream identity was already assigned.']
+  availability_status skein_availability_status [not null, default: 'available']
+  available_skein_count integer [not null]
+  reserved_skein_count integer [not null, default: 0]
+  available_weight_kg decimal(12,3) [not null]
+  published_at timestamp [not null, note: 'System/domain time when this availability became visible downstream.']
+  published_by_actor_ref uuid [not null, note: 'External/shared actor reference.']
+  downstream_reservation_id uuid [note: 'External downstream reservation or intake technical ID when linked later.']
+  availability_note text
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  Note: 'This is the Yarn Production handoff-ready view of skein output. It exposes downstream availability without implying lot creation inside Skeining.'
+
+  Indexes {
+    (section_kind, machine_ref, business_date, business_shift_ref, yarn_count_ref)
+    (production_identity_id)
+    (availability_status)
+  }
+}
+
+Table yarn_production_correction_audit {
+  id uuid [pk]
+  target_table varchar [not null]
+  target_record_id uuid [not null]
+  action_type audit_action_type [not null]
+  correction_reason text [not null]
+  authorization_ref uuid [note: 'External/shared authorization scope or override reference when relevant.']
+  changed_by_actor_ref uuid [not null, note: 'External/shared actor reference.']
+  business_date_snapshot date [note: 'Copied when useful for review because business date and change time are different concerns.']
+  business_shift_ref_snapshot varchar [note: 'Copied when useful for review because shift and change time are different concerns.']
+  changed_fields jsonb [note: 'Field-level diff metadata.']
+  before_payload jsonb
+  after_payload jsonb
+  changed_at timestamp [not null]
+
+  Note: 'Cross-cutting Yarn Production correction history. Keeps current business truth editable under policy without silent overwrite and preserves the business-time context of the corrected record.'
+
+  Indexes {
+    (target_table, target_record_id)
+    (changed_at)
+  }
+}
+
+Ref: skein_availability_records.source_discharge_id > production_discharges.id
