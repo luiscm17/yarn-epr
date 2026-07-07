@@ -4,7 +4,7 @@
 
 Project batch_processing {
   database_type: 'PostgreSQL'
-  Note: 'Canonical Batch Processing schema artifact. External catalogs, employee refs, Warehouse refs, and Yarn Spinning refs stay as reference fields until their owning contexts are modeled.'
+  Note: 'Canonical Batch Processing schema artifact. External/shared technical identifiers use explicit *_id names, while visible business identifiers keep business-oriented names such as *_code or visible numbers.'
 }
 
 Enum lot_stage_kind {
@@ -58,9 +58,9 @@ Enum audit_action_type {
 Table lots {
   id uuid [pk]
   lot_code varchar [not null, unique, note: 'Visible lot code defined by Warehouse and shared across contexts. Not the technical primary key.']
-  production_identity_id uuid [not null, note: 'Warehouse production identity technical ID. Batch Processing consumes it but does not own it.']
+  production_identity_id uuid [not null, unique, note: 'Warehouse production identity technical ID. Batch Processing consumes it but does not own it. One production identity maps to one physical lot in this model.']
   material_emission_id uuid [note: 'Warehouse material emission technical ID when the lot is assembled from a specific emitted movement.']
-  source_skein_reference_snapshot jsonb [note: 'Reference snapshot to upstream skein availability or source evidence from Yarn Spinning.']
+  source_skein_snapshot_summary jsonb [note: 'Historical summary of the upstream skein evidence used for lot assembly. Explicit technical linkage lives in lot_skein_links.']
   yarn_count_snapshot varchar [not null]
   color_requirement_snapshot varchar
   client_or_destination_snapshot varchar
@@ -88,12 +88,12 @@ Table lot_stage_records {
   stage_sequence smallint [not null, note: 'Expected order: Inventory stage=1, Dyeing=2, Drying=3, Winding/Balling=4, Bagging=5, Quality stage=6.']
   record_state lot_stage_record_state [not null, default: 'active']
   business_date date [not null, note: 'Operational business date entered by the user. Separate from system timestamps.']
-  business_shift_ref varchar [not null, note: 'External/shared shift reference selected operationally.']
+  business_shift_id varchar [not null, note: 'External/shared technical shift id selected operationally.']
   entered_stage_at timestamp [note: 'Operational entry datetime when the lot physically entered the stage, if captured.']
   exited_stage_at timestamp [note: 'Operational exit datetime when the lot physically left the stage, if captured.']
-  received_by_actor_ref uuid [note: 'External/shared actor reference for the person responsible for receiving/working the stage.']
-  handed_off_by_actor_ref uuid [note: 'External/shared actor reference for the person handing off the lot from this stage.']
-  supervisor_actor_ref uuid [note: 'External/shared supervisor reference.']
+  received_by_actor_id uuid [note: 'External/shared technical actor id for the person responsible for receiving/working the stage.']
+  handed_off_by_actor_id uuid [note: 'External/shared technical actor id for the person handing off the lot from this stage.']
+  supervisor_actor_id uuid [note: 'External/shared technical supervisor actor id.']
   inherited_data_snapshot jsonb [note: 'Data inherited from Warehouse or the previous stage. Example: lot code, yarn count, prior counts, prior output condition.']
   locally_verified_data_snapshot jsonb [note: 'Data verified or measured locally by the current stage. Keep distinct from inherited data.']
   stage_generated_data_snapshot jsonb [note: 'Stage-local data created here, such as tina number, temperature, produced cone count, bag usage, or stage-specific observations.']
@@ -106,7 +106,32 @@ Table lot_stage_records {
   Indexes {
     (lot_id, stage_sequence) [unique]
     (lot_id, stage_kind) [unique]
-    (business_date, business_shift_ref)
+    (business_date, business_shift_id)
+  }
+}
+
+Table lot_skein_links {
+  id uuid [pk]
+  lot_id uuid [not null]
+  source_skein_availability_id uuid [not null, note: 'External upstream technical ID for the Yarn Production skein-availability record consumed by this lot.']
+  source_discharge_id uuid [note: 'External upstream technical ID for the originating Yarn Production discharge when captured explicitly.']
+  linked_business_date date [not null, note: 'Business date on which the lot consumed or reserved the skein availability.']
+  linked_business_shift_id varchar [not null, note: 'External/shared technical shift id for the Batch Processing lot-assembly action.']
+  reserved_skein_count integer
+  consumed_skein_count integer
+  reserved_weight_kg decimal(12,3)
+  consumed_weight_kg decimal(12,3)
+  source_skein_snapshot jsonb [note: 'Historical readability snapshot copied from the upstream availability/discharge context at link time.']
+  linked_by_actor_id uuid [note: 'External/shared technical actor id.']
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  Note: 'Explicit Batch Processing linkage to upstream Yarn Production skein availability. Preserves the technical handoff while keeping snapshots for historical readability.'
+
+  Indexes {
+    (lot_id)
+    (source_skein_availability_id)
+    (lot_id, source_skein_availability_id) [unique]
   }
 }
 
@@ -114,36 +139,36 @@ Table lot_stage_record_notes {
   id uuid [pk]
   lot_stage_record_id uuid [not null]
   note_kind stage_note_kind [not null]
-  category_ref varchar [note: 'External/shared category reference. Stage-specific inconvenience and defect catalogs remain outside this context schema.']
+  category_id varchar [note: 'External/shared technical category id. Stage-specific inconvenience and defect catalogs remain outside this context schema.']
   detail text
-  reported_by_actor_ref uuid [note: 'External/shared actor reference.']
+  reported_by_actor_id uuid [note: 'External/shared technical actor id.']
   created_at timestamp [not null]
 
   Note: 'Structured notes, inconveniences, delays, and categorized exceptions attached to one stage record.'
 
   Indexes {
     (lot_stage_record_id)
-    (category_ref)
+    (category_id)
   }
 }
 
 Table lot_stage_record_waste {
   id uuid [pk]
   lot_stage_record_id uuid [not null]
-  waste_category_ref varchar [note: 'External/shared waste or cause vocabulary reference.']
+  waste_category_id varchar [note: 'External/shared technical waste or cause vocabulary id.']
   measure_basis waste_measure_basis [not null]
   waste_weight_kg decimal(12,3)
   waste_unit_count decimal(12,3)
   waste_unit_label varchar [note: 'Examples: skein, cone, ball, bag.']
   detail text
-  recorded_by_actor_ref uuid [note: 'External/shared actor reference.']
+  recorded_by_actor_id uuid [note: 'External/shared technical actor id.']
   created_at timestamp [not null]
 
   Note: 'Stage waste kept inside the lot history. Supports weight, count, or both because the exact business measurement varies by stage.'
 
   Indexes {
     (lot_stage_record_id)
-    (waste_category_ref)
+    (waste_category_id)
   }
 }
 
@@ -169,10 +194,10 @@ Table lot_delivery_handoffs {
   quality_outcome_id uuid [not null, unique]
   handoff_number varchar [unique, note: 'Visible Batch Processing handoff reference if the process needs one.']
   business_date date [not null]
-  business_shift_ref varchar [not null, note: 'Operational shift at handoff time.']
+  business_shift_id varchar [not null, note: 'External/shared technical shift id for the operational handoff time.']
   delivered_at timestamp [not null, note: 'Physical handoff datetime to Warehouse.']
-  delivered_by_actor_ref uuid [note: 'External/shared actor reference from Batch Processing.']
-  received_by_actor_ref uuid [note: 'External/shared actor reference from Warehouse when captured.']
+  delivered_by_actor_id uuid [note: 'External/shared technical actor id from Batch Processing.']
+  received_by_actor_id uuid [note: 'External/shared technical actor id from Warehouse when captured.']
   handoff_condition_snapshot jsonb [note: 'Operational packaging/delivery condition evidence sent with the lot.']
   handoff_note text
   warehouse_finished_product_reception_id uuid [note: 'Optional Warehouse finished-product reception technical ID once linked.']
@@ -188,8 +213,10 @@ Table batch_processing_correction_audit {
   target_record_id uuid [not null]
   action_type audit_action_type [not null]
   correction_reason text [not null]
-  authorization_ref uuid [note: 'External/shared authorization scope or override reference when relevant.']
-  changed_by_actor_ref uuid [not null, note: 'External/shared actor reference.']
+  authorization_id uuid [note: 'External/shared technical authorization scope or override id when relevant.']
+  changed_by_actor_id uuid [not null, note: 'External/shared technical actor id.']
+  business_date_snapshot date [note: 'Copied when useful for review because business date and change time are different concerns.']
+  business_shift_id_snapshot varchar [note: 'Copied when useful for review because shift and change time are different concerns.']
   changed_fields jsonb [note: 'Field-level diff metadata.']
   before_payload jsonb
   after_payload jsonb
@@ -205,6 +232,8 @@ Table batch_processing_correction_audit {
 
 Ref: lot_stage_records.lot_id > lots.id
 Ref: lots.current_stage_record_id > lot_stage_records.id
+
+Ref: lot_skein_links.lot_id > lots.id
 
 Ref: lot_stage_record_notes.lot_stage_record_id > lot_stage_records.id
 Ref: lot_stage_record_waste.lot_stage_record_id > lot_stage_records.id

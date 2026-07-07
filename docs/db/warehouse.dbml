@@ -4,7 +4,7 @@
 
 Project warehouse {
   database_type: 'PostgreSQL'
-  Note: 'First Warehouse DBML baseline. External/shared catalogs stay as reference fields until their own contexts are modeled.'
+  Note: 'First Warehouse DBML baseline. External/shared technical identifiers use explicit *_id names, while visible business identifiers keep business-oriented names such as *_code or visible numbers.'
 }
 
 Enum production_identity_status {
@@ -76,14 +76,14 @@ Enum audit_action_type {
 Table bale_receptions {
   id uuid [pk]
   reception_number varchar [not null, unique, note: 'Visible Warehouse reception number. Separate from technical id.']
-  supplier_ref uuid [note: 'External/shared supplier reference. Owned outside Warehouse schema.']
+  supplier_id uuid [note: 'External/shared technical supplier id. Owned outside Warehouse schema and separate from visible supplier business codes/documents.']
   supplier_document_number varchar
   source_origin_snapshot varchar
   truck_number varchar
   business_date date [not null]
-  business_shift_ref varchar [note: 'External/shared shift reference when needed by policy.']
+  business_shift_id varchar [note: 'External/shared technical shift id when needed by policy.']
   received_at timestamp [note: 'Physical reception datetime.']
-  received_by_actor_ref uuid [note: 'External/shared actor reference.']
+  received_by_actor_id uuid [note: 'External/shared technical actor id.']
   unloading_incidents_note text
   created_at timestamp [not null]
   updated_at timestamp [not null]
@@ -95,7 +95,7 @@ Table bales {
   id uuid [pk]
   bale_code varchar [unique, note: 'Visible bale/unit code when Warehouse labels individual bales.']
   bale_reception_id uuid [not null]
-  raw_material_type_ref varchar
+  raw_material_type_id varchar [note: 'External/shared technical raw-material-type id. Keep separate from human-readable descriptors.']
   yarn_count_snapshot varchar
   fiber_or_color_snapshot varchar
   gross_weight_kg decimal(12,3)
@@ -124,8 +124,8 @@ Table production_identities {
   client_or_destination_snapshot varchar
   product_type_snapshot varchar
   request_notes_snapshot text
-  defined_by_actor_ref uuid [note: 'External/shared actor reference.']
-  authorization_ref uuid [note: 'External/shared authorization reference when definition requires approval.']
+  defined_by_actor_id uuid [note: 'External/shared technical actor id.']
+  authorization_id uuid [note: 'External/shared technical authorization id when definition requires approval.']
   status production_identity_status [not null, default: 'defined']
   created_at timestamp [not null]
   updated_at timestamp [not null]
@@ -140,7 +140,7 @@ Table production_identity_bale_allocations {
   planned_quantity_kg decimal(12,3) [not null]
   allocation_basis_snapshot text [note: 'Planning/reference basis before authoritative emission.']
   source_bale_descriptors_snapshot jsonb
-  defined_by_actor_ref uuid [note: 'External/shared actor reference.']
+  defined_by_actor_id uuid [note: 'External/shared technical actor id.']
   business_date date [not null]
   created_at timestamp [not null]
   updated_at timestamp [not null]
@@ -158,13 +158,13 @@ Table material_emissions {
   emission_number varchar [not null, unique, note: 'Visible emission number. Separate from technical id.']
   production_identity_id uuid [not null]
   business_date date [not null]
-  business_shift_ref varchar [note: 'External/shared shift reference when emission is shift-sensitive.']
+  business_shift_id varchar [note: 'External/shared technical shift id when emission is shift-sensitive.']
   moved_at timestamp [not null, note: 'Physical movement datetime.']
-  destination_area_ref varchar [note: 'External/shared reference to receiving production area or destination.']
-  delivered_by_actor_ref uuid [note: 'External/shared actor reference.']
-  received_by_actor_ref uuid [note: 'External/shared actor reference.']
-  authorized_by_actor_ref uuid [note: 'External/shared actor reference.']
-  authorization_ref uuid [note: 'External/shared authorization record.']
+  destination_area_id varchar [note: 'External/shared technical id for the receiving production area or destination.']
+  delivered_by_actor_id uuid [note: 'External/shared technical actor id.']
+  received_by_actor_id uuid [note: 'External/shared technical actor id.']
+  authorized_by_actor_id uuid [note: 'External/shared technical actor id.']
+  authorization_id uuid [note: 'External/shared technical authorization id.']
   incident_note text
   created_at timestamp [not null]
   updated_at timestamp [not null]
@@ -193,12 +193,12 @@ Table finished_product_receptions {
   id uuid [pk]
   reception_number varchar [not null, unique, note: 'Visible Warehouse PT reception number.']
   production_identity_id uuid [not null]
-  operation_handoff_ref varchar [note: 'External/shared reference to the upstream Operation handoff or lot evidence. Warehouse does not own that record family.']
+  batch_processing_lot_delivery_handoff_id uuid [note: 'External upstream technical ID for the Batch Processing lot-delivery handoff record. Warehouse does not own that record family. Separate from lot_code, which remains the visible shared business code.']
   business_date date [not null]
-  business_shift_ref varchar [note: 'External/shared shift reference when needed.']
+  business_shift_id varchar [note: 'External/shared technical shift id when needed.']
   received_at timestamp [not null, note: 'Physical reception datetime.']
-  received_by_actor_ref uuid [note: 'External/shared actor reference.']
-  origin_supervisor_ref uuid [note: 'External/shared actor reference from Operation.']
+  received_by_actor_id uuid [note: 'External/shared technical actor id.']
+  origin_supervisor_id uuid [note: 'External/shared technical actor id from Operation.']
   quantity_received_kg decimal(12,3) [not null]
   quantity_accepted_kg decimal(12,3) [not null]
   declared_value_amount decimal(14,2)
@@ -218,13 +218,13 @@ Table pt_disposition_history {
   production_identity_id uuid [not null]
   finished_product_reception_id uuid
   business_date date [not null]
-  business_shift_ref varchar
+  business_shift_id varchar [note: 'External/shared technical shift id when relevant to the disposition event.']
   effective_at timestamp [not null]
   operation_quality_state_snapshot varchar [note: 'Reference-only context copied when relevant.']
   disposition_state pt_disposition_state [not null]
   condition_note text
   planned_destination_snapshot varchar
-  set_by_actor_ref uuid [note: 'External/shared actor reference.']
+  set_by_actor_id uuid [note: 'External/shared technical actor id.']
   created_at timestamp [not null]
 
   Note: 'Warehouse-owned availability/disposition history. Separate dimension from Operation quality and physical presentation.'
@@ -245,7 +245,7 @@ Table pt_physical_presentation_history {
   physical_presentation pt_physical_presentation_kind [not null]
   storage_mode_snapshot varchar [note: 'Optional operational/commercial mode such as industrial or balling.']
   affected_quantity_kg decimal(12,3)
-  changed_by_actor_ref uuid [note: 'External/shared actor reference.']
+  changed_by_actor_id uuid [note: 'External/shared technical actor id.']
   reason_note text
   created_at timestamp [not null]
 
@@ -262,13 +262,13 @@ Table pt_exits {
   exit_number varchar [not null, unique, note: 'Visible PT exit number.']
   exit_type pt_exit_type [not null]
   business_date date [not null]
-  business_shift_ref varchar
+  business_shift_id varchar [note: 'External/shared technical shift id when relevant to the exit.']
   moved_at timestamp [not null]
-  destination_ref varchar [note: 'External/shared customer or commercialization destination reference.']
+  destination_id varchar [note: 'External/shared technical customer or commercialization destination id. Keep business-facing document/number fields separate.']
   commercial_document_number varchar
-  delivered_by_actor_ref uuid [note: 'External/shared actor reference.']
-  authorized_by_actor_ref uuid [note: 'External/shared actor reference.']
-  authorization_ref uuid [note: 'External/shared authorization reference.']
+  delivered_by_actor_id uuid [note: 'External/shared technical actor id.']
+  authorized_by_actor_id uuid [note: 'External/shared technical actor id.']
+  authorization_id uuid [note: 'External/shared technical authorization id.']
   note text
   created_at timestamp [not null]
   updated_at timestamp [not null]
@@ -299,7 +299,7 @@ Table pt_returns {
   original_pt_exit_id uuid [not null]
   business_date date [not null]
   returned_at timestamp [not null]
-  received_by_actor_ref uuid [note: 'External/shared actor reference.']
+  received_by_actor_id uuid [note: 'External/shared technical actor id.']
   return_reason_snapshot text
   created_at timestamp [not null]
   updated_at timestamp [not null]
@@ -331,17 +331,17 @@ Table supply_movements {
   movement_number varchar [not null, unique, note: 'Visible supply movement number.']
   movement_type supply_movement_type [not null]
   business_date date [not null]
-  business_shift_ref varchar
+  business_shift_id varchar [note: 'External/shared technical shift id when relevant to the movement.']
   moved_at timestamp [not null]
-  supply_category_ref varchar [note: 'External/shared category reference.']
-  supply_item_ref varchar [note: 'External/shared item reference.']
-  supplier_or_destination_ref varchar [note: 'External/shared supplier or destination reference.']
-  destination_area_ref varchar [note: 'External/shared production area reference for consumption.']
+  supply_category_id varchar [note: 'External/shared technical supply-category id.']
+  supply_item_id varchar [note: 'External/shared technical supply-item id.']
+  supplier_or_destination_id varchar [note: 'External/shared technical supplier or destination id.']
+  destination_area_id varchar [note: 'External/shared technical production-area id for consumption.']
   quantity decimal(12,3) [not null]
-  unit_of_measure varchar [not null]
-  handled_by_actor_ref uuid [note: 'External/shared actor reference.']
-  authorized_by_actor_ref uuid [note: 'External/shared actor reference when required by movement type.']
-  authorization_ref uuid [note: 'External/shared authorization reference when required.']
+  unit_of_measure_id varchar [not null, note: 'External/shared technical unit-of-measure id. Keep visible labels in catalogs or snapshots when historical readability requires them.']
+  handled_by_actor_id uuid [note: 'External/shared technical actor id.']
+  authorized_by_actor_id uuid [note: 'External/shared technical actor id when required by movement type.']
+  authorization_id uuid [note: 'External/shared technical authorization id when required.']
   note text
   created_at timestamp [not null]
   updated_at timestamp [not null]
@@ -356,7 +356,7 @@ Table stock_closures {
   period_start date [not null]
   period_end date [not null]
   closed_at timestamp [not null]
-  closed_by_actor_ref uuid [note: 'External/shared actor reference.']
+  closed_by_actor_id uuid [note: 'External/shared technical actor id.']
   note text
   created_at timestamp [not null]
 
@@ -371,7 +371,7 @@ Table stock_closure_lines {
   incoming_quantity decimal(12,3) [not null]
   outgoing_quantity decimal(12,3) [not null]
   closing_quantity decimal(12,3) [not null]
-  unit_of_measure varchar [not null]
+  unit_of_measure_id varchar [not null, note: 'External/shared technical unit-of-measure id. Keep visible labels in snapshots when needed for historical readability.']
   snapshot_payload jsonb [note: 'Supporting descriptors kept for historical readability.']
 
   Note: 'Closure evidence line implementing (opening + entries) - exits = closing.'
@@ -388,8 +388,10 @@ Table warehouse_correction_audit {
   target_record_id uuid [not null]
   action_type audit_action_type [not null]
   correction_reason text [not null]
-  authorization_ref uuid [note: 'External/shared authorization scope or override reference when relevant.']
-  changed_by_actor_ref uuid [not null, note: 'External/shared actor reference.']
+  authorization_id uuid [note: 'External/shared technical authorization id for scope or override when relevant.']
+  changed_by_actor_id uuid [not null, note: 'External/shared technical actor id.']
+  business_date_snapshot date [note: 'Copied when useful for review because business date and change time are different concerns.']
+  business_shift_id_snapshot varchar [note: 'Copied when useful for review because shift and change time are different concerns.']
   changed_fields jsonb [note: 'Field-level diff metadata.']
   before_payload jsonb
   after_payload jsonb
