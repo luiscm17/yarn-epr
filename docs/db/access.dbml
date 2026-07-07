@@ -1,0 +1,194 @@
+// Access Control context only.
+// This DBML models authorization policy records and permission-change auditability.
+// It intentionally keeps business workflow ownership outside the access context.
+
+Project access {
+  database_type: 'PostgreSQL'
+  Note: 'Canonical Access Control schema artifact. Internal policy records use local technical IDs, while external user/employee or business-scope references remain explicit external IDs.'
+}
+
+Enum assignment_effect {
+  allow
+  deny
+}
+
+Enum scope_kind {
+  directorate
+  unit
+  process
+  section
+  lot_stage
+  shift
+  warehouse_area
+  global
+}
+
+Enum override_kind {
+  exception
+  temporary_override
+  emergency_override
+  explicit_restriction
+}
+
+Enum audit_action_type {
+  create
+  correct
+  activate
+  deactivate
+  revoke
+}
+
+Table capabilities {
+  id uuid [pk]
+  capability_code varchar [not null, unique, note: 'Visible stable capability code used by policy and application contracts.']
+  bounded_context_code varchar [not null, note: 'Context alias such as warehouse, yarn-production, batch-processing, access, or catalogs.']
+  resource_code varchar [not null, note: 'Protected resource or record family code.']
+  action_code varchar [not null, note: 'Action such as read, register, validate, approve, correct, consolidate, or administer.']
+  capability_name varchar [not null]
+  description text
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  Note: 'Canonical permission capability definition. Business workflow meaning stays in the owning context; Access only governs who may perform the action.'
+
+  Indexes {
+    (bounded_context_code, resource_code, action_code) [unique]
+  }
+}
+
+Table roles {
+  id uuid [pk]
+  role_code varchar [not null, unique, note: 'Visible stable system-role code. Separate from technical id and from changing organizational job names.']
+  role_name varchar [not null]
+  description text
+  is_system_role boolean [not null, default: false]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  Note: 'System roles define reusable access profiles. They do not freeze the organization chart into the business model.'
+}
+
+Table role_capabilities {
+  id uuid [pk]
+  role_id uuid [not null]
+  capability_id uuid [not null]
+  assignment_effect assignment_effect [not null, default: 'allow']
+  granted_by_actor_id uuid [note: 'External/shared technical actor id for the administrator or policy owner who granted the capability.']
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  Note: 'Role-level capability assignment baseline. Explicit deny remains available when policy needs an exclusion rule at the role layer.'
+
+  Indexes {
+    (role_id, capability_id) [unique]
+    (capability_id)
+  }
+}
+
+Table access_scopes {
+  id uuid [pk]
+  scope_code varchar [not null, unique, note: 'Visible stable scope code for policy configuration and audit readability.']
+  scope_kind scope_kind [not null]
+  scope_name varchar [not null]
+  parent_scope_id uuid [note: 'Optional access-owned parent scope for hierarchical evaluation.']
+  external_scope_target_id varchar [note: 'External/shared technical ID for the organizational or business target represented by this scope. Access does not own that target record.']
+  bounded_context_code varchar [note: 'Owning business/support context of the external scope target when applicable.']
+  active_from date
+  active_to date
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  Note: 'Policy scope definition used to limit where permissions apply. The scope points to external organizational or business dimensions without taking ownership of them.'
+
+  Indexes {
+    (parent_scope_id)
+    (scope_kind, bounded_context_code)
+  }
+}
+
+Table permission_assignments {
+  id uuid [pk]
+  principal_user_id uuid [note: 'External/shared technical user id. Access does not own the user record.']
+  principal_employee_id uuid [note: 'External/shared technical employee id when policy is tied to the employee identity.']
+  role_id uuid [not null]
+  scope_id uuid [not null]
+  valid_from timestamp [not null]
+  valid_to timestamp
+  assignment_reason text
+  granted_by_actor_id uuid [note: 'External/shared technical actor id for the administrator or approver who created the assignment.']
+  authorization_id uuid [note: 'External/shared technical authorization id when assignment itself required approval.']
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  Note: 'Principal-to-role assignment inside one explicit scope. User and employee links remain external references only.'
+
+  Indexes {
+    (principal_user_id)
+    (principal_employee_id)
+    (role_id, scope_id)
+    (valid_from, valid_to)
+  }
+}
+
+Table assignment_overrides {
+  id uuid [pk]
+  permission_assignment_id uuid [note: 'Optional baseline assignment affected by this exception or override.']
+  principal_user_id uuid [note: 'External/shared technical user id for direct user-level override.']
+  principal_employee_id uuid [note: 'External/shared technical employee id when the override follows employee identity.']
+  capability_id uuid [not null]
+  scope_id uuid [not null]
+  override_kind override_kind [not null]
+  assignment_effect assignment_effect [not null]
+  valid_from timestamp [not null]
+  valid_to timestamp
+  override_reason text [not null]
+  approved_by_actor_id uuid [note: 'External/shared technical actor id for the person authorizing the exception or restriction.']
+  authorization_id uuid [note: 'External/shared technical authorization id when override approval is persisted separately.']
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  Note: 'Explicit user- or employee-level exception / override. Keeps special cases traceable without redefining the general role model.'
+
+  Indexes {
+    (permission_assignment_id)
+    (principal_user_id)
+    (principal_employee_id)
+    (capability_id, scope_id)
+    (valid_from, valid_to)
+  }
+}
+
+Table permission_change_audit {
+  id uuid [pk]
+  target_table varchar [not null]
+  target_record_id uuid [not null]
+  action_type audit_action_type [not null]
+  correction_reason text [not null]
+  authorization_id uuid [note: 'External/shared technical authorization id for approval, exception, or override basis when relevant.']
+  changed_by_actor_id uuid [not null, note: 'External/shared technical actor id.']
+  effective_from_snapshot timestamp [note: 'Copied when useful so reviewers can reconstruct the effective access window before/after the change.']
+  effective_to_snapshot timestamp [note: 'Copied when useful so reviewers can reconstruct the effective access window before/after the change.']
+  changed_fields jsonb [note: 'Field-level diff metadata.']
+  before_payload jsonb
+  after_payload jsonb
+  changed_at timestamp [not null]
+
+  Note: 'Cross-cutting audit for policy changes. Permission history must remain reconstructable even when current assignments are later corrected.'
+
+  Indexes {
+    (target_table, target_record_id)
+    (changed_at)
+  }
+}
+
+Ref: role_capabilities.role_id > roles.id
+Ref: role_capabilities.capability_id > capabilities.id
+
+Ref: access_scopes.parent_scope_id > access_scopes.id
+
+Ref: permission_assignments.role_id > roles.id
+Ref: permission_assignments.scope_id > access_scopes.id
+
+Ref: assignment_overrides.permission_assignment_id > permission_assignments.id
+Ref: assignment_overrides.capability_id > capabilities.id
+Ref: assignment_overrides.scope_id > access_scopes.id

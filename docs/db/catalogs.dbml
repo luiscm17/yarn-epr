@@ -1,0 +1,236 @@
+// Shared Reference Data context only.
+// This DBML models canonical catalogs and shared technical identifiers reused across contexts.
+// It intentionally does NOT absorb transactional business records or permission policy meaning.
+
+Project catalogs {
+  database_type: 'PostgreSQL'
+  Note: 'Canonical Shared Reference Data schema artifact. Catalog records own stable technical IDs plus visible business codes/labels when those are part of the shared contract.'
+}
+
+Enum machine_status {
+  active
+  inactive
+  maintenance
+}
+
+Enum section_kind {
+  warehouse
+  preparation
+  ring_spinning
+  bobbin_winding
+  twisting
+  skeining
+  inventory_stage
+  dyeing
+  drying
+  winding
+  balling
+  bagging
+  quality_stage
+}
+
+Enum vocabulary_status {
+  active
+  inactive
+}
+
+Enum audit_action_type {
+  create
+  correct
+  activate
+  deactivate
+  retire
+}
+
+Table employee_references {
+  id uuid [pk]
+  employee_code varchar [unique, note: 'Visible employee code or payroll number when the organization uses one.']
+  employee_name varchar [not null]
+  organizational_role_name varchar [note: 'Current business-facing organizational role label. This is not an access-policy role.']
+  directorate_name varchar
+  unit_name varchar
+  active boolean [not null, default: true]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  Note: 'Canonical employee reference reused by business and support contexts. Keeps identity separate from access-policy assignments.'
+}
+
+Table user_references {
+  id uuid [pk]
+  username varchar [not null, unique, note: 'Visible login or application username.']
+  employee_id uuid [note: 'Optional link to the employee reference represented by this user.']
+  display_name varchar
+  active boolean [not null, default: true]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  Note: 'Canonical application-user reference. Authentication mechanics remain outside this schema.'
+
+  Indexes {
+    (employee_id)
+  }
+}
+
+Table machine_groups {
+  id uuid [pk]
+  machine_group_code varchar [not null, unique, note: 'Visible stable group code.']
+  machine_group_name varchar [not null]
+  section_id uuid [not null]
+  description text
+  active boolean [not null, default: true]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  Note: 'Canonical machine-group catalog reused mainly by Yarn Production and related reporting.'
+}
+
+Table machines {
+  id uuid [pk]
+  machine_code varchar [not null, unique, note: 'Visible stable machine code.']
+  machine_name varchar [not null]
+  machine_group_id uuid [note: 'Optional group used for reporting, waste registration, or section organization.']
+  section_id uuid [not null]
+  machine_status machine_status [not null, default: 'active']
+  serial_number varchar
+  active boolean [not null, default: true]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  Note: 'Canonical machine catalog. Operational records consume machine IDs but do not own machine metadata.'
+
+  Indexes {
+    (machine_group_id)
+    (section_id)
+  }
+}
+
+Table sections {
+  id uuid [pk]
+  section_code varchar [not null, unique, note: 'Visible stable section or stage code.']
+  section_name varchar [not null]
+  section_kind section_kind [not null]
+  parent_section_id uuid [note: 'Optional hierarchy when a stage belongs under a broader process section.']
+  bounded_context_code varchar [not null, note: 'Context alias such as warehouse, yarn-production, or batch-processing.']
+  active boolean [not null, default: true]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  Note: 'Canonical section/stage catalog spanning both Yarn Production sections and Lot Processing stages without taking ownership of workflow state.'
+
+  Indexes {
+    (parent_section_id)
+    (bounded_context_code, section_kind)
+  }
+}
+
+Table shifts {
+  id uuid [pk]
+  shift_code varchar [not null, unique, note: 'Visible stable shift code.']
+  shift_name varchar [not null]
+  sequence_number smallint
+  starts_at time
+  ends_at time
+  active boolean [not null, default: true]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  Note: 'Canonical shift catalog reused by Warehouse, Yarn Production, and Batch Processing.'
+}
+
+Table yarn_counts {
+  id varchar [pk, note: 'Stable technical yarn-count id. A string key is allowed because current business notation may already be canonical, such as 2/18 or 2/32.']
+  yarn_count_code varchar [not null, unique, note: 'Visible business yarn-count notation.']
+  yarn_count_name varchar [note: 'Optional normalized display label when different from the visible code.']
+  fiber_family varchar
+  composition_snapshot jsonb [note: 'Optional controlled descriptors when the catalog needs to preserve a standard composition definition.']
+  active boolean [not null, default: true]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  Note: 'Canonical yarn-count catalog. Business notation remains visible while technical references can still point to a stable catalog key.'
+}
+
+Table units_of_measure {
+  id varchar [pk, note: 'Stable technical unit-of-measure id.']
+  unit_code varchar [not null, unique, note: 'Visible business code such as kg, lb, unit, cone, or bag when standardized.']
+  unit_name varchar [not null]
+  symbol varchar
+  active boolean [not null, default: true]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  Note: 'Canonical unit-of-measure catalog reused by Warehouse and related contexts.'
+}
+
+Table movement_types {
+  id varchar [pk, note: 'Stable technical movement-type id.']
+  movement_type_code varchar [not null, unique, note: 'Visible stable movement type code.']
+  movement_type_name varchar [not null]
+  bounded_context_code varchar [note: 'Context where the movement type is valid, when not global.']
+  active boolean [not null, default: true]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  Note: 'Canonical movement-type catalog for Warehouse and any other context that needs controlled movement vocabularies.'
+}
+
+Table controlled_vocabularies {
+  id varchar [pk, note: 'Stable technical vocabulary-set id.']
+  vocabulary_code varchar [not null, unique, note: 'Visible stable vocabulary-set code.']
+  vocabulary_name varchar [not null]
+  bounded_context_code varchar [note: 'Owning or primary consuming context when the vocabulary is context-scoped.']
+  description text
+  status vocabulary_status [not null, default: 'active']
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  Note: 'Catalog of reusable controlled vocabulary sets such as waste categories, note categories, sample types, or destination classifications.'
+}
+
+Table controlled_vocabulary_values {
+  id varchar [pk, note: 'Stable technical controlled-value id.']
+  vocabulary_id varchar [not null]
+  value_code varchar [not null, note: 'Visible stable code within the vocabulary set.']
+  value_name varchar [not null]
+  sort_order integer
+  status vocabulary_status [not null, default: 'active']
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  Note: 'Controlled values under one vocabulary set. Business contexts consume these IDs without taking ownership of the vocabulary itself.'
+
+  Indexes {
+    (vocabulary_id, value_code) [unique]
+  }
+}
+
+Table reference_change_audit {
+  id uuid [pk]
+  target_table varchar [not null]
+  target_record_id varchar [not null, note: 'Stored as text because catalog PKs may be uuid or string IDs.']
+  action_type audit_action_type [not null]
+  correction_reason text [not null]
+  changed_by_actor_id uuid [not null, note: 'External/shared technical actor id.']
+  changed_fields jsonb [note: 'Field-level diff metadata.']
+  before_payload jsonb
+  after_payload jsonb
+  changed_at timestamp [not null]
+
+  Note: 'Cross-cutting audit for shared reference changes. Catalog corrections can affect multiple contexts and must remain traceable.'
+
+  Indexes {
+    (target_table, target_record_id)
+    (changed_at)
+  }
+}
+
+Ref: user_references.employee_id > employee_references.id
+
+Ref: machine_groups.section_id > sections.id
+Ref: machines.machine_group_id > machine_groups.id
+Ref: machines.section_id > sections.id
+
+Ref: sections.parent_section_id > sections.id
+
+Ref: controlled_vocabulary_values.vocabulary_id > controlled_vocabularies.id

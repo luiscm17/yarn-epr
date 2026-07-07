@@ -17,7 +17,7 @@
 | **PR target** | `main` — always |
 | **Merge strategy** | Squash merge (one commit per PR into `main`) |
 | **Review required** | At least 1 approval before merge |
-| **PR size limit** | 400 changed lines max — split into stacked PRs if larger |
+| **PR scope** | One concern per PR — split into stacked PRs if too large |
 
 ---
 
@@ -49,16 +49,16 @@
 
 | Branch | What it contains |
 |--------|-----------------|
-| `back/machine-catalog` | Machine CRUD API + data layer |
-| `front/shift-form` | Production shift form UI |
+| `back/user-service` | User CRUD API + data layer |
+| `front/settings-page` | User settings form UI |
 | `front/login-page` | Login screen and auth UI |
 | `back/auth` | Auth middleware, JWT, login endpoint |
-| `back/batch-state-machine` | Batch lifecycle logic |
-| `front/batch-status-badge` | UI badge showing batch state |
+| `back/payment-workflow` | Payment lifecycle logic |
+| `front/status-badge` | UI badge showing entity state |
 | `devops/docker-compose` | Docker setup for local dev |
 | `devops/cd-pipeline` | Deployment pipeline config |
 | `docs/git-workflow` | Git conventions guide |
-| `front/warehouse-receipts` | Warehouse receipt form + list |
+| `front/order-form` | Order creation form + list |
 
 ---
 
@@ -82,18 +82,18 @@ Every commit message **title** must follow these rules:
 |------|-----|
 | **Imperative mood** — "Add shift form", not "Added" or "Adds" | Reads like an instruction, consistent with generated merge commits |
 | **No period at the end** | Terse, scannable |
-| **Max 50 characters** for the title | Truncation-safe in `git log --oneline` |
+| **Max 200 characters** for the title | Long enough to capture the functional change without truncation |
 | **Blank line before body** (if body exists) | Standard convention, tools rely on it |
 
 ```
 # Good
-feat(op): add production shift form
-fix(wh): validate receipt date range
+feat(api): add user registration endpoint
+fix(auth): validate token expiration on refresh
 
 # Bad
-feat(op): Added production shift form.  ← past tense + period
-feat(op): add production shift form with machine grid,
-section selector, and weight calculation           ← over 50 chars
+feat(api): Added user registration endpoint.  ← past tense + period
+feat(api): add user registration endpoint with email validation and welcome email  ← describes implementation, not functional change
+refactor(api): rename UserService.py to account_service.py  ← names the file, not the functional change
 ```
 
 ### 2.3 Types
@@ -115,23 +115,21 @@ The scope is the **module or domain** the change affects. Use one of:
 
 | Scope | Area |
 |-------|------|
-| `op` | Operation (machines, shifts, lots, quality, waste) |
-| `wh` | Warehouse (receipts, issues, stock, verification) |
-| `admin` | Administration (valuation, costing, closures) |
-| `shared` | Shared catalogs (employees, machines, titles) |
 | `auth` | Authentication and authorization |
 | `api` | API design or contract changes |
 | `ui` | Frontend / UI changes |
 | `docs` | Documentation |
+| `core` | Core domain logic and models |
+| `db` | Database schemas and migrations |
 
 ### 2.5 Good examples
 
 ```
-feat(op): add production shift form with machine grid
-feat(wh): register material receipt with location assignment
-fix(op): prevent negative tare values in net weight calculation
-refactor(wh): extract stock service from warehouse controller
-test(op): cover batch state machine transitions
+feat(api): add user registration with email verification
+feat(ui): implement order creation form with validation
+fix(auth): prevent session reuse after password change
+refactor(api): extract notification service from user controller
+test(core): cover payment workflow state transitions
 docs: add git workflow and naming conventions
 chore: configure eslint and prettier
 ```
@@ -144,21 +142,33 @@ chore: configure eslint and prettier
 | `feat(warehouse): fix` | Type says feat, description says fix — inconsistent |
 | `WIP` | Useless on its own; use `chore: wip` or squash before merge |
 | `asdflkj` | Zero information |
+| `refactor(db): replace schema.sql with migration-v2.sql` | Names the file instead of the functional change |
+
+> **Principle — describe the functional change, not the file.**
+> The title should answer **what changed in the system**, not which file was touched.
+>
+> | File | Functional change |
+> |---|---|
+> | `refactor(api): replace schema.sql` | `refactor(api): migrate from SQL schema to code-first migrations` |
+> | `docs(db): remove outdated entity docs` | `docs(db): restructure DBML schemas per bounded context` |
+> | `refactor(api): rename PaymentService.py` | `refactor(api): extract refund handling into independent module` |
+>
+> If it's hard to describe without naming files, the commit is probably not atomic.
 
 ### 2.7 Body (when to use)
 
 Use the commit body when the change needs explanation:
 
 ```
-feat(op): calculate net weight automatically
+feat(api): calculate order total automatically
 
-Derive net weight from gross - tare on the client side as the
-user types. The server re-calculates on save to prevent tampering.
+Derive order total from line items - discount on the server side
+as items are added. The client displays the running total.
 
-Why inline calculation?
-- Immediate feedback for the supervisor
-- Prevents manual math errors
-- Server validates on persist regardless
+Why server-side calculation?
+- Single source of truth for pricing
+- Prevents client-side manipulation
+- Consistent with invoice generation
 ```
 
 ---
@@ -174,11 +184,11 @@ main ──► <layer>/xxx ──► commits ──► push ──► PR ──�
 ```bash
 # Backend work
 git checkout main && git pull
-git checkout -b back/machine-catalog
+git checkout -b back/user-service
 
 # Frontend work
 git checkout main && git pull
-git checkout -b front/shift-form
+git checkout -b front/settings-page
 
 # Documentation
 git checkout main && git pull
@@ -190,10 +200,10 @@ git checkout -b docs/git-workflow
 ```bash
 # Make small, logical commits as you work
 git add <files>
-git commit -m "feat(op): add machine selector to shift form"
+git commit -m "feat(ui): add user role selector to settings form"
 
 # Push the branch (first time)
-git push -u origin back/machine-catalog
+git push -u origin back/user-service
 
 # Subsequent pushes
 git push
@@ -203,7 +213,7 @@ git push
 
 ```bash
 git checkout main && git pull
-git checkout back/machine-catalog
+git checkout back/user-service
 git rebase main
 ```
 
@@ -228,7 +238,7 @@ git rebase --continue
 
 ```bash
 git checkout main && git pull
-git branch -d back/machine-catalog
+git branch -d back/user-service
 ```
 
 ---
@@ -249,22 +259,24 @@ Each PR description **must** include:
 - <!-- key changes, bullet points -->
 ```
 
-### 4.2 Size rule
+### 4.2 Scope rule
 
-If the PR exceeds **400 changed lines**, split it into stacked / chained PRs:
+Each PR should cover **one concern**. A concern is a single functional change — one feature, one fix, one refactor.
+
+If a change is too large to fit in one focused PR, split it into stacked PRs:
 
 - PR #1: `back/data-model` — domain logic and persistence
 - PR #2: `back/api` — endpoints and validation
 - PR #3: `front/form` — UI components
 
-Each stacked PR targets `main` in order. This protects reviewers from burnout and keeps reviews focused.
+This protects reviewers from burnout and keeps reviews focused. There is no hard line-count limit — use judgment. If the PR description is hard to write without listing files, it's probably too broad.
 
 ### 4.3 Merge strategy
 
 **Always squash merge** into `main`. This produces one clean commit per PR. The squashed commit message should match the PR title, formatted as a conventional commit:
 
 ```
-feat(op): add production shift form with machine grid (#42)
+feat(api): add user registration with email verification (#42)
 ```
 
 Do NOT use "Create a merge commit" or "Rebase and merge" — they clutter history with intermediate commits.
@@ -336,23 +348,23 @@ Each SDD change maps to **one branch** and **one squashed commit** in `main`. Th
 ```bash
 # Start new work — pick the right layer
 git checkout main && git pull
-git checkout -b back/machine-catalog   # backend
-git checkout -b front/shift-form      # frontend
+git checkout -b back/user-service     # backend
+git checkout -b front/settings-page   # frontend
 git checkout -b devops/docker-compose # infrastructure
 git checkout -b docs/git-workflow     # documentation
 
 # Commit
 git add <files>
-git commit -m "feat(op): add machine catalog endpoints"
+git commit -m "feat(api): add user list endpoint"
 
 # Push
-git push -u origin back/machine-catalog
+git push -u origin back/user-service
 
 # Update branch with main
 git checkout main && git pull
-git checkout back/machine-catalog && git rebase main
+git checkout back/user-service && git rebase main
 
 # After merge, clean up
 git checkout main && git pull
-git branch -d back/machine-catalog
+git branch -d back/user-service
 ```
