@@ -42,7 +42,7 @@ It does **not** define database schema, APIs, or internal code structure.
 - **Owns:** raw-material reception as **bales**; production identity definition; emission to production; finished-product reception; warehouse availability/disposition; physical presentation; stock movements; stock balances; supply movements.
 - **Does not own:** spinning production records; lot-stage progression; process quality execution; lot-stage waste; final production-stage decisions inside Operation.
 - **Inbound dependencies:** Access Control; Shared Reference Data; processed lot delivery and quality documentation from Lot Processing.
-- **Outbound contracts / shared identifiers:** production identity / lot code; yarn count; color requirement; client/destination; emitted quantity references; finished-product receipt reference.
+- **Outbound contracts / shared identifiers:** technical production identity, visible lot code, yarn count, color requirement, client/destination, and emitted quantity linkage needed by downstream contexts.
 
 ### 3.2 Yarn Spinning
 
@@ -58,7 +58,7 @@ It does **not** define database schema, APIs, or internal code structure.
 - **Owns:** physical lot birth; lot stage records; lot timeline; lot-stage notes/exceptions; stage waste; final quality documentation for delivery; handoff back to Warehouse.
 - **Does not own:** warehouse stock balances; warehouse availability/disposition; spinning-section records; permission policy; reference catalog governance.
 - **Inbound dependencies:** warehouse-issued production identity and specifications; skein output from Yarn Spinning; Access Control; Shared Reference Data.
-- **Outbound contracts / shared identifiers:** same production identity / lot code; lot history; lot quality state at delivery; delivery conditions; delivered quantity/physical presentation.
+- **Outbound contracts / shared identifiers:** same technical production identity, visible lot code, operational lot stage history, lot quality state at delivery, delivery conditions, and delivered quantity/physical presentation.
 
 ### 3.4 Access Control
 
@@ -71,10 +71,10 @@ It does **not** define database schema, APIs, or internal code structure.
 ### 3.5 Shared Reference Data
 
 - **Core responsibility:** provide canonical reference values reused across contexts.
-- **Owns:** employees, machines, machine groups, sections, shifts, yarn counts, movement-type catalogs, and similar shared lookups.
+- **Owns:** users, machines, machine groups, sections, shifts, yarn counts, movement-type catalogs, and other approved shared lookups.
 - **Does not own:** transactional records, lot timelines, stock balances, or permission decisions.
 - **Inbound dependencies:** business governance that decides which catalogs exist.
-- **Outbound contracts / shared identifiers:** stable IDs and controlled vocabularies reused by Warehouse, Yarn Spinning, Lot Processing, and Access Control.
+- **Outbound contracts / shared identifiers:** stable IDs and shared controlled values reused by Warehouse, Yarn Spinning, Lot Processing, and Access Control.
 
 ---
 
@@ -89,14 +89,14 @@ These are **not the same thing**.
 | **Production identity** | **Warehouse** | Documentary/commercial-production identity defined before processing: yarn count, color, client, requirements, and shared code |
 | **Physical lot** | **Lot Processing** | The real grouped set of skeins assembled in the Inventory stage and then moved through batch stages |
 
-**Decision:** the same shared identifier may travel across contexts, but the **physical lot is born later** in Lot Processing. Warehouse defines identity first; Lot Processing instantiates the physical batch under that identity.
+**Decision:** the same visible business code may travel across contexts while technical ownership stays separated. Warehouse defines the production identity first; Lot Processing instantiates the physical batch later under that identity.
 
 ### 4.2 Warehouse vs Yarn Spinning vs Lot Processing
 
 - **Warehouse** receives **bales**, not physical production lots.
 - **Yarn Spinning** transforms material continuously and does **not** own a lot entity or lot timeline.
 - **Lot Processing** starts when the Inventory stage assembles skeins into a physical lot and from then on owns the lot timeline.
-- The lot history delivered back to Warehouse is a **continuation**, not a new warehouse-only record detached from production.
+- The lot history delivered back to Warehouse belongs to a broader **cross-context traceability chain**, not a new warehouse-only record detached from production. Lot Processing owns the operational stage history; Warehouse owns the warehouse-side records that continue the same business identity.
 
 ### 4.3 Access Control as a policy context
 
@@ -111,7 +111,7 @@ Access Control must stay a **policy context**, not a hidden business owner.
 
 Shared Reference Data is a support context, not a dumping ground for business logic.
 
-- keep canonical lists and identifiers here
+- keep canonical shared lists and identifiers here
 - keep operational meaning in the owning business context
 - do not move lot rules, stock rules, or permission rules into catalogs
 
@@ -140,7 +140,7 @@ Shared Reference Data is a support context, not a dumping ground for business lo
 | PT physical presentation | Warehouse | Separate dimension from quality/disposition |
 | PT sale / transfer / return | Warehouse | Warehouse stock lifecycle after reception |
 | Permission policy and scope rules | Access Control | Cross-cutting authorization only |
-| Employees, machines, shifts, yarn counts, sections | Shared Reference Data | Canonical references only |
+| Users, machines, shifts, yarn counts, sections | Shared Reference Data | Canonical shared references only |
 
 ---
 
@@ -160,7 +160,7 @@ flowchart LR
     YS -->|Skein output and readiness for physical lot assembly| LP
     LP -->|Processed lot delivery with unified history, quality state, and delivery conditions| W
     AC -->|Authorization decisions by action and scope| ALL
-    SRD -->|Stable catalog identifiers and reference values| ALL
+    SRD -->|Stable catalog identifiers and shared reference values| ALL
 ```
 
 | From | To | Handoff |
@@ -170,7 +170,7 @@ flowchart LR
 | Warehouse | Lot Processing | Shared production identity, specifications, and lot code |
 | Lot Processing | Warehouse | Processed lot delivery with unified history, quality state, and delivery conditions |
 | Access Control | All business contexts | Authorization decisions by action and scope |
-| Shared Reference Data | All business contexts | Stable catalog identifiers and reference values |
+| Shared Reference Data | All business contexts | Stable catalog identifiers and shared reference values |
 
 **Important:** no handoff changes ownership retroactively. A receiving context may reference prior data, but it must only write its own part.
 
