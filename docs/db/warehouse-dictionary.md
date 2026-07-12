@@ -7,7 +7,7 @@ This dictionary is a review aid for the current Warehouse DBML. It keeps the mod
 - Technical IDs use `_id`; visible business numbers/codes use `_number` or `_code`.
 - Raw material is intentionally simple: `raw_material` keeps the bale/fardo identity, original receipt evidence, and whole-bale delivery facts.
 - The Warehouse-owned production identity is the single lot identity used by Warehouse and Lot Processing.
-- Finished product stays under the existing production identity; Warehouse does not create a second product identity.
+- Finished product stays under the existing production identity; Warehouse accepts each identity once and does not create a second product identity.
 - Supplies are intentionally simple: what was received, what was delivered, to whom, and how much.
 - Correction history is separated from current business records.
 
@@ -56,13 +56,13 @@ Represents the raw-material bale/fardo identity, original receipt evidence, and 
 
 ### `finished_product_receipts`
 
-Represents finished product received by Warehouse from Operation under the existing shared production identity.
+Represents the one Warehouse acceptance receipt for finished product received from Operation under the existing shared production identity.
 
 | Field                                              | Why it exists                                                                                          | Optional / challenge later                         |
 | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------- |
 | `finished_product_receipt_id`                      | Technical identifier for the Warehouse receipt record.                                                 | No.                                                |
 | `receipt_number`                                   | Visible Warehouse receipt number.                                                                      | No.                                                |
-| `production_identity_id`                           | Keeps finished product tied to the existing production identity instead of creating a second identity. | No.                                                |
+| `production_identity_id`                           | Keeps finished product tied to the existing production identity and permits one Warehouse acceptance receipt for it. | No; unique.                                        |
 | `availability_state`                               | Warehouse readiness for distribution.                                                                  | No, but the state list may be reviewed.            |
 | `physical_presentation`                            | Bagged/bulk or other physical form in Warehouse.                                                       | No for PT receipt; vocabulary may be reviewed.     |
 | `business_received_at`                             | Business receipt time.                                                                                 | No.                                                |

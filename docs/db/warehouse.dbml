@@ -62,7 +62,7 @@ Table supply_items {
 Table finished_product_receipts {
   finished_product_receipt_id uuid [pk]
   receipt_number varchar [not null, unique]
-  production_identity_id uuid [not null, ref: > production_identities.production_identity_id, note: "Warehouse receives the finished product under the existing shared production identity; this does not create a second product identity."]
+  production_identity_id uuid [not null, unique, ref: > production_identities.production_identity_id, note: "Warehouse accepts the finished product once under the existing shared production identity; this does not create a second product identity."]
   availability_state product_availability_state [not null, note: "Current Warehouse availability state after reception and verification."]
   physical_presentation varchar [not null, note: "Physical form received or stored by Warehouse, kept separate from availability state."]
   business_received_at timestamptz [not null]
