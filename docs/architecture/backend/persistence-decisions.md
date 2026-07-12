@@ -21,15 +21,14 @@
 |---|---|---|
 | Warehouse | `productionIdentityId` | Internal technical ID of the Warehouse-owned production identity. |
 | Cross-context business navigation | `lotCode` | Visible business code shared across contexts for operator recognition and traceability. |
-| Lot Processing | `lotId` | Internal technical ID of the physical lot aggregate. |
-| Cross-context links | technical IDs and visible codes | Technical IDs support ownership and explicit integration. Visible codes support shared business traceability. |
+| Lot Processing | `productionIdentityId` | Reference to the Warehouse-defined single lot identity used by every stage record. |
+| Cross-context links | `productionIdentityId` and `lotCode` | The technical ID links records to the same lot; the visible code supports operator recognition and traceability. |
 
 ### Stable rule
 
-- Internal technical IDs remain local to the owning write model.
+- The Warehouse-owned `productionIdentityId` is the single technical lot identity across Warehouse and Lot Processing records.
 - Visible business codes remain separate from technical IDs.
-- `lotCode` does not replace `productionIdentityId` or `lotId`.
-- `lotId` is the canonical technical identifier for the physical lot.
+- `lotCode` does not replace `productionIdentityId`.
 - If a column stores a technical identifier, name it with `_id`.
 - If a column stores a visible business identifier, name it with `_code` or another explicit visible-number/code term.
 
@@ -40,9 +39,9 @@
 | Area | Decision |
 |---|---|
 | Production identity | Snapshot business-defining descriptors such as yarn count, color requirement, destination/client, and request notes when they are part of the meaning of the identity. |
-| Bale allocation | Keep explicit technical links to source bales and snapshot enough bale descriptors for historical readability. |
+| Bale custody | Preserve receipt evidence and whole-bale delivery responsibility; bales do not link to production identities or finished-product lots. |
 | Lot stage records | Keep inherited references explicit and snapshot the values that the stage actually received, verified, or produced. |
-| PT handoff and reception | Snapshot quality wording, delivery conditions, and physical presentation details that must remain historically readable after handoff. |
+| PT handoff and reception | Preserve the one permitted Quality Send marker and exact send timestamp separately from Warehouse's later acceptance. A pending handoff is that singular marker with no Warehouse receipt for the same `productionIdentityId`; it needs no timestamp tie-breaker. The receipt does not duplicate quality state or re-enter lot weight, bag count, or unit count. |
 | Shared catalogs | Keep only references when the catalog remains authoritative and the historical wording is not itself business evidence. |
 
 ### Stable rule

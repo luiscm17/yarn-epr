@@ -50,8 +50,9 @@ Backend decisions always remain authoritative.
    UI should prioritize those slices, not a fake lot timeline.
 
 4. **Treat Lot Processing as a unified stage-history flow.** The main UI model
-   is the **single-stage-record** pattern, not a primary split between “enter”
-   and “exit” pages.
+   is one specialized record per intervention, not a primary split between
+   “enter” and “exit” pages. A lot can have multiple records in the same stage,
+   date, or shift.
 
 5. **Support controlled correction, not silent rewriting.** Editing UX must make
    audit implications visible and must respect backend policy decisions.
@@ -180,10 +181,11 @@ Main page families should include:
 - **Stage waste capture** inside or adjacent to the stage record
 - **Delivery-to-Warehouse summary** driven by the final Quality stage/hand-off record
 
-The primary abstraction is **one record per stage in the shared lot history**.
-If sub-steps are needed in the UI, they should still resolve into one stage
-record instead of separate architectural “enter stage” and “exit stage” page
-families.
+The primary abstraction is **specialized records per intervention in the shared
+lot history**. If sub-steps are needed in the UI, they should resolve into the
+relevant stage record rather than separate architectural “enter stage” and
+“exit stage” page families. Date, shift, actors, and timestamps are history
+attributes, not uniqueness rules.
 
 ### 4.4 Reports and cross-context views
 

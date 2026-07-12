@@ -58,8 +58,8 @@ The backend should keep descriptive architecture names in documentation while us
 | Architecture context | Code-facing module | Primary responsibility |
 |---|---|---|
 | Warehouse | `warehouse` | Custody, stock movements, production identity setup, finished-product reception, and warehouse lifecycle |
-| Yarn Spinning | `yarn-production` | Continuous production records before any physical lot exists |
-| Lot Processing | `batch-processing` | Physical lot birth, sequential stage history, delivery back to Warehouse |
+| Yarn Spinning | `yarn-production` | Continuous production records before Inventory assembles a lot |
+| Lot Processing | `batch-processing` | Inventory assembly facts, sequential stage history, Quality Send back to Warehouse |
 | Access Control | `access` | RBAC, scopes, permission assignments, exceptions, and authorization decisions |
 | Shared Reference Data | `catalogs` | Canonical catalogs, shared identifiers, and controlled vocabularies |
 
@@ -90,12 +90,12 @@ Cross-context collaboration should happen through explicit contracts such as:
 - authorization decision ports
 - catalog validation/query ports
 
-### 4.2 Identity and lot separation
+### 4.2 Single lot identity
 
-The backend must preserve this split:
+The backend must preserve this ownership split:
 
-- **Warehouse** defines the production identity
-- **Lot Processing** creates the physical lot
+- **Warehouse** defines the single lot identity
+- **Lot Processing** appends stage records directly to that identity
 - **Yarn Spinning** never pretends to own a lot aggregate
 
 ### 4.3 Correction and audit baseline
@@ -133,8 +133,8 @@ At minimum, each context design must account for:
 
 - Receive and register raw material
 - Define production identity from available raw material
-- Emit material to production with authorization
-- Receive finished product back from Operation
+- Deliver a whole bale to production with authorization
+- Accept a finished product lot after Warehouse physical verification
 - Classify finished product for warehouse disposition
 - Execute sale, transfer, return, and stock-affecting warehouse actions
 - Query stock, movement history, and custody traceability
@@ -144,15 +144,15 @@ At minimum, each context design must account for:
 - production identity read/export contract for downstream contexts
 - stock balance and movement persistence ports
 - warehouse authorization policy port
-- finished-product delivery intake contract from `batch-processing`
+- Quality send and finished-product acceptance contracts with `batch-processing`
 - audit trail writer port
 - catalog query/validation ports
 
 ### Correction and audit implications
 
-- reception, identity, emission, PT reception, and PT classification are separate auditable business acts
+- raw-material reception, whole-bale delivery, identity definition, PT acceptance, and PT classification are separate auditable business acts
 - Warehouse corrections must not rewrite Lot Processing stage history
-- PT quality state, warehouse availability/disposition, and physical presentation must remain separately auditable dimensions
+- Lot Processing-owned quality state must not be duplicated in Warehouse; Warehouse availability/disposition and physical presentation remain separately auditable dimensions
 
 ### Key dependencies
 
@@ -177,7 +177,7 @@ At minimum, each context design must account for:
 - Register section progress where applicable
 - Register process-quality controls
 - Register spinning waste by section or machine group
-- Publish skein availability for downstream physical lot assembly
+- Publish skein availability for downstream Inventory assembly
 - Query operational production summaries by section, shift, machine, and yarn count
 
 ### Ports / contracts
@@ -208,38 +208,35 @@ At minimum, each context design must account for:
 
 ### Record / aggregate families
 
-- Physical lot aggregate
 - Lot stage records
 - Stage note / inconvenience records
 - Stage waste records
-- Delivery-to-Warehouse record
+- Quality send evidence for Warehouse receipt
 
 ### Use-case groups
 
-- Assemble the physical lot in the Inventory stage from upstream identity and skein availability
+- Record Inventory assembly facts from the upstream lot identity and skein availability
 - Advance the lot through its ordered stage history
 - Register stage-local verified data, generated data, stage notes/exceptions, and waste
-- Capture final quality state and delivery conditions
-- Deliver the processed lot back to Warehouse
-- Query lot history, current stage, delays, and cross-stage traceability
+- Capture final quality state and send the validated lot to Warehouse
+- Query lot history, derived process position, delays, and cross-stage traceability
 
 ### Ports / contracts
 
-- physical lot persistence ports
 - lot stage sequence policy port
 - skein availability intake port
 - warehouse production identity read port
 - lot-processing authorization policy port
-- delivery contract toward `warehouse`
+- Quality send contract toward `warehouse`; Warehouse acceptance stays Warehouse-owned
 - audit trail writer port
 - catalog query/validation ports
 
 ### Correction and audit implications
 
-- the Inventory stage is the auditable birth of the physical lot
-- stage records must preserve the single-stage-record model rather than split into artificial receipt/delivery pairs
+- the Inventory stage is the first operational record for the Warehouse-defined lot
+- stage records must preserve the dedicated record model per intervention rather than split into artificial receipt/delivery pairs; a lot may have multiple legitimate records in the same stage, business date, or shift
 - each correction must preserve stage sequence meaning and historical responsibility
-- The Quality stage documents delivery condition, but does not decide Warehouse disposition
+- The Quality stage records Quality Send while the lot awaits Warehouse receipt; the pending condition ends when Warehouse records its receipt for the same `production_identity_id`, and Warehouse does not mutate Lot Processing history
 
 ### Key dependencies
 
@@ -357,7 +354,7 @@ Those decisions should come later, after domain and persistence design are deriv
 Any later persistence or database design must preserve these constraints:
 
 1. **Persistence follows ownership.** Each record family belongs to the context that owns its business meaning.
-2. **Identity separation remains explicit.** Production identity and physical lot must not collapse into one premature persistence model.
+2. **One lot identity remains explicit.** Warehouse owns `production_identity_id`; Lot Processing records reference it directly without a duplicate aggregate.
 3. **Correction and audit are first-class.** Persistence must support editable business truth with auditable history.
 4. **Cross-context references stay explicit.** Shared identifiers and integration references must preserve context ownership.
 5. **Read models do not redefine ownership.** Cross-context traceability and reporting views must not flatten the owning write models.

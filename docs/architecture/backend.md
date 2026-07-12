@@ -41,9 +41,8 @@ It does **not** define:
 1. **Boundaries follow the current domain map.** Backend modules must align with
    **Warehouse**, **Yarn Spinning**, **Lot Processing**, **Access Control**, and
    **Shared Reference Data**.
-2. **Production identity and physical lot are different concepts.** Warehouse
-   defines production identity; the physical lot is born later in the Lot Processing
-   Inventory stage.
+2. **Warehouse defines the single lot identity.** Inventory records assembly
+   facts and later Lot Processing stages append their history to that same identity.
 3. **Yarn Spinning and Lot Processing must stay separate.** They do not share
    the same aggregate root, timeline, or record semantics.
 4. **Business records support controlled edits with audit trail.** The backend
@@ -87,7 +86,7 @@ flowchart LR
     SRD[Shared Reference Data\nCatalogs + canonical IDs]
     W[Warehouse\nCustody + identity + stock lifecycle]
     YS[Yarn Spinning\nContinuous production records]
-    LP[Lot Processing\nPhysical lot + stage history]
+    LP[Lot Processing\nStage history for the Warehouse-defined lot]
 
     AC --> W
     AC --> YS
@@ -128,11 +127,10 @@ reception, and downstream warehouse lifecycle decisions.
 - Raw material is received as **bales**, not as a production lot.
 - Production identity is defined **after** raw-material reception as bales, as a separate business
   act.
-- Warehouse owns the production identity, but **does not** own the physical lot
-  birth.
-- Finished-product reception continues the same production identity / shared
-  lot-code reference without collapsing Warehouse ownership into Lot Processing
-  history.
+- Warehouse owns the single lot identity; Lot Processing owns the operational
+  records appended to it.
+- Finished-product reception continues the same production identity and visible
+  lot code without collapsing Warehouse ownership into Lot Processing history.
 - Warehouse must keep these dimensions separate:
   - quality state reported by Operation
   - warehouse availability/disposition
@@ -167,7 +165,7 @@ reception, and downstream warehouse lifecycle decisions.
 
 ### Purpose
 
-Own continuous production records before any physical lot exists.
+Own continuous production records before Inventory assembles a lot.
 
 ### Core aggregates / record families
 
@@ -181,9 +179,9 @@ Own continuous production records before any physical lot exists.
 
 - Yarn Spinning has **no lot aggregate** and **no lot timeline**.
 - Its continuity is organized by section, machine, shift, business date, and
-   yarn count — not by physical lot history.
-- The backend must model Madejeras (Skeining) output as skein availability for later assembly,
-  not as the birth of the physical lot.
+   yarn count — not by lot-stage history.
+- The backend must model Madejeras (Skeining) output as skein availability for Inventory assembly,
+  not as the start of a lot-stage history.
 - Net weights and derived production values should be computed/validated by
   domain rules rather than treated as arbitrary user-entered facts.
 - Waste and quality belong to the spinning context even if recorder assignment is
@@ -217,12 +215,11 @@ Own continuous production records before any physical lot exists.
 
 ### Purpose
 
-Own the physical lot from assembly in the Inventory stage through the stage history during
-operation until delivery back to Warehouse.
+Own the operational stage history from Inventory assembly through Quality Send back
+to Warehouse.
 
 ### Core aggregates / record families
 
-- **Physical Lot** — born in the Inventory stage under a Warehouse-defined production identity
 - **Lot Stage Record** — the main record family for Inventory stage, Dyeing, Drying,
   Winding, Ball Winding, Bagging, and Quality stage
 - **Stage Note / Inconvenience Records**
@@ -231,17 +228,17 @@ operation until delivery back to Warehouse.
 
 ### Important invariants / business rules
 
-- The physical lot is born in the **Inventory stage**, not in Warehouse and not in Yarn
-  Spinning.
-- The lot reuses the Warehouse production identity / shared lot-code reference,
-  but Lot Processing owns the physical batch lifecycle.
-- Lot Processing stage records should follow the **single-stage-record model**:
+- Warehouse defines the single lot identity before production; Inventory records its
+  assembly facts, and Lot Processing owns the stage history appended to it.
+- Each Lot Processing intervention should use its stage's dedicated record model
+  rather than artificial receipt/delivery pairs:
   - inherited data from Warehouse or the previous stage
   - locally verified data
   - stage-generated data
   - stage notes/exceptions, waste, and output condition
-- The lot history is sequential by stage, but stage records are not separate
-  delivery/receipt document pairs unless later design proves that necessary.
+- The lot history is sequential by stage, but a lot may have multiple legitimate
+  records in the same stage, business date, or shift. These history attributes
+  must not be used as a uniqueness key.
 - No lot history should be flattened into generic “Operation” records.
 - The Quality stage documents the lot condition for delivery; Warehouse later decides its
   own operational disposition.
@@ -251,7 +248,6 @@ operation until delivery back to Warehouse.
 
 ### Likely ports / contracts
 
-- `PhysicalLotRepository`
 - `LotStageRecordRepository`
 - `LotStageSequencePolicyPort`
 - `SkeinAvailabilityPort`
@@ -348,19 +344,20 @@ contexts.
 
 ---
 
-## 10. Identity vs physical lot
+## 10. Single lot identity
 
-The backend must model these as separate concepts.
+The backend must use the Warehouse-defined production identity as the single lot
+identity across both contexts.
 
-| Concept | Owner | Backend meaning |
+| Concern | Owner | Backend meaning |
 |---|---|---|
-| **Production identity** | **Warehouse** | Cross-context reference defined after raw-material reception as bales and before later production execution |
-| **Physical lot** | **Lot Processing** | Real batch assembled in the Inventory stage from skeins and tracked through the stage history |
+| **Lot identity** | **Warehouse** | Cross-context `productionIdentityId` defined after raw-material reception as bales and before production execution |
+| **Operational stage history** | **Lot Processing** | Inventory assembly and later stage facts linked directly to `productionIdentityId` |
 
 ### Design consequence
 
-- Warehouse should expose identity data for downstream use.
-- Lot Processing should instantiate the physical lot under that identity.
+- Warehouse should expose lot identity data for downstream use.
+- Lot Processing should append stage records directly under that identity.
 - Yarn Spinning should reference the upstream production context when needed, but
   it should not pretend to own or progress a lot aggregate.
 
@@ -370,7 +367,7 @@ flowchart LR
     ID --> YS[Yarn Spinning\ncontinuous records only]
     ID --> INV[Inventory stage\nLot Processing]
     YS --> INV
-    INV --> LOT[Physical lot exists\nand stage history begins]
+    INV --> LOT[Stage history begins\nunder the same lot identity]
 ```
 
 ---
@@ -447,7 +444,7 @@ flowchart TD
 | Shared Reference Data | All business contexts | canonical IDs, catalogs, and validations |
 | Warehouse | Yarn Spinning | production identity and material context |
 | Warehouse | Lot Processing | production identity, specifications, and shared lot-code reference |
-| Yarn Spinning | Lot Processing | skein output availability for physical lot assembly |
+| Yarn Spinning | Lot Processing | skein output availability for Inventory assembly |
 | Lot Processing | Warehouse | processed lot delivery, quality state, and handoff condition |
 
 ### Architectural constraint

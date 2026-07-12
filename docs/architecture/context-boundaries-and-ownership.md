@@ -25,8 +25,8 @@ It does **not** define database schema, APIs, or internal code structure.
 | Context | Why it exists | Core boundary |
 |---|---|---|
 | **Warehouse** | Owns warehouse custody, stock movements, production identity setup, and finished-product handling | Stops at warehouse-issued identity and warehouse-managed stock lifecycle |
-| **Yarn Spinning** | Owns continuous spinning production records before any physical lot exists | Stops at skein output and section/shift/machine records |
-| **Lot Processing** | Owns the physical lot lifecycle after the Inventory stage assembles it | Stops when the processed lot is delivered back to Warehouse |
+| **Yarn Spinning** | Owns continuous spinning production records before Inventory assembles a lot | Stops at skein output and section/shift/machine records |
+| **Lot Processing** | Owns the operational stage history appended after Inventory assembles the lot | Stops when Quality Send hands the lot back to Warehouse |
 | **Access Control** | Owns authorization policy, scopes, and configurable permissions | Does not own business workflow semantics |
 | **Shared Reference Data** | Owns shared catalogs and canonical reference values used by multiple contexts | Does not own operational records |
 
@@ -41,24 +41,24 @@ It does **not** define database schema, APIs, or internal code structure.
 - **Core responsibility:** manage physical custody and documentary control of raw material, finished product, and production supplies; define the production identity that later travels across contexts.
 - **Owns:** raw-material reception as **bales**; production identity definition; emission to production; finished-product reception; warehouse availability/disposition; physical presentation; stock movements; stock balances; supply movements.
 - **Does not own:** spinning production records; lot-stage progression; process quality execution; lot-stage waste; final production-stage decisions inside Operation.
-- **Inbound dependencies:** Access Control; Shared Reference Data; processed lot delivery and quality documentation from Lot Processing.
+- **Inbound dependencies:** Access Control; Shared Reference Data; Quality's sent-lot documentation from Lot Processing.
 - **Outbound contracts / shared identifiers:** technical production identity, visible lot code, yarn count, color requirement, client/destination, and emitted quantity linkage needed by downstream contexts.
 
 ### 3.2 Yarn Spinning
 
-- **Core responsibility:** record continuous yarn production before a physical lot exists.
+- **Core responsibility:** record continuous yarn production before Inventory assembles a lot.
 - **Owns:** production discharges; section progress records; process quality in spinning sections; spinning waste; skein output from Madejeras (Skeining).
-- **Does not own:** warehouse stock; production identity assignment rules; physical lot assembly; lot timeline; final finished-product reception.
+- **Does not own:** warehouse stock; production identity assignment rules; Inventory assembly; lot timeline; final finished-product reception.
 - **Inbound dependencies:** Access Control; Shared Reference Data; warehouse-issued production identity as external planning/reference context.
 - **Outbound contracts / shared identifiers:** yarn count produced; skein availability; section/shift/machine production records; operational readiness for lot assembly.
 
 ### 3.3 Lot Processing
 
-- **Core responsibility:** own the physical lot once the Inventory stage assembles it and carry its unified stage history until delivery back to Warehouse.
-- **Owns:** physical lot birth; lot stage records; lot timeline; lot-stage notes/exceptions; stage waste; final quality documentation for delivery; handoff back to Warehouse.
+- **Core responsibility:** own the operational stage history appended after Inventory assembles the Warehouse-defined lot and carry it until Quality Send.
+- **Owns:** lot stage records; lot timeline; lot-stage notes/exceptions; stage waste; final quality documentation for delivery; handoff back to Warehouse.
 - **Does not own:** warehouse stock balances; warehouse availability/disposition; spinning-section records; permission policy; reference catalog governance.
 - **Inbound dependencies:** warehouse-issued production identity and specifications; skein output from Yarn Spinning; Access Control; Shared Reference Data.
-- **Outbound contracts / shared identifiers:** same technical production identity, visible lot code, operational lot stage history, lot quality state at delivery, delivery conditions, and delivered quantity/physical presentation.
+- **Outbound contracts / shared identifiers:** same technical production identity, visible lot code, operational lot stage history, Quality Send evidence, Lot Processing-owned quality state, delivery conditions, and physical presentation.
 
 ### 3.4 Access Control
 
@@ -80,22 +80,15 @@ It does **not** define database schema, APIs, or internal code structure.
 
 ## 4. Explicit boundary decisions
 
-### 4.1 Production identity vs physical lot
+### 4.1 Single lot identity
 
-These are **not the same thing**.
-
-| Concept | Owner | Meaning |
-|---|---|---|
-| **Production identity** | **Warehouse** | Documentary/commercial-production identity defined before processing: yarn count, color, client, requirements, and shared code |
-| **Physical lot** | **Lot Processing** | The real grouped set of skeins assembled in the Inventory stage and then moved through batch stages |
-
-**Decision:** the same visible business code may travel across contexts while technical ownership stays separated. Warehouse defines the production identity first; Lot Processing instantiates the physical batch later under that identity.
+Warehouse defines the single lot through its technical `production_identity_id` and visible `lot_code`, including yarn count, color, customer/destination, and request data. Inventory records the assembled weight and skein count, and each later Lot Processing stage appends its own history to that same lot.
 
 ### 4.2 Warehouse vs Yarn Spinning vs Lot Processing
 
-- **Warehouse** receives **bales**, not physical production lots.
+- **Warehouse** receives **bales**, not production lots.
 - **Yarn Spinning** transforms material continuously and does **not** own a lot entity or lot timeline.
-- **Lot Processing** starts when the Inventory stage assembles skeins into a physical lot and from then on owns the lot timeline.
+- **Lot Processing** starts when Inventory assembles skeins and from then on owns the lot timeline.
 - The lot history delivered back to Warehouse belongs to a broader **cross-context traceability chain**, not a new warehouse-only record detached from production. Lot Processing owns the operational stage history; Warehouse owns the warehouse-side records that continue the same business identity.
 
 ### 4.3 Access Control as a policy context
@@ -122,7 +115,7 @@ Shared Reference Data is a support context, not a dumping ground for business lo
 | Aggregate / record family | Owning context | Ownership note |
 |---|---|---|
 | Raw material reception (`bales`) | Warehouse | Initial physical receipt of MP |
-| Production identity definition | Warehouse | Defined before physical lot assembly |
+| Lot identity definition | Warehouse | Defines the single lot before Inventory records its assembly facts |
 | MP emission to production | Warehouse | Stock movement plus production handoff |
 | Warehouse supply movement | Warehouse | Independent from production lot history |
 | Spinning production discharge | Yarn Spinning | Machine/shift/yarn-count record |
@@ -130,13 +123,12 @@ Shared Reference Data is a support context, not a dumping ground for business lo
 | Spinning process quality | Yarn Spinning | Section/machine quality, not lot-final quality |
 | Spinning waste | Yarn Spinning | Continuous-process waste |
 | Skein output availability | Yarn Spinning | Output contract for lot assembly |
-| Physical lot aggregate | Lot Processing | Born in Inventory stage |
 | Lot stage record | Lot Processing | Unified lot history across stages |
 | Lot-stage note / inconvenience | Lot Processing | Attached to stage history |
 | Lot-stage waste | Lot Processing | Part of lot history |
-| Final lot quality state at delivery | Lot Processing | Documents delivery condition to Warehouse |
-| PT reception from Operation | Warehouse | Warehouse receives under existing identity |
-| PT availability / disposition | Warehouse | Separate from production quality state |
+| Final lot quality state and send | Lot Processing | Quality sends the validated lot and documents its delivery condition |
+| PT reception from Operation | Warehouse | Warehouse accepts the same lot through its own receipt after verification; it does not change the operational history |
+| PT availability / disposition | Warehouse | Separate from the Lot Processing-owned quality state, which Warehouse does not snapshot |
 | PT physical presentation | Warehouse | Separate dimension from quality/disposition |
 | PT sale / transfer / return | Warehouse | Warehouse stock lifecycle after reception |
 | Permission policy and scope rules | Access Control | Cross-cutting authorization only |
@@ -157,8 +149,8 @@ flowchart LR
 
     W -->|Production identity and material availability| YS
     W -->|Shared production identity, specifications, and lot code| LP
-    YS -->|Skein output and readiness for physical lot assembly| LP
-    LP -->|Processed lot delivery with unified history, quality state, and delivery conditions| W
+    YS -->|Skein output and readiness for Inventory assembly| LP
+    LP -->|Quality Send provides validated lot history, quality state, and delivery conditions| W
     AC -->|Authorization decisions by action and scope| ALL
     SRD -->|Stable catalog identifiers and shared reference values| ALL
 ```
@@ -166,9 +158,9 @@ flowchart LR
 | From | To | Handoff |
 |---|---|---|
 | Warehouse | Yarn Spinning | Production identity and material availability for execution |
-| Yarn Spinning | Lot Processing | Skein output and readiness for physical lot assembly |
+| Yarn Spinning | Lot Processing | Skein output and readiness for Inventory assembly |
 | Warehouse | Lot Processing | Shared production identity, specifications, and lot code |
-| Lot Processing | Warehouse | Processed lot delivery with unified history, quality state, and delivery conditions |
+| Lot Processing | Warehouse | One Quality Send leaves the same lot awaiting Warehouse validation; Warehouse later accepts it through its own receipt for the same `production_identity_id` after physical verification |
 | Access Control | All business contexts | Authorization decisions by action and scope |
 | Shared Reference Data | All business contexts | Stable catalog identifiers and shared reference values |
 
@@ -178,7 +170,7 @@ flowchart LR
 
 ## 7. Top architecture mistakes to avoid
 
-1. **Modeling Warehouse reception of bales as if the physical lot already exists.**
+1. **Modeling Warehouse reception of bales as if the production lot already exists.**
 2. **Treating Yarn Spinning and Lot Processing as one aggregate model with one timeline.**
 3. **Letting Warehouse own production-stage records after the lot returns.**
 4. **Using Supervisor as the default recorder in the domain model.** Supervisor is the operational lead/consolidator, not the mandatory registrar.
