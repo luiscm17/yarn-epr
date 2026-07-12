@@ -87,7 +87,7 @@ Dirección de Producción
 ### 2.4 Principios operativos
 
 1. **Recepción de MP como fardos.** Almacén recibe materia prima desde proveedor en forma de fardos. Esa recepción no debe confundirse con el lote físico que nace más adelante en Operación.
-2. **Identidad de producción como acto separado.** La definición del código o identificador que acompaña a producción, junto con título, color, cliente y demás requerimientos, es un acto separado de la recepción física de fardos. El formato del identificador podrá rediseñarse más adelante.
+2. **Identidad de producción como acto separado.** Almacén define la única identidad del lote mediante `production_identity_id` y el código visible `lot_code`, junto con título, color, cliente o destino y demás requerimientos. Este acto es separado de la recepción física de fardos, que no se vinculan a la identidad de producción.
 3. **Trazabilidad obligatoria.** Todo lote de producción debe conservar un historial auditable de su recorrido, incluyendo definición inicial, emisión a Operación, recepción de PT, salidas, devoluciones y ajustes documentados. El historial no se elimina y su continuidad pasa entre Almacén y Operación bajo la misma identidad.
 4. **Consistencia de saldos.** El stock reflejado en el sistema debe coincidir con las existencias físicas. Cualquier discrepancia requiere ajuste documentado.
 5. **Cada dominio escribe su historial.** Almacén registra sus movimientos y no interfiere con los datos de Operación. La historia del lote es única, pero se compone con aportes de ambos dominios.
@@ -187,11 +187,11 @@ En cada cierre, el sistema calcula los saldos con la formula `(Saldo Anterior + 
 
 | ID | Requerimiento |
 |---|---|
-| WH-RM-01 | El sistema debe permitir registrar la recepcion de fardos de MP con: proveedor, factura, peso bruto, titulo, color/fibra y numero de camion. |
-| WH-RM-02 | El sistema debe generar automaticamente el codigo unico `NN-GGGG-NNN` al confirmar la recepcion, donde NN es el numero de camion, GGGG la gestion y NNN el correlativo del ano. |
-| WH-RM-03 | El sistema debe permitir enriquecer el lote con datos del pedido: cliente, color solicitado, titulo, tipo N/CH y observaciones. Este enriquecimiento es el insumo para la planificación de producción que realiza el Jefe de Producción (ver [sección 5 de operation.md](../prd/operation.md#5-planificación-de-la-producción)). |
-| WH-RM-04 | El sistema debe permitir registrar la emision de MP a Operacion indicando: fecha, supervisor receptor, cantidad emitida (kg) y destino. La emision requiere autorizacion del Jefe de Produccion. |
-| WH-RM-05 | El sistema debe mantener un historial de fardos recibidos y de las definiciones de producción asociadas, con su estado operativo correspondiente. |
+| WH-RM-01 | El sistema debe permitir registrar la recepción de fardos de MP con: proveedor, factura, peso bruto, título, color/fibra y número de camión. |
+| WH-RM-02 | El sistema debe permitir definir una identidad de producción independiente mediante `production_identity_id` y un `lot_code` único visible. |
+| WH-RM-03 | El sistema debe registrar en esa identidad los datos del pedido: cliente o destino, color solicitado, título, tipo N/CH y observaciones. Este enriquecimiento es el insumo para la planificación de producción que realiza el Jefe de Producción (ver [sección 5 de operation.md](../prd/operation.md#5-planificación-de-la-producción)). |
+| WH-RM-04 | El sistema debe permitir registrar la entrega completa de un fardo a Operación indicando fecha, responsable que entrega, responsable receptor y destino. La entrega no vincula el fardo a una identidad de producción o código de lote. |
+| WH-RM-05 | El sistema debe mantener el historial de fardos recibidos y entregados a Operación, independiente de las definiciones de producción. |
 
 ### 5.2 Producto Terminado
 
@@ -239,8 +239,8 @@ En cada cierre, el sistema calcula los saldos con la formula `(Saldo Anterior + 
 |---|---|
 | **Almacen** | Unidad organizacional responsable de gestionar las existencias de materia prima, producto terminado e insumos de produccion. Depende de la Direccion de Produccion. |
 | **Fardo** | Unidad física de materia prima recibida desde proveedor. La recepción inicial de MP ocurre en fardos, no en lotes de proceso. |
-| **Lote** | Unidad de producción cuya identidad es definida por Almacén y cuyo armado físico ocurre más adelante en Operación. |
-| **Codigo de lote** | Identificador único definido por Almacén para acompañar la producción y el historial del lote. Su formato podrá rediseñarse más adelante. |
+| **Lote** | Unidad de producción cuya única identidad es definida por Almacén y cuyo armado físico ocurre más adelante en Operación. |
+| **Codigo de lote** | `lot_code` visible definido por Almacén para la única `production_identity_id` que acompaña la producción y el historial del lote. |
 | **Movimiento** | Registro auditable de una entrada o salida de existencias en Almacen. Puede corregirse mediante edición controlada con trazabilidad completa. Cada movimiento pertenece a un tipo especifico (reception, emission, sale, etc.). |
 | **Existencias** | Cantidad de un producto disponible en Almacen en un momento dado. Se calcula con la formula `(Saldo Anterior + Entradas) − Salidas`. |
 | **Estado operativo del PT** | Situación del Producto Terminado dentro de Almacén para efectos de disponibilidad y distribución: disponible, observado, disponible con condición, defectuoso o entregado/despachado. |
