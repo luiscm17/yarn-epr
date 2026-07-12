@@ -40,7 +40,7 @@ Cubre la totalidad de la operación productiva de la planta textil:
 
 | Límite         | Detalle                                                                                                                      |
 | -------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| **Entrada**    | MP recibida desde Almacén, con código de lote `NN-GGGG-NNN` asignado y hoja de ruta con título, color y cliente.             |
+| **Entrada**    | Fardos completos recibidos desde Almacén y la identidad de producción definida por Almacén (`production_identity_id`, `lot_code`, título, color y cliente o destino). Los fardos no se vinculan a esa identidad. |
 | **Salida**     | Lotes procesados, aprobados por Calidad y entregados a Almacén para verificación física de PT.                               |
 | **No incluye** | Gestión de inventarios de MP/PT/insumos, valuación, costeo, cierres contables (responsabilidad de Almacén y Administración). |
 
@@ -96,7 +96,7 @@ DIRECCIÓN DE PRODUCCIÓN
 |---|---|---|
 | **Supervisor** | Jefe de Producción | Responsable del proceso completo de la MP durante su turno, de la coordinación del personal operativo de su turno y de la supervisión/consolidación del registro productivo. Cada turno tiene su propio Supervisor. No actúa como registrador directo por defecto, salvo que la política de permisos lo habilite explícitamente. |
 | **Control de Calidad** | Supervisor | Rol operativo por turno. Realiza control de calidad y pruebas en TODAS las secciones y máquinas de la planta (aleatorio cuando corresponde). Registra producción y avance de Preparación y Continuas (actualmente en formulario papel, a sistematizar). Evalúa y aprueba el estado final de los lotes antes de su entrega a Almacén. Asigna nomenclaturas especiales al PT según la política vigente. |
-| **Inventario** | Supervisor | Rol operativo por turno. Crea el lote físico en la etapa Inventario del Proceso por Lotes y asegura su seguimiento documental hasta la entrega a Almacén. Registra producción y avance de Retorcido y Madejeras. Recibe la MP enviada diariamente por Almacén. Registra el desperdicio real en TODAS las secciones y máquinas. |
+| **Inventario** | Supervisor | Rol operativo por turno. Registra el armado físico bajo la identidad única definida por Almacén y asegura su seguimiento documental hasta la entrega a Almacén. Registra producción y avance de Retorcido y Madejeras. Recibe la MP enviada diariamente por Almacén. Registra el desperdicio real en TODAS las secciones y máquinas. |
 | **Personal de Tintorería** | Supervisor | Rol operativo por turno. Opera el proceso de tintorería dentro del ciclo del lote y registra los eventos que le corresponden. |
 | **Embolsado** | Supervisor | Rol operativo por turno. Hoy coordina y registra operativamente Embolsado y, cuando así se asigna, también Devanado/Ovillado. Esta distribución puede cambiar por permisos configurables. Reporta a Supervisión. |
 
@@ -124,8 +124,8 @@ Estos dos procesos son complementarios pero distintos:
 - **Hilatura (`Yarn Spinning`)** transforma la materia prima hasta convertirla
   en hilado y madejas, y define el título producido.
 - **Proceso por Lotes (`Lot Processing`)** toma las madejas producidas en
-  Hilatura; el lote físico nace en Inventario y luego atraviesa las etapas
-  posteriores hasta su aprobación para entrega a Almacén.
+  Hilatura; Inventario registra su armado físico bajo la identidad única de
+  Almacén y luego las etapas posteriores hasta su entrega a Almacén.
 
 Los PRD encadenados de `docs/prd/operation/` desarrollan cada proceso en
 detalle. Este documento se mantiene como contrato de nivel unidad.
@@ -282,8 +282,8 @@ reutiliza durante todo este proceso.
 4. **Inventario — desperdicio:** Inventario registra el desperdicio real de
    TODAS las secciones y máquinas de la planta.
 
-5. **Inventario — lotes:** Inventario crea el lote físico en la etapa
-   Inventario del Proceso por Lotes, realiza su seguimiento físico/documental
+5. **Inventario — lotes:** Inventario registra el armado físico bajo la
+   identidad única definida por Almacén, realiza su seguimiento físico/documental
    durante ese proceso y registra qué lotes aprobados fueron entregados a
    Almacén.
 
@@ -321,9 +321,9 @@ reutiliza durante todo este proceso.
    calidad, movimientos de lote) no se eliminan. Cuando existan errores de
    carga, las correcciones permitidas deben dejar trazabilidad completa.
 
-2. **Trazabilidad de lote:** El código `NN-GGGG-NNN` asignado por Almacén
-     es el identificador único del lote durante todo el proceso productivo.
-     Operación no genera códigos de lote nuevos.
+2. **Trazabilidad de lote:** `production_identity_id` y su `lot_code` visible,
+      definidos por Almacén, constituyen la única identidad del lote durante todo
+      el proceso productivo. Operación no genera identidades ni códigos nuevos.
 
 3. **Sin cuarentena como estado formal:** Si un lote presenta defectos o
    demora en su proceso, esto se registra como observación, reproceso o
