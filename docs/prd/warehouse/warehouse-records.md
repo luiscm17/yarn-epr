@@ -233,6 +233,9 @@ agrupaciones funcionales para cerrar el significado del dato antes del diseño.
 - Almacén no recrea el historial productivo.
 - Almacén recibe el lote bajo la **misma identidad** que ya fue usada por
   Operación.
+- La recepción para esa misma identidad es la evidencia de aceptación del único
+  Quality Send. Hasta registrarla, el lote permanece en espera de validación de
+  Almacén; una nota breve de coordinación no constituye aceptación ni otro envío.
 - La recepción puede apoyarse en datos heredados de Operación y en verificación
   física propia de Almacén.
 
@@ -242,14 +245,14 @@ agrupaciones funcionales para cerrar el significado del dato antes del diseño.
 - título
 - color
 - cliente o destino
-- estado documentado por Operación
+- estado documentado por Operación, which remains owned by Lot Processing
 - información relevante de calidad o condición de entrega
+- route-sheet facts already recorded by Inventario and Embolsado
 
 ### Datos que Almacén verifica localmente
 
-- cantidad efectivamente recibida
 - presentación física recibida
-- consistencia general entre lo entregado y lo esperado
+- physical consistency of the route-sheet facts already recorded by Inventario and Embolsado
 - incidencias visibles al momento de la recepción
 
 ### Datos generados por la recepción
@@ -258,8 +261,6 @@ agrupaciones funcionales para cerrar el significado del dato antes del diseño.
 - fecha de negocio de recepción
 - responsable que recibe
 - supervisor o responsable de origen
-- cantidad aceptada
-- unidad principal de control: kg
 - observaciones o diferencias detectadas
 
 ### Datos técnicos automáticos
@@ -293,7 +294,7 @@ agrupaciones funcionales para cerrar el significado del dato antes del diseño.
 
 - identidad de lote
 - fecha de negocio de clasificación
-- estado de calidad informado por Operación (solo referencia)
+- Lot Processing-owned quality state, read only as context and not persisted by Warehouse
 - condición de disponibilidad o disposición operativa definida por Almacén
 - presentación física o modalidad de almacenamiento
 - destino operativo previsto cuando ya se conozca
@@ -310,7 +311,7 @@ agrupaciones funcionales para cerrar el significado del dato antes del diseño.
 
 ### Dimensiones funcionales que no deben mezclarse
 
-- estado de calidad informado por Operación: estándar / con nomenclatura / observado
+- Lot Processing-owned quality state: estándar / con nomenclatura / observado
 - disponibilidad o disposición en Almacén: disponible / observado / disponible con condición / defectuoso / entregado-despachado
 - presentación física: bolsa / suelto u otra presentación relevante
 - modalidad o destino operativo: industrial / ovillado u otra clasificación comercial u operativa relevante

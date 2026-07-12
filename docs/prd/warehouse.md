@@ -91,7 +91,7 @@ Dirección de Producción
 3. **Trazabilidad obligatoria.** Todo lote de producción debe conservar un historial auditable de su recorrido, incluyendo definición inicial, emisión a Operación, recepción de PT, salidas, devoluciones y ajustes documentados. El historial no se elimina y su continuidad pasa entre Almacén y Operación bajo la misma identidad.
 4. **Consistencia de saldos.** El stock reflejado en el sistema debe coincidir con las existencias físicas. Cualquier discrepancia requiere ajuste documentado.
 5. **Cada dominio escribe su historial.** Almacén registra sus movimientos y no interfiere con los datos de Operación. La historia del lote es única, pero se compone con aportes de ambos dominios.
-6. **Dos canales de salida de PT.** El PT puede salir por venta directa a cliente o por transferencia a Comercialización. Además, Almacén necesita distinguir por separado el estado de calidad informado por Operación, la disponibilidad o disposición operativa dentro de Almacén, y la presentación física o modalidad del producto (por ejemplo bolsa/suelto, industrial/ovillado cuando aplique).
+6. **Dos canales de salida de PT.** El PT puede salir por venta directa a cliente o por transferencia a Comercialización. Warehouse owns availability or operational disposition and physical presentation; Lot Processing retains ownership of quality.
 7. **Permisos configurables.** La asignación de capacidades de registro, validación, autorización, corrección y consulta no se fija rígidamente por cargo. El sistema debe permitir reasignarlas sin rediseñar los procesos de Almacén.
 
 **Estados operativos iniciales del PT en Almacén:**
@@ -197,14 +197,14 @@ En cada cierre, el sistema calcula los saldos con la formula `(Saldo Anterior + 
 
 | ID | Requerimiento |
 |---|---|
-| WH-PT-01 | El sistema debe permitir registrar la recepción de PT desde Operación con: identificador de lote, descripción, cantidad (kg), valor, categoría, subcategoría, estado de calidad informado por Operación, presentación física recibida (por ejemplo bolsa/suelto) y supervisor de origen. |
+| WH-PT-01 | The system must allow Warehouse to accept PT from Operation with the lot identifier, description, received physical presentation, and origin supervisor. Warehouse physically verifies the route-sheet facts already recorded by Inventory and Bagging without re-entering a weight, bag count, or unit count. |
 | WH-PT-02 | El sistema debe permitir documentar inconsistencias entre lo entregado por Operación y la verificación física realizada por Almacén antes de aceptar o clasificar el PT para disponibilidad. |
 | WH-PT-03 | El sistema debe permitir registrar la salida de PT por venta directa a cliente con: cliente, cantidad (kg), fecha y numero de factura. Requiere autorizacion del Jefe de Produccion. |
 | WH-PT-04 | El sistema debe permitir registrar la transferencia de PT a Comercializacion con: cantidad (kg), fecha. Requiere autorizacion del Jefe de Produccion. |
 | WH-PT-05 | El sistema debe permitir registrar devoluciones de PT (totales o parciales) referenciando a la venta original. El lote devuelto se reincorpora a existencias. |
 | WH-PT-06 | El sistema debe permitir registrar el cambio de presentación física de un lote (por ejemplo bolsa/suelto) dejando registro en el historial. |
 | WH-PT-07 | El sistema debe mostrar el historial completo de movimientos de cada lote de PT, desde su recepcion hasta su salida final. |
-| WH-PT-08 | El sistema debe permitir gestionar el estado operativo del PT en Almacén separadamente del estado de calidad informado por Operación y de la presentación física del producto. |
+| WH-PT-08 | The system must allow Warehouse to manage PT operational availability separately from the Lot Processing-owned quality state and the physical presentation, without persisting a separate quality-state snapshot. |
 
 ### 5.3 Insumos de Producción
 
