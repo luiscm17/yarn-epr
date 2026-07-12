@@ -1,6 +1,6 @@
 Project yarn_epr_yarn_production {
   database_type: "PostgreSQL"
-  Note: "Minimal Yarn Production write model. Hybrid, but primarily record-centered: production, progress, process quality, waste, and skein output are business records. No production run, machine-shift context, lot aggregate, or lot timeline is modeled here. No SQL is defined here."
+  Note: "Minimal Yarn Production write model. Hybrid, but primarily record-centered: production, progress, process quality, waste, and skein output are business records. Yarn count is referenced as a shared identity from Catalogs. No production run, machine-shift context, lot aggregate, or lot timeline is modeled here. No SQL is defined here."
 }
 
 Enum yarn_spinning_section {
@@ -38,7 +38,7 @@ Table production_discharges {
   business_date date [not null, note: "Operational date entered by the user; not inferred from created_at."]
   shift_code varchar [not null]
   supervisor_user_id uuid [not null]
-  yarn_count varchar [not null, note: "Snapshot of the yarn count/title for this discharge."]
+  yarn_count_id uuid [not null, ref: > yarn_counts.yarn_count_id, note: "Shared Catalogs identity for the produced yarn count/title."]
   discharged_at timestamptz [note: "Physical discharge time when captured. The system may still record it at shift close."]
   gross_weight_kg decimal [not null]
   spindle_tare_kg decimal [not null]
@@ -59,9 +59,9 @@ Table skein_records {
   business_date date [not null]
   shift_code varchar [not null]
   supervisor_user_id uuid [not null]
-  yarn_count varchar [not null]
+  yarn_count_id uuid [not null, ref: > yarn_counts.yarn_count_id, note: "Shared Catalogs identity for the produced yarn count/title."]
   skein_count int [not null, note: "Primary production quantity for Madejeras."]
-  unit_skein_weight_kg decimal [not null, note: "Estimated weight per skein or agreed business unit for the yarn count."]
+  unit_skein_weight_kg decimal [not null, note: "Estimated weight per skein or agreed business unit for the yarn count at capture time."]
   estimated_weight_kg decimal [not null, note: "Calculated from skein count and unit weight; no spindle/tare calculation applies."]
   weight_requirement_note text [note: "Explains title-specific weight variation, for example 500g vs 600g skeins."]
   registered_by_user_id uuid [not null]
@@ -77,10 +77,10 @@ Table progress_records {
   machine_id uuid [not null, ref: > yarn_production_machines.machine_id]
   business_date date [not null]
   shift_code varchar [not null]
-  yarn_count varchar [not null]
+  yarn_count_id uuid [not null, ref: > yarn_counts.yarn_count_id, note: "Shared Catalogs identity used to reconcile progress with production discharges."]
   input_weight_kg decimal [not null]
   in_machine_net_weight_kg decimal [note: "Used by Ring Spinning and Twisting when the section captures material still in machine."]
-  discharged_weight_kg decimal [not null, note: "Must reconcile with production discharge totals for the same section, machine, shift, date, and yarn count."]
+  discharged_weight_kg decimal [not null, note: "Must reconcile with production discharge totals for the same section, machine, shift, date, and yarn count identity."]
   output_weight_kg decimal [not null]
   operative_spindle_count int [note: "Used where progress is calculated by spindle sampling."]
   worked_hours decimal
@@ -97,7 +97,7 @@ Table process_quality_records {
   machine_id uuid [ref: > yarn_production_machines.machine_id, note: "Optional when the business records a section-level random check instead of a machine-level check."]
   business_date date [not null]
   shift_code varchar [not null]
-  yarn_count varchar [note: "Used when the quality check is tied to a yarn count or sample type."]
+  yarn_count_id uuid [ref: > yarn_counts.yarn_count_id, note: "Used when the quality check is tied to a yarn count identity or sample context."]
   quality_method process_quality_method [not null]
   sample_type varchar
   sample_count int

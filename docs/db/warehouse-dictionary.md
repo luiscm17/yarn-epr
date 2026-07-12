@@ -5,8 +5,8 @@ This dictionary is a review aid for the current Warehouse DBML. It keeps the mod
 ## Review focus
 
 - Technical IDs use `_id`; visible business numbers/codes use `_number` or `_code`.
-- Raw material is intentionally simple: `raw_material` keeps the bale/fardo identity, current Warehouse quantity, and the basic Operation delivery facts needed now.
-- Production identity stays separate from raw-material reception and from Operation's physical lot.
+- Raw material is intentionally simple: `raw_material` keeps the bale/fardo identity, original receipt evidence, and whole-bale delivery facts.
+- The Warehouse-owned production identity is the single lot identity used by Warehouse and Lot Processing.
 - Finished product stays under the existing production identity; Warehouse does not create a second product identity.
 - Supplies are intentionally simple: what was received, what was delivered, to whom, and how much.
 - Correction history is separated from current business records.
@@ -15,13 +15,13 @@ This dictionary is a review aid for the current Warehouse DBML. It keeps the mod
 
 ### `production_identities`
 
-Represents the shared business identity defined before production and reused by Operation and Warehouse.
+Represents the single lot identity initially defined by Warehouse before production and reused by Lot Processing and Warehouse.
 
 | Field                    | Why it exists                                                              | Optional / challenge later                               |
 | ------------------------ | -------------------------------------------------------------------------- | -------------------------------------------------------- |
 | `production_identity_id` | Technical Warehouse-owned identifier.                                      | No.                                                      |
 | `lot_code`               | Visible shared business code for operators and cross-context traceability. | No, but final format may change.                         |
-| `target_yarn_count`      | Snapshot of the requested yarn count.                                      | No.                                                      |
+| `yarn_count_id`          | Required reference to the shared Catalogs yarn count requested for production. | No.                                                   |
 | `required_color`         | Requested color for production.                                            | Yes.                                                     |
 | `destination_name`       | Customer or destination known when defining the identity.                  | Yes.                                                     |
 | `production_variant`     | Captures business variant/classification when needed.                      | Yes; challenge if it duplicates future catalog data.     |
@@ -33,7 +33,7 @@ Represents the shared business identity defined before production and reused by 
 
 ### `raw_material`
 
-Represents the raw-material bale/fardo identity, how much exists in Warehouse, and the basic delivery facts when material goes to Operation.
+Represents the raw-material bale/fardo identity, original receipt evidence, and the one whole-bale delivery to Operation when it occurs. A bale is never partially delivered and is not linked to a production identity or finished-product lot.
 
 | Field                                | Why it exists                                                                 | Optional / challenge later                                  |
 | ------------------------------------ | ----------------------------------------------------------------------------- | ----------------------------------------------------------- |
@@ -46,13 +46,10 @@ Represents the raw-material bale/fardo identity, how much exists in Warehouse, a
 | `business_received_at`               | Physical/business receipt time.                                               | No.                                                         |
 | `supplier_name`                      | Supplier evidence without requiring a supplier catalog.                       | Yes; challenge once catalogs exist.                         |
 | `received_weight_kg`                 | Quantity originally received for the bale.                                    | No.                                                         |
-| `current_warehouse_weight_kg`        | Quantity currently available under Warehouse custody.                         | No.                                                         |
-| `delivered_to_operation_weight_kg`   | Quantity already delivered from this bale to Operation.                       | No.                                                         |
-| `custody_state`                      | Simple current state: in Warehouse, partially delivered, delivered, adjusted. | No, but refine after real operations.                       |
-| `production_identity_id`             | Production identity associated with the delivery/reservation when applicable. | Yes; production identity remains separate.                  |
-| `delivered_to_operation_at`          | Business time of the latest delivery to Operation.                            | Yes; enough for now instead of emission event tables.       |
+| `delivered`                          | Whether the whole bale was delivered to Operation.                             | No.                                                         |
+| `delivered_at`                       | Business time of the whole-bale delivery to Operation.                         | Yes; required once delivered.                               |
 | `delivered_by_user_id`               | Warehouse user who delivered the material to Operation.                       | Yes; required only once delivered.                          |
-| `operation_received_by_user_id`      | Operation receiver when captured as a user.                                   | Yes.                                                        |
+| `received_by_operation_user_id`      | Operation user who received the whole bale.                                   | Yes.                                                        |
 | `received_by_user_id`                | Warehouse receiver at raw-material intake.                                    | No.                                                         |
 | `condition_notes`                    | Physical condition or differences observed on the bale.                       | Yes.                                                        |
 | `created_at`                         | System timestamp.                                                            | No.                                                         |
@@ -66,11 +63,8 @@ Represents finished product received by Warehouse from Operation under the exist
 | `finished_product_receipt_id`                      | Technical identifier for the Warehouse receipt record.                                                 | No.                                                |
 | `receipt_number`                                   | Visible Warehouse receipt number.                                                                      | No.                                                |
 | `production_identity_id`                           | Keeps finished product tied to the existing production identity instead of creating a second identity. | No.                                                |
-| `operation_lot_id`                                 | Optional technical reference to Operation's lot aggregate.                                             | Yes; keep only when Operation exposes it.          |
-| `operation_quality_state`                          | Snapshot/reference from Operation; separate from Warehouse availability.                               | Yes; challenge once quality vocabulary stabilizes. |
 | `availability_state`                               | Warehouse readiness for distribution.                                                                  | No, but the state list may be reviewed.            |
 | `physical_presentation`                            | Bagged/bulk or other physical form in Warehouse.                                                       | No for PT receipt; vocabulary may be reviewed.     |
-| `accepted_weight_kg`                               | Quantity accepted into Warehouse custody.                                                              | No.                                                |
 | `business_received_at`                             | Business receipt time.                                                                                 | No.                                                |
 | `received_by_user_id`, `origin_supervisor_user_id` | Warehouse receiver and Operation-side origin reference.                                                | Receiver no; origin supervisor optional.           |
 | `delivery_condition_note`, `verification_notes`    | Differences, visible condition, or reception checks.                                                   | Yes.                                               |
@@ -96,15 +90,16 @@ Represents Warehouse delivery of finished product to a customer or Commercializa
 
 ### `finished_product_returns`
 
-Represents basic registration of a finished product returned to Warehouse. The return restores the previous availability state on the finished product receipt; it is not a separate return workflow.
+Represents basic registration of finished product returned from a Warehouse delivery. Each return records the returned quantity, allowing partial returns and restoring that quantity to Warehouse availability; it is not a separate return workflow.
 
-| Field                         | Why it exists                                      | Optional / challenge later |
-| ----------------------------- | -------------------------------------------------- | -------------------------- |
-| `finished_product_return_id`  | Technical identifier.                              | No.                        |
-| `finished_product_receipt_id` | Identifies which finished product was returned.    | No.                        |
-| `business_returned_at`        | Business return time.                              | No.                        |
-| `received_by_user_id`         | Warehouse user who received the returned product.  | No.                        |
-| `created_at`                  | System timestamp.                                  | No.                        |
+| Field                          | Why it exists                                                                | Optional / challenge later |
+| ------------------------------ | ---------------------------------------------------------------------------- | -------------------------- |
+| `finished_product_return_id`   | Technical identifier.                                                        | No.                        |
+| `finished_product_delivery_id` | Identifies the delivery from which the finished product was returned.        | No.                        |
+| `returned_quantity_kg`         | Returned quantity; supports partial returns and restores Warehouse availability. | No.                     |
+| `business_returned_at`         | Business return time.                                                        | No.                        |
+| `received_by_user_id`          | Warehouse user who received the returned product.                            | No.                        |
+| `created_at`                   | System timestamp.                                                            | No.                        |
 
 ### `supply_items`
 

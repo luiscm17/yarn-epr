@@ -1,6 +1,6 @@
 Project yarn_epr_warehouse {
   database_type: "PostgreSQL"
-  Note: "Minimal Warehouse write model. Raw material is bale-centered in one table, with current Warehouse quantity and the basic Operation delivery facts needed now. No SQL is defined here."
+  Note: "Minimal Warehouse write model. Raw material is bale-centered in one table, with receipt evidence and whole-bale delivery facts. No SQL is defined here."
 }
 
 Enum finished_product_delivery_type {
@@ -16,17 +16,10 @@ Enum product_availability_state {
   delivered
 }
 
-Enum raw_material_custody_state {
-  in_warehouse
-  partially_delivered_to_operation
-  delivered_to_operation
-  adjusted
-}
-
 Table production_identities {
   production_identity_id uuid [pk]
   lot_code varchar [not null, unique, note: "Visible business code shared across contexts; not the technical ID."]
-  target_yarn_count varchar [not null, note: "Snapshot of the requested yarn count/title for production identity."]
+  yarn_count_id uuid [not null, ref: > yarn_counts.yarn_count_id, note: "Shared Catalogs yarn count identity requested for production."]
   required_color varchar
   destination_name varchar [note: "Business customer or destination defined for production."]
   production_variant varchar
@@ -47,13 +40,10 @@ Table raw_material {
   business_received_at timestamptz [not null, note: "Physical/business receipt time, not system capture time."]
   supplier_name varchar
   received_weight_kg decimal [not null]
-  current_warehouse_weight_kg decimal [not null, note: "Quantity currently available under Warehouse custody."]
-  delivered_to_operation_weight_kg decimal [not null, note: "Total quantity already delivered to Operation from this bale."]
-  custody_state raw_material_custody_state [not null]
-  production_identity_id uuid [ref: > production_identities.production_identity_id, note: "Set only when this bale is delivered or reserved for a production identity."]
-  delivered_to_operation_at timestamptz [note: "Business time of the latest delivery to Operation; enough for the current Warehouse need."]
+  delivered boolean [not null, note: "True only after the entire bale is delivered to Operation."]
+  delivered_at timestamptz [note: "Business time of the whole-bale delivery to Operation."]
   delivered_by_user_id uuid
-  operation_received_by_user_id uuid
+  received_by_operation_user_id uuid
   received_by_user_id uuid [not null]
   condition_notes text
   created_at timestamptz [not null]
@@ -73,11 +63,8 @@ Table finished_product_receipts {
   finished_product_receipt_id uuid [pk]
   receipt_number varchar [not null, unique]
   production_identity_id uuid [not null, ref: > production_identities.production_identity_id, note: "Warehouse receives the finished product under the existing shared production identity; this does not create a second product identity."]
-  operation_lot_id uuid [note: "External Lot Processing technical ID when supplied; Warehouse references but does not own it."]
-  operation_quality_state varchar [note: "Snapshot/reference wording reported by Operation; not Warehouse availability."]
   availability_state product_availability_state [not null, note: "Current Warehouse availability state after reception and verification."]
   physical_presentation varchar [not null, note: "Physical form received or stored by Warehouse, kept separate from availability state."]
-  accepted_weight_kg decimal [not null, note: "Quantity accepted at Warehouse reception from Operation."]
   business_received_at timestamptz [not null]
   received_by_user_id uuid [not null]
   origin_supervisor_user_id uuid
@@ -103,8 +90,9 @@ Table finished_product_deliveries {
 
 Table finished_product_returns {
   finished_product_return_id uuid [pk]
-  finished_product_receipt_id uuid [not null, ref: > finished_product_receipts.finished_product_receipt_id, note: "Finished product returned to Warehouse availability."]
-  business_returned_at timestamptz [not null, note: "Business return time; return restores the previous availability state."]
+  finished_product_delivery_id uuid [not null, ref: > finished_product_deliveries.finished_product_delivery_id, note: "Delivery from which finished product is returned to Warehouse."]
+  returned_quantity_kg decimal [not null, note: "Quantity returned; supports partial returns and restores this quantity to Warehouse availability."]
+  business_returned_at timestamptz [not null, note: "Business return time."]
   received_by_user_id uuid [not null, note: "Warehouse user who received the returned finished product."]
   created_at timestamptz [not null]
 }
