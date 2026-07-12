@@ -38,7 +38,7 @@ ALMACÉN                        OPERACIÓN (Lot Processing)               ALMAC�
                                                                              └── Clasificación y disposición
 ```
 
-El código único del lote es asignado por Almacén al definir el pedido y se mantiene durante todo este proceso. El formato exacto del código podrá rediseñarse más adelante, pero Operación no genera códigos nuevos. En este proceso el lote nace **físicamente** cuando Inventario arma el conjunto de madejas que será procesado. El sistema es la fuente de toda esta información; cualquier respaldo físico (planilla, etiqueta) es solo una representación impresa de los datos del sistema.
+El código único del lote es asignado por Almacén al definir el pedido y se mantiene durante todo este proceso. Esa definición establece la única identidad del lote; Operación no genera otra identidad ni códigos nuevos. El formato exacto del código podrá rediseñarse más adelante. Inventario registra el armado del conjunto de madejas que será procesado. El sistema es la fuente de toda esta información; cualquier respaldo físico (planilla, etiqueta) es solo una representación impresa de los datos del sistema.
 
 ### 1.3 Límites del sistema
 
@@ -60,7 +60,7 @@ El código único del lote es asignado por Almacén al definir el pedido y se ma
 
 Cada lote atraviesa las siguientes etapas en orden secuencial estricto. No se puede registrar una etapa si la anterior no está completada.
 
-El tiempo total del proceso es de aproximadamente 1 a 2 días, pudiendo el lote **físicamente** cruzar múltiples turnos (ej: entra a Tintorería en el turno mañana y sale en el turno tarde). Cada turno registra **solo su parte** del proceso al finalizar su jornada. No hay edición concurrente del mismo registro — cada etapa genera un nuevo registro inmutable con el turno y responsable correspondiente, garantizando trazabilidad multi-turno.
+The process usually lasts approximately one to two days, and a lot may physically cross multiple shifts. Each intervention records only the work actually performed at that moment. A lot may have multiple legitimate records in the same stage, business date, or shift, including records by different users or at different times. Business date, shift, actors, and timestamps describe process history; they do not define uniqueness. Controlled edits remain subject to the existing audit policy.
 
 ### 2.1 Inventario — Armado del lote
 
@@ -184,7 +184,8 @@ stateDiagram-v2
     En_Secado --> En_Devanado
     En_Devanado --> En_Embolsado
     En_Embolsado --> En_Calidad
-    En_Calidad --> En_Almacen_PT: Entregado con documentación
+    En_Calidad --> En_Espera_Validacion_Almacen: Quality Send
+    En_Espera_Validacion_Almacen --> En_Almacen_PT: Recepción de Almacén
     En_Almacen_PT --> [*]
 ```
 
@@ -199,7 +200,8 @@ stateDiagram-v2
 | **En_Devanado**   | Lote en proceso de devanado u ovillado.                                                         |
 | **En_Embolsado**  | Lote en proceso de empaque.                                                                     |
 | **En_Calidad**    | Lote en inspección final.                                                                       |
-| **En_Almacen_PT** | Lote entregado a Almacén con su documentación completa de calidad.                              |
+| **En_Espera_Validacion_Almacen** | Quality realizó el único envío permitido; el mismo lote espera la validación y recepción de Almacén. Las notas breves de coordinación no son aceptación ni generan otro envío. |
+| **En_Almacen_PT** | Almacén registró la recepción del mismo lote después de la validación física. |
 
 ### 4.3 Reglas de transición
 
@@ -208,7 +210,8 @@ stateDiagram-v2
 3. **Edición controlada con auditoría:** Los datos de una etapa pueden corregirse si hubo error de carga, pero toda edición debe dejar trazabilidad completa de quién editó, cuándo, qué cambió y por qué.
 4. **Ventana operativa de corrección:** La edición puede permitirse durante una ventana definida posterior al turno o al cierre de la etapa (por ejemplo 24 o 48 horas, según la política vigente).
 5. **Edición restringida fuera de ventana:** Una vez vencida la ventana operativa, solo el rol **SysAdmin** puede editar registros de etapas, manteniendo la misma trazabilidad obligatoria.
-6. **Entrega a Almacén obligatoria:** Todo lote que completa las 6 etapas sale de Operación hacia Almacén con su documentación completa, incluyendo defectos y condiciones de entrega si existieran.
+6. **Quality Send único:** Todo lote que completa las 6 etapas puede realizar un único Quality Send hacia Almacén con su documentación completa, incluyendo defectos y condiciones de entrega si existieran. El envío deja al lote en espera de validación de Almacén; no se repite ni ocurre concurrentemente para la misma identidad.
+7. **Recepción de Almacén:** La aceptación se evidencia solo cuando Almacén registra la recepción para la misma identidad del lote. Las notas breves durante la espera no son aceptación ni otro envío.
 
 ### 4.4 Clasificación de Calidad
 
@@ -254,7 +257,7 @@ Antes de registrar una etapa, el sistema verifica:
 
 ### 5.5 Cierre del ciclo del lote en Operación
 
-El ciclo del lote en Operación se cierra cuando Calidad completa su inspección y el lote es entregado a Almacén. A partir de ese momento, Almacén recibe el lote con su documentación completa de calidad, verifica lo recibido, clasifica el estado del PT y decide su disposición. Esa decisión ya corresponde al dominio de Almacén, no al de Operación.
+El tramo de Operación concluye cuando Calidad completa su inspección y realiza el único Quality Send. El mismo lote queda en espera de validación de Almacén hasta que Almacén registra su recepción. A partir de esa aceptación, Almacén verifica lo recibido, clasifica el estado del PT y decide su disposición. Esa decisión ya corresponde al dominio de Almacén, no al de Operación.
 
 ---
 
