@@ -113,7 +113,7 @@ flowchart LR
 | Warehouse | Yarn Spinning | Production identity and material availability |
 | Yarn Spinning | Lot Processing | skein output ready for Inventory assembly |
 | Warehouse | Lot Processing | Shared production identity, specifications, lot code |
-| Lot Processing | Warehouse | One Quality Send per lot records the validated lot, its delivery condition, and the Lot Processing-owned quality state; it moves the same lot to awaiting Warehouse validation until Warehouse accepts it through its own receipt after physical verification |
+| Lot Processing | Warehouse | One Quality Send per lot records the validated lot, its delivery condition, and the Lot Processing-owned quality state; it moves the same lot to awaiting Warehouse validation until Warehouse accepts it once through its own receipt after physical verification |
 | Access Control | All business contexts | Authorization decisions by action and scope |
 | Shared Reference Data | All business contexts | Shared IDs, catalogs, and controlled vocabularies |
 
@@ -182,7 +182,7 @@ flowchart LR
 - **Yarn Spinning has no lot entity or lot timeline.**
 - **Inventory records the assembled lot's weight and skein count.**
 - **Lot Processing owns the stage history during operation.**
-- **One Quality Send moves a validated lot to awaiting Warehouse validation; Warehouse acceptance is the later, distinct receipt for that same `production_identity_id`.**
+- **One Quality Send moves a validated lot to awaiting Warehouse validation; Warehouse acceptance is the one later, distinct receipt for that same `production_identity_id`.**
 - **Warehouse owns its own records after PT reception**, while the system may
   still expose a broader cross-context traceability view.
 

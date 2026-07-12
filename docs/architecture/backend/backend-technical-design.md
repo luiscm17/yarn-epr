@@ -47,7 +47,6 @@ This document belongs to the detailed backend-design layer within the current ar
 | Detailed backend design | [Backend Technical Design](./backend-technical-design.md) | Technical backend module design baseline |
 | Detailed backend design | [Persistence Design Principles](./persistence-design-principles.md) | Conceptual persistence ownership, identity, correction, and time-model rules |
 | Context-level schema design | [Warehouse DBML](../../db/warehouse.dbml) | Canonical Warehouse schema artifact |
-| Context-level schema notes | [Warehouse Notes](../../db/warehouse-notes.md) | Short companion for decisions DBML does not express cleanly |
 
 ---
 
@@ -61,7 +60,7 @@ The backend should keep descriptive architecture names in documentation while us
 | Yarn Spinning | `yarn-production` | Continuous production records before Inventory assembles a lot |
 | Lot Processing | `batch-processing` | Inventory assembly facts, sequential stage history, Quality Send back to Warehouse |
 | Access Control | `access` | RBAC, scopes, permission assignments, exceptions, and authorization decisions |
-| Shared Reference Data | `catalogs` | Canonical catalogs, shared identifiers, and controlled vocabularies |
+| Shared Reference Data | `catalogs` | Canonical yarn counts and their identifiers |
 
 ### Technical boundary rule
 
@@ -111,7 +110,7 @@ At minimum, each context design must account for:
 ### 4.4 Support contexts remain support contexts
 
 - `access` governs authorization, not business meaning
-- `catalogs` provides canonical references, not workflow ownership
+- `catalogs` provides canonical yarn counts, not workflow ownership
 
 ---
 
@@ -157,7 +156,7 @@ At minimum, each context design must account for:
 ### Key dependencies
 
 - Depends on `access` for action + scope authorization
-- Depends on `catalogs` for suppliers, units, movement types, employees, yarn counts, destinations
+- Depends on `access` for canonical user references and `catalogs` for yarn counts
 - Consumes delivery context from `batch-processing`
 - Exposes production identity and material availability to `yarn-production` and `batch-processing`
 
@@ -200,7 +199,7 @@ At minimum, each context design must account for:
 ### Key dependencies
 
 - Depends on `access` for register/validate/approve/correct permissions
-- Depends on `catalogs` for machines, machine groups, sections, shifts, employees, yarn counts
+- Depends on `access` for canonical user references and `catalogs` for yarn counts
 - Consumes production identity and material context from `warehouse`
 - Exposes skein availability and readiness to `batch-processing`
 
@@ -241,7 +240,7 @@ At minimum, each context design must account for:
 ### Key dependencies
 
 - Depends on `access` for stage-level permissions and elevated corrections
-- Depends on `catalogs` for stages, shifts, equipment, employees, defect vocabularies, controlled values
+- Depends on `access` for canonical user references and `catalogs` for yarn counts
 - Consumes production identity from `warehouse`
 - Consumes skein availability from `yarn-production`
 - Exposes processed-lot delivery back to `warehouse`
@@ -270,7 +269,7 @@ At minimum, each context design must account for:
 - permission assignment persistence ports
 - scope persistence ports
 - permission audit ports
-- user/employee identity mapping read ports
+- canonical user identity read port
 
 ### Correction and audit implications
 
@@ -280,7 +279,7 @@ At minimum, each context design must account for:
 
 ### Key dependencies
 
-- Depends on `catalogs` or platform identity references for users/employees and organizational dimensions
+- Owns canonical users and technical RBAC roles
 - Consumes protected action and scope definitions from business modules
 - Exposes authorization decisions to every business context
 
@@ -288,25 +287,19 @@ At minimum, each context design must account for:
 
 ### Record / aggregate families
 
-- Employee/user references
-- Machine and machine-group catalogs
-- Section, stage, and shift catalogs
 - Yarn counts
-- Movement types, units, and shared controlled vocabularies
 
 ### Use-case groups
 
-- Maintain canonical reference values
-- Validate shared references used by business contexts
-- Publish query access to reusable catalog data
-- Audit relevant catalog changes that affect cross-context behavior
+- Maintain canonical yarn counts
+- Validate yarn-count references used by business contexts
+- Publish query access to reusable yarn-count data
 
 ### Ports / contracts
 
-- catalog query ports
-- reference validation ports
-- catalog maintenance persistence ports
-- reference change audit ports
+- yarn-count query port
+- yarn-count validation port
+- yarn-count persistence port
 
 ### Correction and audit implications
 
@@ -315,8 +308,8 @@ At minimum, each context design must account for:
 
 ### Key dependencies
 
-- Depends on business governance for catalog ownership and curation rules
-- Exposes canonical values and stable IDs to `warehouse`, `yarn-production`, `batch-processing`, and `access`
+- Depends on business governance for yarn-count curation rules
+- Exposes canonical yarn-count values and stable IDs to `warehouse`, `yarn-production`, and `batch-processing`
 
 ---
 
@@ -328,7 +321,7 @@ At minimum, each context design must account for:
 | `yarn-production` | `access`, `catalogs`, production context from `warehouse` | skein availability and spinning records |
 | `batch-processing` | `access`, `catalogs`, identity from `warehouse`, skein availability from `yarn-production` | processed-lot delivery and lot traceability |
 | `access` | shared identity references, protected action definitions | authorization decisions and policy enforcement |
-| `catalogs` | governance inputs | canonical references and validations |
+| `catalogs` | yarn-count governance inputs | canonical yarn-count references and validations |
 
 ---
 

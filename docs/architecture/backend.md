@@ -9,8 +9,7 @@
 > Conceptual persistence rules now live in
 > [Persistence Design Principles](./backend/persistence-design-principles.md).
 > The Warehouse schema source of truth now lives in
-> [Warehouse DBML](../db/warehouse.dbml), with a short
-> [Warehouse Notes](../db/warehouse-notes.md) companion for rules DBML does not express well.
+> [Warehouse DBML](../db/warehouse.dbml).
 > This document remains the higher-level backend view.
 
 ---
@@ -83,7 +82,7 @@ Code-facing names should follow the aliases defined in
 ```mermaid
 flowchart LR
     AC[Access Control\nPolicy + RBAC]
-    SRD[Shared Reference Data\nCatalogs + canonical IDs]
+    SRD[Shared Reference Data\nYarn counts]
     W[Warehouse\nCustody + identity + stock lifecycle]
     YS[Yarn Spinning\nContinuous production records]
     LP[Lot Processing\nStage history for the Warehouse-defined lot]
@@ -152,8 +151,8 @@ reception, and downstream warehouse lifecycle decisions.
 ### Consumes from other contexts
 
 - **Access Control**: action + scope authorization
-- **Shared Reference Data**: employees, shifts, yarn counts, movement types,
-  units, destinations, suppliers
+- **Access Control**: canonical users for audit references
+- **Shared Reference Data**: yarn counts
 - **Lot Processing**: delivery condition, lot quality state, delivery history,
   delivered quantities/physical presentation
 - **Yarn Spinning**: no direct ownership dependency; usually only indirect
@@ -204,8 +203,8 @@ Own continuous production records before Inventory assembles a lot.
 ### Consumes from other contexts
 
 - **Access Control**: who may register, validate, approve, or correct records
-- **Shared Reference Data**: machines, machine groups, sections, shifts,
-  employees, yarn counts
+- **Access Control**: canonical users for audit references
+- **Shared Reference Data**: yarn counts
 - **Warehouse**: production identity, yarn-count/color/client/specification context,
   and material availability references
 
@@ -259,8 +258,8 @@ to Warehouse.
 ### Consumes from other contexts
 
 - **Access Control**: stage-level authorization and correction permissions
-- **Shared Reference Data**: employees, shifts, stages, machines/equipment,
-  defect catalogs, controlled vocabularies
+- **Access Control**: canonical users for audit references
+- **Shared Reference Data**: yarn counts
 - **Warehouse**: production identity, lot code, yarn count, color, client/destination,
   and order specifications
 - **Yarn Spinning**: skein output availability and readiness for lot assembly
@@ -301,8 +300,7 @@ auditability across the system.
 
 ### Consumes from other contexts
 
-- **Shared Reference Data**: canonical user/employee identities and relevant
-  organizational references
+- **Access Control owns canonical users and technical roles.**
 - **Business contexts**: action names, protected resources, and scopes that need
   authorization
 
@@ -312,35 +310,29 @@ auditability across the system.
 
 ### Purpose
 
-Provide canonical catalogs and stable reference identities reused by multiple
-contexts.
+Provide the canonical yarn-count catalog and stable yarn-count identities reused
+by multiple contexts.
 
 ### Core aggregates / record families
 
-- **Employee / User Reference**
-- **Machine / Machine Group**
-- **Section / Stage / Shift**
 - **Yarn Count**
-- **Movement Type / Unit / Catalog Value**
-- **Other controlled vocabularies shared across contexts**
 
 ### Important invariants / business rules
 
-- Shared Reference Data owns canonical values and IDs, not transactional meaning.
+- Shared Reference Data owns canonical yarn counts, not transactional meaning.
 - It must not absorb warehouse rules, lot rules, or permission logic.
 - Changes to reference data should remain auditable because they affect multiple
   contexts.
 
 ### Likely ports / contracts
 
-- `CatalogQueryPort`
-- `ReferenceValidationPort`
-- `CatalogMaintenanceRepository`
-- `ReferenceChangeAuditPort`
+- `YarnCountQueryPort`
+- `YarnCountValidationPort`
+- `YarnCountRepository`
 
 ### Consumes from other contexts
 
-- Governance decisions about which catalogs exist and how they are curated
+- Governance decisions about yarn-count curation
 
 ---
 
@@ -441,7 +433,7 @@ flowchart TD
 | From | To | Why |
 |---|---|---|
 | Access Control | All business contexts | authorization decisions by action and scope |
-| Shared Reference Data | All business contexts | canonical IDs, catalogs, and validations |
+| Shared Reference Data | Warehouse, Yarn Spinning, Lot Processing | canonical yarn-count IDs and validation |
 | Warehouse | Yarn Spinning | production identity and material context |
 | Warehouse | Lot Processing | production identity, specifications, and shared lot-code reference |
 | Yarn Spinning | Lot Processing | skein output availability for Inventory assembly |
@@ -461,7 +453,6 @@ integration contracts that preserve ownership.
 - [Backend Technical Design Baseline](./backend/backend-technical-design.md)
 - [Persistence Design Principles](./backend/persistence-design-principles.md)
 - [Warehouse DBML](../db/warehouse.dbml)
-- [Warehouse Notes](../db/warehouse-notes.md)
 - [Context Boundaries and Ownership](./context-boundaries-and-ownership.md)
 - [Master PRD](../prd.md)
 - [Access Control PRD](../prd/access-control.md)

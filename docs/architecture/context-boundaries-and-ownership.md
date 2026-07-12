@@ -28,7 +28,7 @@ It does **not** define database schema, APIs, or internal code structure.
 | **Yarn Spinning** | Owns continuous spinning production records before Inventory assembles a lot | Stops at skein output and section/shift/machine records |
 | **Lot Processing** | Owns the operational stage history appended after Inventory assembles the lot | Stops when Quality Send hands the lot back to Warehouse |
 | **Access Control** | Owns authorization policy, scopes, and configurable permissions | Does not own business workflow semantics |
-| **Shared Reference Data** | Owns shared catalogs and canonical reference values used by multiple contexts | Does not own operational records |
+| **Shared Reference Data** | Owns the canonical shared yarn-count catalog | Does not own operational records |
 
 **Recommendation:** treat **Yarn Spinning** and **Lot Processing** as separate contexts inside the broader **Operation Unit**, not one generic “Operation” model. They have different identities, timelines, and record semantics.
 
@@ -70,11 +70,11 @@ It does **not** define database schema, APIs, or internal code structure.
 
 ### 3.5 Shared Reference Data
 
-- **Core responsibility:** provide canonical reference values reused across contexts.
-- **Owns:** users, machines, machine groups, sections, shifts, yarn counts, movement-type catalogs, and other approved shared lookups.
-- **Does not own:** transactional records, lot timelines, stock balances, or permission decisions.
-- **Inbound dependencies:** business governance that decides which catalogs exist.
-- **Outbound contracts / shared identifiers:** stable IDs and shared controlled values reused by Warehouse, Yarn Spinning, Lot Processing, and Access Control.
+- **Core responsibility:** provide the canonical yarn-count values reused across contexts.
+- **Owns:** the canonical `yarn_counts` catalog.
+- **Does not own:** users, transactional records, lot timelines, stock balances, or permission decisions.
+- **Inbound dependencies:** business governance for yarn-count curation.
+- **Outbound contracts / shared identifiers:** stable yarn-count IDs and values reused by Warehouse, Yarn Spinning, and Lot Processing.
 
 ---
 
@@ -104,7 +104,7 @@ Access Control must stay a **policy context**, not a hidden business owner.
 
 Shared Reference Data is a support context, not a dumping ground for business logic.
 
-- keep canonical shared lists and identifiers here
+- keep the canonical yarn-count list and identifiers here
 - keep operational meaning in the owning business context
 - do not move lot rules, stock rules, or permission rules into catalogs
 
@@ -132,7 +132,8 @@ Shared Reference Data is a support context, not a dumping ground for business lo
 | PT physical presentation | Warehouse | Separate dimension from quality/disposition |
 | PT sale / transfer / return | Warehouse | Warehouse stock lifecycle after reception |
 | Permission policy and scope rules | Access Control | Cross-cutting authorization only |
-| Users, machines, shifts, yarn counts, sections | Shared Reference Data | Canonical shared references only |
+| Canonical users and technical roles | Access Control | Authorization identity and technical RBAC roles |
+| Yarn counts | Shared Reference Data | Canonical `yarn_counts` references only |
 
 ---
 
@@ -160,7 +161,7 @@ flowchart LR
 | Warehouse | Yarn Spinning | Production identity and material availability for execution |
 | Yarn Spinning | Lot Processing | Skein output and readiness for Inventory assembly |
 | Warehouse | Lot Processing | Shared production identity, specifications, and lot code |
-| Lot Processing | Warehouse | One Quality Send leaves the same lot awaiting Warehouse validation; Warehouse later accepts it through its own receipt for the same `production_identity_id` after physical verification |
+| Lot Processing | Warehouse | One Quality Send leaves the same lot awaiting Warehouse validation; Warehouse later accepts it once through its own receipt for the same `production_identity_id` after physical verification |
 | Access Control | All business contexts | Authorization decisions by action and scope |
 | Shared Reference Data | All business contexts | Stable catalog identifiers and shared reference values |
 
