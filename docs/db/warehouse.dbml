@@ -19,7 +19,7 @@ Enum product_availability_state {
 Table production_identities {
   production_identity_id uuid [pk]
   lot_code varchar [not null, unique, note: "Visible business code shared across contexts; not the technical ID."]
-  yarn_count_id uuid [not null, ref: > yarn_counts.yarn_count_id, note: "Shared Catalogs yarn count identity requested for production."]
+  yarn_count_id uuid [not null, note: "Shared Catalogs yarn count identity requested for production."]
   required_color varchar
   destination_name varchar [note: "Business customer or destination defined for production."]
   production_variant varchar
