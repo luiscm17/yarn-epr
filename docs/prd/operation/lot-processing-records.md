@@ -80,7 +80,7 @@ del historial del lote.
 
 ### Datos heredados o de referencia
 
-- código de lote definido por Almacén
+- `production_identity_id` definido por Almacén y su `lot_code` visible
 - título
 - color
 - cliente o destino
@@ -134,7 +134,7 @@ del historial del lote.
 
 ### Datos heredados o de referencia
 
-- código de lote
+- `production_identity_id` y `lot_code` visible
 - título
 - color requerido
 - cantidad de madejas armadas por Inventario
@@ -205,7 +205,7 @@ del historial del lote.
 
 ### Datos heredados o de referencia
 
-- código de lote
+- `production_identity_id` y `lot_code` visible
 - cantidad de madejas
 - información relevante de Tintorería
 
@@ -265,7 +265,7 @@ del historial del lote.
 
 ### Datos heredados o de referencia
 
-- código de lote
+- `production_identity_id` y `lot_code` visible
 - cantidad de madejas provenientes de Secado
 - información de condición del lote
 
@@ -326,7 +326,7 @@ del historial del lote.
 
 ### Datos heredados o de referencia
 
-- código de lote
+- `production_identity_id` y `lot_code` visible
 - cantidad de conos u ovillos provenientes de Devanado/Ovillado
 - información relevante de la etapa anterior
 
@@ -389,7 +389,7 @@ del historial del lote.
 
 ### Datos heredados o de referencia
 
-- código de lote
+- `production_identity_id` y `lot_code` visible
 - historial completo del lote
 - datos relevantes de Embolsado
 
@@ -412,7 +412,7 @@ del historial del lote.
 
 ### Quality Send
 
-- Quality Send is the one permitted operational action per lot that records an exact send timestamp and actor, leaves the same Warehouse-defined lot in the intermediate awaiting-Warehouse-validation phase, and implies completed Quality validation. The pending handoff is that singular marker, not the latest record or a timestamp-ordered selection. It ends only when Warehouse records its receipt for the same lot identity.
+- Quality Send is the one permitted operational action per lot that records an exact send timestamp and actor, leaves the same Warehouse-defined lot in the intermediate awaiting-Warehouse-validation phase, and implies completed Quality validation. The pending handoff is that singular marker, not the latest record or a timestamp-ordered selection. It ends only when Warehouse records its one acceptance receipt for the same lot identity.
 - The UI may show the business date, but the system persists the exact send timestamp for audit and ordering.
 - During this phase Warehouse may leave brief coordination notes. Calidad can see and subsanar those notes; they do not mean acceptance and do not create another send.
 - It does not create separate permissions for implicit inspect, review, or approve sub-steps.
@@ -452,8 +452,8 @@ del historial del lote.
 
 1. **Nacimiento físico del lote:** el lote nace físicamente en este proceso,
    cuando Inventario arma el conjunto de madejas.
-2. **Código definido externamente:** el código del lote es definido por Almacén;
-   Operación no crea códigos nuevos.
+2. **Identidad definida externamente:** Almacén define `production_identity_id`
+   y su `lot_code` visible; Operación no crea identidades ni códigos nuevos.
 3. **Historial único del lote:** cada etapa complementa el mismo historial con
    nuevos datos; no se modela como pares separados de entrega/recepción.
 4. **Dato heredado vs dato verificado:** el sistema debe distinguir claramente
@@ -469,9 +469,9 @@ del historial del lote.
 8. **Restricción posterior:** fuera de la ventana operativa, solo SysAdmin puede
    editar.
 9. **Handoff intermedio único:** después de Quality Send, el lote permanece en
-   espera de validación de Almacén hasta que Almacén registra su recepción bajo
-   la misma identidad. Las notas breves de coordinación no equivalen a aceptación
-   ni reinician el envío.
+   espera de validación de Almacén hasta que Almacén registra su única recepción
+   de aceptación bajo la misma identidad. Las notas breves de coordinación no
+   equivalen a aceptación ni reinician el envío.
 10. **Permisos configurables:** el registrador actual no equivale a permiso fijo.
 11. **Continuidad del historial en Almacén:** al terminar Operación, el historial
    del lote continúa bajo la misma identidad en la Unidad Almacén.
