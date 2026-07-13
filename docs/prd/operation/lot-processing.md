@@ -60,7 +60,7 @@ Almacén define la única identidad del lote mediante `production_identity_id` y
 
 Cada lote atraviesa las siguientes etapas en orden secuencial estricto. No se puede registrar una etapa si la anterior no está completada.
 
-The process usually lasts approximately one to two days, and a lot may physically cross multiple shifts. Each intervention records only the work actually performed at that moment. A lot may have multiple legitimate records in the same stage, business date, or shift, including records by different users or at different times. Business date, shift, actors, and timestamps describe process history; they do not define uniqueness. Controlled edits remain subject to the existing audit policy.
+The process usually lasts approximately one to two days, and a lot may physically cross multiple shifts. Each intervention records only the work actually performed at that moment. A lot may have multiple legitimate records in the same stage, business date, or shift, including records by different users or at different times. Business date, shift, actors, and system timestamps describe process history; they do not define uniqueness. The use-case/domain layer rejects a later-stage intervention until the prior stage is complete; this cross-table invariant is not a DBML constraint. Controlled edits remain subject to the existing audit policy.
 
 ### 2.1 Inventario — Armado del lote
 
@@ -159,13 +159,11 @@ La categoría se selecciona de un listado específico para cada etapa. Si no apl
 
 Además de la categoría, se puede incluir un campo opcional de **detalles** en texto libre para contexto adicional (ej: "la tina T-03 presentó residuos del lote anterior").
 
-### 3.2 Registro de timeline
+### 3.2 Registro de historial
 
-Cada etapa captura el momento en que el lote **entra** y el momento en que **sale**, junto con quién lo recibió y quién lo entregó. Esto permite:
+Cada intervención conserva fecha de negocio, turno, responsables aplicables y timestamps del sistema. No se persisten pares de timestamps físicos de entrada/salida en el modelo actual. La duración física por etapa queda diferida hasta que el negocio defina qué evento inicia y termina esa medición, cómo se capturará y qué decisiones la usarán.
 
-- Saber exactamente cuánto tiempo estuvo el lote en cada etapa
-- Identificar cuellos de botella (etapas donde los lotes pasan más tiempo del esperado)
-- Determinar quién fue responsable en cada momento, incluso cuando el lote cruza múltiples turnos
+Esto permite mantener trazabilidad de responsabilidad y de registro, incluso cuando el lote cruza múltiples turnos, sin inferir una duración física que el negocio aún no definió.
 
 El lote avanza cuando **físicamente** cambia de etapa. No existen estados intermedios formales fuera de estas etapas; si el lote está en Tintorería esperando una decisión sobre un reteñir, sigue estando en Tintorería hasta que sale a Secado. Las demoras, observaciones o decisiones pendientes se registran como parte de la etapa actual.
 
@@ -231,13 +229,12 @@ Calidad documenta el estado de calidad del lote al momento de la entrega. Esa in
 
 El proceso completo del lote puede durar entre 1 y 2 días, cruzando múltiples turnos. Cada registro de etapa captura:
 
-- El turno en que se recibió el lote en esa etapa
-- El responsable que lo recibió
-- El supervisor a cargo en ese turno
-- El turno en que salió de la etapa
-- El responsable que lo entregó
+- La fecha de negocio y el turno de la intervención
+- El responsable que recibe, entrega o ejecuta, según corresponda a la etapa
+- El supervisor a cargo
+- Los timestamps de registro y corrección del sistema
 
-Esto garantiza que en cualquier momento se pueda responder: ¿quién hizo qué, en qué turno, y cuánto tiempo estuvo el lote en cada etapa?
+Esto permite responder quién hizo qué y en qué turno. La duración física de cada etapa no se calcula ni se infiere hasta que exista una definición de negocio aprobada.
 
 ### 5.2 Peso por etapa
 

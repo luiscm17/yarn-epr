@@ -48,6 +48,8 @@ Estas tres piezas no representan el mismo evento y no deben confundirse.
 
 This does not impose one record per lot or stage. A lot may have multiple legitimate interventions in the same stage, business date, or shift by different users or at different moments. Business date, shift, actors, and timestamps are history attributes, not uniqueness keys.
 
+Later-stage interventions require completion of the prior stage. This is enforced in the use-case/domain layer across the specialized stage records; it is not expressed as a cross-table database constraint.
+
 ---
 
 ## 3. Familia principal de registro
@@ -462,6 +464,9 @@ del historial del lote.
 5. **Tiempo de negocio vs tiempo de sistema:** cada etapa debe guardar la fecha
    de negocio y el turno ingresados por el usuario, además del timestamp de
    registro capturado automáticamente por el sistema.
+   El modelo actual no guarda pares de timestamps físicos de entrada/salida ni
+   calcula duración por etapa; esa necesidad queda diferida hasta que el negocio
+   defina los eventos físicos, la captura y el uso de esa duración.
 6. **Corrección con auditoría:** si existe error de carga, el registro puede
    corregirse con auditoría completa.
 7. **Ventana operativa:** los roles operativos pueden corregir dentro de la

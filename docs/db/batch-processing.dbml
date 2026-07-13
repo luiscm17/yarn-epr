@@ -1,6 +1,6 @@
 Project yarn_epr_batch_processing {
   database_type: "PostgreSQL"
-  Note: "Minimal Lot Processing write model. Warehouse defines the single lot identity; each specialized stage table records the history of its interventions for that same lot. Separate stage tables capture the materially different facts of Inventory, Dyeing, Drying, Winding/Balling, Bagging, and Quality. Business date, shift, actors, and timestamps describe history and never make a stage record unique. Notes are optional fields on the stage records. Waste stays on the stages that can produce it. No SQL is defined here."
+  Note: "Minimal Lot Processing write model. Warehouse defines the single lot identity; each specialized stage table records the history of its interventions for that same lot. Separate stage tables capture the materially different facts of Inventory, Dyeing, Drying, Winding/Balling, Bagging, and Quality. Business date, shift, actors, and timestamps describe history and never make a stage record unique. Later stages require prior-stage completion as a use-case/domain invariant; no cross-table DBML constraint models that ordering. Notes are optional fields on the stage records. Waste stays on the stages that can produce it. No SQL is defined here."
 }
 
 Enum conversion_variant {

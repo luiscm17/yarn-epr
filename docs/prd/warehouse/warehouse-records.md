@@ -188,7 +188,9 @@ agrupaciones funcionales para cerrar el significado del dato antes del diseño.
 
 - la emisión mueve stock de MP
 - no redefine la identidad del lote
-- documenta la entrega completa del fardo a Operación sin vincularlo a una identidad de producción o código de lote
+- documenta la entrega completa del fardo únicamente a Producción, sin vincularlo a una identidad de producción o código de lote; no requiere ni registra un destino
+- un fardo pasa de no entregado a entregado una sola vez; al entregarlo se registran obligatoriamente fecha de negocio, responsable que entrega y responsable receptor, y antes de entregarlo esos datos no existen
+- una reversión solo puede ocurrir como corrección controlada y auditada
 
 ### Datos de negocio principales
 
@@ -196,7 +198,6 @@ agrupaciones funcionales para cerrar el significado del dato antes del diseño.
 - fecha de negocio de emisión
 - fardo entregado completo
 - peso del fardo entregado en kg
-- destino o área receptora
 - responsable que entrega
 - responsable receptor
 - autorización operativa correspondiente
@@ -252,6 +253,8 @@ agrupaciones funcionales para cerrar el significado del dato antes del diseño.
 - presentación física recibida
 - physical consistency of the route-sheet facts already recorded by Inventario and Embolsado
 - incidencias visibles al momento de la recepción
+
+Almacén no vuelve a cargar peso, cantidad de bolsas ni cantidad de unidades: esos son hechos ya registrados por Operación en la route sheet. La recepción de Almacén registra aceptación, presentación física y diferencias observadas.
 
 ### Datos generados por la recepción
 

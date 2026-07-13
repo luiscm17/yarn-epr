@@ -40,13 +40,15 @@ Table raw_material {
   business_received_at timestamptz [not null, note: "Physical/business receipt time, not system capture time."]
   supplier_name varchar
   received_weight_kg decimal [not null]
-  delivered boolean [not null, note: "True only after the entire bale is delivered to Operation."]
-  delivered_at timestamptz [note: "Business time of the whole-bale delivery to Operation."]
-  delivered_by_user_id uuid
-  received_by_operation_user_id uuid
+  delivered boolean [not null, note: "True only after the entire bale is delivered to Production. Whole bales are delivered only to Production, so no destination column is needed. When false, all three delivery facts are null; when true, all three are required."]
+  delivered_at timestamptz [note: "Required business time of the whole-bale delivery to Production when delivered is true; otherwise null."]
+  delivered_by_user_id uuid [note: "Required Warehouse delivery actor when delivered is true; otherwise null."]
+  received_by_operation_user_id uuid [note: "Required Production receipt actor when delivered is true; otherwise null."]
   received_by_user_id uuid [not null]
   condition_notes text
   created_at timestamptz [not null]
+
+  Note: "Delivery coherence is an eventual PostgreSQL CHECK and transactional application invariant: delivered = false requires delivered_at, delivered_by_user_id, and received_by_operation_user_id to be null; delivered = true requires all three. A bale transitions from not delivered to delivered once, except through the controlled correction audit."
 }
 
 Table supply_items {

@@ -190,7 +190,7 @@ En cada cierre, el sistema calcula los saldos con la formula `(Saldo Anterior + 
 | WH-RM-01 | El sistema debe permitir registrar la recepción de fardos de MP con: proveedor, factura, peso bruto, título, color/fibra y número de camión. |
 | WH-RM-02 | El sistema debe permitir definir una identidad de producción independiente mediante `production_identity_id` y un `lot_code` único visible. |
 | WH-RM-03 | El sistema debe registrar en esa identidad los datos del pedido: cliente o destino, color solicitado, título, tipo N/CH y observaciones. Este enriquecimiento es el insumo para la planificación de producción que realiza el Jefe de Producción (ver [sección 5 de operation.md](../prd/operation.md#5-planificación-de-la-producción)). |
-| WH-RM-04 | El sistema debe permitir registrar la entrega completa de un fardo a Operación indicando fecha, responsable que entrega, responsable receptor y destino. La entrega no vincula el fardo a una identidad de producción o código de lote. |
+| WH-RM-04 | El sistema debe permitir registrar una única entrega completa de un fardo a Producción indicando fecha, responsable que entrega y responsable receptor. Los fardos completos se entregan únicamente a Producción, por lo que no se requiere ni se persiste un destino. Cuando la entrega está registrada, esos tres datos son obligatorios; antes de la entrega no se registran. La transición de no entregado a entregado solo se revierte mediante corrección controlada y auditada. La entrega no vincula el fardo a una identidad de producción o código de lote. |
 | WH-RM-05 | El sistema debe mantener el historial de fardos recibidos y entregados a Operación, independiente de las definiciones de producción. |
 
 ### 5.2 Producto Terminado

@@ -33,7 +33,7 @@ Represents the single lot identity initially defined by Warehouse before product
 
 ### `raw_material`
 
-Represents the raw-material bale/fardo identity, original receipt evidence, and the one whole-bale delivery to Operation when it occurs. A bale is never partially delivered and is not linked to a production identity or finished-product lot.
+Represents the raw-material bale/fardo identity, original receipt evidence, and the one whole-bale delivery to Production when it occurs. A bale is never partially delivered, is delivered only to Production, and is not linked to a production identity or finished-product lot; therefore, no destination column is needed. Delivery coherence is an eventual PostgreSQL `CHECK` and transactional application invariant: when `delivered` is false, `delivered_at`, `delivered_by_user_id`, and `received_by_operation_user_id` are null; when true, all three are required. The bale transitions from not delivered to delivered once, except through the controlled correction audit.
 
 | Field                                | Why it exists                                                                 | Optional / challenge later                                  |
 | ------------------------------------ | ----------------------------------------------------------------------------- | ----------------------------------------------------------- |
@@ -46,17 +46,17 @@ Represents the raw-material bale/fardo identity, original receipt evidence, and 
 | `business_received_at`               | Physical/business receipt time.                                               | No.                                                         |
 | `supplier_name`                      | Supplier evidence without requiring a supplier catalog.                       | Yes; challenge once catalogs exist.                         |
 | `received_weight_kg`                 | Quantity originally received for the bale.                                    | No.                                                         |
-| `delivered`                          | Whether the whole bale was delivered to Operation.                             | No.                                                         |
-| `delivered_at`                       | Business time of the whole-bale delivery to Operation.                         | Yes; required once delivered.                               |
-| `delivered_by_user_id`               | Warehouse user who delivered the material to Operation.                       | Yes; required only once delivered.                          |
-| `received_by_operation_user_id`      | Operation user who received the whole bale.                                   | Yes.                                                        |
+| `delivered`                          | Whether the whole bale was delivered to Production.                            | No; Production is the only destination, so none is stored. |
+| `delivered_at`                       | Business time of the whole-bale delivery to Production.                        | Required when delivered; otherwise null.                    |
+| `delivered_by_user_id`               | Warehouse user who delivered the material to Production.                      | Required when delivered; otherwise null.                    |
+| `received_by_operation_user_id`      | Production user who received the whole bale.                                  | Required when delivered; otherwise null.                    |
 | `received_by_user_id`                | Warehouse receiver at raw-material intake.                                    | No.                                                         |
 | `condition_notes`                    | Physical condition or differences observed on the bale.                       | Yes.                                                        |
 | `created_at`                         | System timestamp.                                                            | No.                                                         |
 
 ### `finished_product_receipts`
 
-Represents the one Warehouse acceptance receipt for finished product received from Operation under the existing shared production identity.
+Represents the one Warehouse acceptance receipt for finished product received from Operation under the existing shared production identity. Warehouse verifies the existing Inventory and Bagging route-sheet facts and records acceptance, presentation, and differences; it does not duplicate Operational weight, bag count, or unit count.
 
 | Field                                              | Why it exists                                                                                          | Optional / challenge later                         |
 | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------- |
