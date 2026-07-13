@@ -1,431 +1,139 @@
-// Warehouse context only.
-// This DBML models Warehouse-owned write records and Warehouse-side auditability.
-// It intentionally does NOT absorb Yarn Spinning or Lot Processing stage history.
-
-Project warehouse {
-  database_type: 'PostgreSQL'
-  Note: 'First Warehouse DBML baseline. External/shared technical identifiers use explicit *_id names, while visible business identifiers keep business-oriented names such as *_code or visible numbers.'
+Project yarn_epr_warehouse {
+  database_type: "PostgreSQL"
+  Note: "Minimal Warehouse write model. Raw material is bale-centered in one table, with receipt evidence and whole-bale delivery facts. No SQL is defined here."
 }
 
-Enum production_identity_status {
-  defined
-  planned
-  emitted
-  partially_completed
-  completed
-  cancelled
-}
-
-Enum bale_custody_status {
-  available
-  partially_allocated
-  fully_allocated
-  emitted
-  adjusted
-  blocked
-}
-
-Enum pt_disposition_state {
-  available
-  flagged
-  available_with_condition
-  defective
-  dispatched
-}
-
-Enum pt_physical_presentation_kind {
-  bagged
-  bulk
-  cone
-  ball
-  mixed
-  other
-}
-
-Enum pt_exit_type {
+Enum finished_product_delivery_type {
   direct_sale
   commercialization_transfer
 }
 
-Enum supply_movement_type {
-  supplier_reception
-  production_consumption
-  supplier_return
-}
-
-Enum stock_family {
-  raw_material_bale
-  finished_product
-  supply
-}
-
-Enum stock_closure_type {
-  monthly
-  annual
-  extraordinary
-}
-
-Enum audit_action_type {
-  create
-  correct
-  reclassify
-  cancel
-  reopen
-}
-
-Table bale_receptions {
-  id uuid [pk]
-  reception_number varchar [not null, unique, note: 'Visible Warehouse reception number. Separate from technical id.']
-  supplier_id uuid [note: 'External/shared technical supplier id. Owned outside Warehouse schema and separate from visible supplier business codes/documents.']
-  supplier_document_number varchar
-  source_origin_snapshot varchar
-  truck_number varchar
-  business_date date [not null]
-  business_shift_id varchar [note: 'External/shared technical shift id when needed by policy.']
-  received_at timestamp [note: 'Physical reception datetime.']
-  received_by_actor_id uuid [note: 'External/shared technical actor id.']
-  unloading_incidents_note text
-  created_at timestamp [not null]
-  updated_at timestamp [not null]
-
-  Note: 'Warehouse-owned raw-material reception header. Reception is separate from later production identity definition.'
-}
-
-Table bales {
-  id uuid [pk]
-  bale_code varchar [unique, note: 'Visible bale/unit code when Warehouse labels individual bales.']
-  bale_reception_id uuid [not null]
-  raw_material_type_id varchar [note: 'External/shared technical raw-material-type id. Keep separate from human-readable descriptors.']
-  yarn_count_snapshot varchar
-  fiber_or_color_snapshot varchar
-  gross_weight_kg decimal(12,3)
-  net_weight_kg decimal(12,3) [not null]
-  remaining_weight_kg decimal(12,3) [not null]
-  custody_status bale_custody_status [not null, default: 'available']
-  received_condition_note text
-  source_descriptors_snapshot jsonb [note: 'Minimal historical descriptors kept for later traceability readability.']
-  created_at timestamp [not null]
-  updated_at timestamp [not null]
-
-  Note: 'A bale is a received raw-material unit under Warehouse custody. It is not a production lot.'
-
-  Indexes {
-    (bale_reception_id)
-    (custody_status)
-  }
+Enum product_availability_state {
+  available
+  flagged
+  available_with_condition
+  defective
+  delivered
 }
 
 Table production_identities {
-  id uuid [pk]
-  lot_code varchar [not null, unique, note: 'Visible business code shared downstream. Not the technical primary key.']
-  business_date date [not null, note: 'Date the identity was defined.']
-  yarn_count_snapshot varchar [not null]
-  color_requirement_snapshot varchar
-  client_or_destination_snapshot varchar
-  product_type_snapshot varchar
-  request_notes_snapshot text
-  defined_by_actor_id uuid [note: 'External/shared technical actor id.']
-  authorization_id uuid [note: 'External/shared technical authorization id when definition requires approval.']
-  status production_identity_status [not null, default: 'defined']
-  created_at timestamp [not null]
-  updated_at timestamp [not null]
-
-  Note: 'Warehouse-owned production identity created after bale reception and before Operation creates the physical lot.'
+  production_identity_id uuid [pk]
+  lot_code varchar [not null, unique, note: "Visible business code shared across contexts; not the technical ID."]
+  yarn_count_id uuid [not null, note: "Shared Catalogs yarn count identity requested for production."]
+  required_color varchar
+  destination_name varchar [note: "Business customer or destination defined for production."]
+  production_variant varchar
+  request_notes text
+  business_defined_at timestamptz [not null]
+  defined_by_user_id uuid [not null, note: "Reference to Access/Shared actor identity; Warehouse does not own users."]
+  authorized_by_user_id uuid
+  created_at timestamptz [not null]
 }
 
-Table production_identity_bale_allocations {
-  id uuid [pk]
-  production_identity_id uuid [not null]
-  bale_id uuid [not null]
-  planned_quantity_kg decimal(12,3) [not null]
-  allocation_basis_snapshot text [note: 'Planning/reference basis before authoritative emission.']
-  source_bale_descriptors_snapshot jsonb
-  defined_by_actor_id uuid [note: 'External/shared technical actor id.']
-  business_date date [not null]
-  created_at timestamp [not null]
-  updated_at timestamp [not null]
+Table raw_material {
+  raw_material_id uuid [pk]
+  bale_number varchar [not null, unique, note: "Visible bale/fardo identity under Warehouse custody; not the technical ID."]
+  raw_material_type varchar [not null]
+  yarn_count_label varchar [note: "Snapshot of title/yarn-count wording known at reception."]
+  color_or_fiber varchar
+  receipt_number varchar [note: "Visible Warehouse receipt reference when one exists; no separate receipt header until needed."]
+  business_received_at timestamptz [not null, note: "Physical/business receipt time, not system capture time."]
+  supplier_name varchar
+  received_weight_kg decimal [not null]
+  delivered boolean [not null, note: "True only after the entire bale is delivered to Production. Whole bales are delivered only to Production, so no destination column is needed. When false, all three delivery facts are null; when true, all three are required."]
+  delivered_at timestamptz [note: "Required business time of the whole-bale delivery to Production when delivered is true; otherwise null."]
+  delivered_by_user_id uuid [note: "Required Warehouse delivery actor when delivered is true; otherwise null."]
+  received_by_operation_user_id uuid [note: "Required Production receipt actor when delivered is true; otherwise null."]
+  received_by_user_id uuid [not null]
+  condition_notes text
+  created_at timestamptz [not null]
 
-  Note: 'Planning/reference linkage between production identity and source bales. This table alone does NOT commit stock.'
-
-  Indexes {
-    (production_identity_id)
-    (bale_id)
-  }
+  Note: "Delivery coherence is an eventual PostgreSQL CHECK and transactional application invariant: delivered = false requires delivered_at, delivered_by_user_id, and received_by_operation_user_id to be null; delivered = true requires all three. A bale transitions from not delivered to delivered once, except through the controlled correction audit."
 }
 
-Table material_emissions {
-  id uuid [pk]
-  emission_number varchar [not null, unique, note: 'Visible emission number. Separate from technical id.']
-  production_identity_id uuid [not null]
-  business_date date [not null]
-  business_shift_id varchar [note: 'External/shared technical shift id when emission is shift-sensitive.']
-  moved_at timestamp [not null, note: 'Physical movement datetime.']
-  destination_area_id varchar [note: 'External/shared technical id for the receiving production area or destination.']
-  delivered_by_actor_id uuid [note: 'External/shared technical actor id.']
-  received_by_actor_id uuid [note: 'External/shared technical actor id.']
-  authorized_by_actor_id uuid [note: 'External/shared technical actor id.']
-  authorization_id uuid [note: 'External/shared technical authorization id.']
-  incident_note text
-  created_at timestamp [not null]
-  updated_at timestamp [not null]
-
-  Note: 'Warehouse-owned raw-material emission to production. Authoritative bale stock commitment is established through its emission allocations.'
+Table supply_items {
+  supply_item_id uuid [pk]
+  supply_code varchar [not null, unique]
+  supply_name varchar [not null]
+  supply_category varchar [not null, note: "Flexible Warehouse-owned label; no separate catalog until the source docs require one."]
+  unit_of_measure varchar [not null]
+  is_active boolean [not null]
+  created_at timestamptz [not null]
 }
 
-Table material_emission_allocations {
-  id uuid [pk]
-  material_emission_id uuid [not null]
-  production_identity_bale_allocation_id uuid [note: 'Optional link back to prior planning/reference allocation.']
-  bale_id uuid [not null]
-  emitted_quantity_kg decimal(12,3) [not null]
-  source_bale_descriptors_snapshot jsonb
-  created_at timestamp [not null]
-
-  Note: 'Authoritative bale allocation for stock commitment and source-bale consumption. This is the Warehouse source of truth for what was actually emitted.'
-
-  Indexes {
-    (material_emission_id)
-    (bale_id)
-  }
+Table finished_product_receipts {
+  finished_product_receipt_id uuid [pk]
+  receipt_number varchar [not null, unique]
+  production_identity_id uuid [not null, unique, ref: > production_identities.production_identity_id, note: "Warehouse accepts the finished product once under the existing shared production identity; this does not create a second product identity."]
+  availability_state product_availability_state [not null, note: "Current Warehouse availability state after reception and verification."]
+  physical_presentation varchar [not null, note: "Physical form received or stored by Warehouse, kept separate from availability state."]
+  business_received_at timestamptz [not null]
+  received_by_user_id uuid [not null]
+  origin_supervisor_user_id uuid
+  delivery_condition_note text
+  verification_notes text
+  created_at timestamptz [not null]
 }
 
-Table finished_product_receptions {
-  id uuid [pk]
-  reception_number varchar [not null, unique, note: 'Visible Warehouse PT reception number.']
-  production_identity_id uuid [not null]
-  batch_processing_lot_delivery_handoff_id uuid [note: 'External upstream technical ID for the Batch Processing lot-delivery handoff record. Warehouse does not own that record family. Separate from lot_code, which remains the visible shared business code.']
-  business_date date [not null]
-  business_shift_id varchar [note: 'External/shared technical shift id when needed.']
-  received_at timestamp [not null, note: 'Physical reception datetime.']
-  received_by_actor_id uuid [note: 'External/shared technical actor id.']
-  origin_supervisor_id uuid [note: 'External/shared technical actor id from Operation.']
-  quantity_received_kg decimal(12,3) [not null]
-  quantity_accepted_kg decimal(12,3) [not null]
-  declared_value_amount decimal(14,2)
-  product_category_snapshot varchar
-  product_subcategory_snapshot varchar
-  operation_quality_state_snapshot varchar [note: 'Reference snapshot from Operation. Keep separate from Warehouse disposition.']
-  received_physical_presentation_snapshot varchar [note: 'What arrived physically at reception time.']
-  inconsistency_note text
-  created_at timestamp [not null]
-  updated_at timestamp [not null]
-
-  Note: 'Warehouse intake of finished product. Continues the shared identity without taking ownership of Operation stage history.'
+Table finished_product_deliveries {
+  finished_product_delivery_id uuid [pk]
+  delivery_number varchar [not null, unique]
+  delivery_type finished_product_delivery_type [not null]
+  finished_product_receipt_id uuid [not null, ref: > finished_product_receipts.finished_product_receipt_id]
+  business_delivered_at timestamptz [not null]
+  delivered_to_name varchar [not null, note: "Customer, Commercialization, or other business destination."]
+  quantity_kg decimal [not null]
+  commercial_document_number varchar [note: "Invoice or commercial reference when applicable."]
+  handled_by_user_id uuid [not null]
+  authorized_by_user_id uuid
+  notes text
+  created_at timestamptz [not null]
 }
 
-Table pt_disposition_history {
-  id uuid [pk]
-  production_identity_id uuid [not null]
-  finished_product_reception_id uuid
-  business_date date [not null]
-  business_shift_id varchar [note: 'External/shared technical shift id when relevant to the disposition event.']
-  effective_at timestamp [not null]
-  operation_quality_state_snapshot varchar [note: 'Reference-only context copied when relevant.']
-  disposition_state pt_disposition_state [not null]
-  condition_note text
-  planned_destination_snapshot varchar
-  set_by_actor_id uuid [note: 'External/shared technical actor id.']
-  created_at timestamp [not null]
-
-  Note: 'Warehouse-owned availability/disposition history. Separate dimension from Operation quality and physical presentation.'
-
-  Indexes {
-    (production_identity_id)
-    (finished_product_reception_id)
-    (disposition_state)
-  }
+Table finished_product_returns {
+  finished_product_return_id uuid [pk]
+  finished_product_delivery_id uuid [not null, ref: > finished_product_deliveries.finished_product_delivery_id, note: "Delivery from which finished product is returned to Warehouse."]
+  returned_quantity_kg decimal [not null, note: "Quantity returned; supports partial returns and restores this quantity to Warehouse availability."]
+  business_returned_at timestamptz [not null, note: "Business return time."]
+  received_by_user_id uuid [not null, note: "Warehouse user who received the returned finished product."]
+  created_at timestamptz [not null]
 }
 
-Table pt_physical_presentation_history {
-  id uuid [pk]
-  production_identity_id uuid [not null]
-  finished_product_reception_id uuid
-  business_date date [not null]
-  effective_at timestamp [not null]
-  physical_presentation pt_physical_presentation_kind [not null]
-  storage_mode_snapshot varchar [note: 'Optional operational/commercial mode such as industrial or balling.']
-  affected_quantity_kg decimal(12,3)
-  changed_by_actor_id uuid [note: 'External/shared technical actor id.']
-  reason_note text
-  created_at timestamp [not null]
-
-  Note: 'Warehouse-owned physical presentation history. Separate from disposition and Operation quality.'
-
-  Indexes {
-    (production_identity_id)
-    (finished_product_reception_id)
-  }
+Table supply_receipts {
+  supply_receipt_id uuid [pk]
+  receipt_number varchar [not null, unique]
+  supply_item_id uuid [not null, ref: > supply_items.supply_item_id]
+  business_received_at timestamptz [not null]
+  received_from_name varchar [not null, note: "Supplier or source name; intentionally denormalized until a supplier catalog is justified."]
+  quantity decimal [not null]
+  unit_of_measure_snapshot varchar [not null]
+  received_by_user_id uuid [not null]
+  notes text
+  created_at timestamptz [not null]
 }
 
-Table pt_exits {
-  id uuid [pk]
-  exit_number varchar [not null, unique, note: 'Visible PT exit number.']
-  exit_type pt_exit_type [not null]
-  business_date date [not null]
-  business_shift_id varchar [note: 'External/shared technical shift id when relevant to the exit.']
-  moved_at timestamp [not null]
-  destination_id varchar [note: 'External/shared technical customer or commercialization destination id. Keep business-facing document/number fields separate.']
-  commercial_document_number varchar
-  delivered_by_actor_id uuid [note: 'External/shared technical actor id.']
-  authorized_by_actor_id uuid [note: 'External/shared technical actor id.']
-  authorization_id uuid [note: 'External/shared technical authorization id.']
-  note text
-  created_at timestamp [not null]
-  updated_at timestamp [not null]
-
-  Note: 'Warehouse-owned PT exit header. Items keep the production-identity-level stock traceability.'
+Table supply_deliveries {
+  supply_delivery_id uuid [pk]
+  delivery_number varchar [not null, unique]
+  supply_item_id uuid [not null, ref: > supply_items.supply_item_id]
+  business_delivered_at timestamptz [not null]
+  delivered_to_name varchar [not null, note: "Person, area, or production destination that received the supply."]
+  quantity decimal [not null]
+  unit_of_measure_snapshot varchar [not null]
+  delivered_by_user_id uuid [not null]
+  received_by_name varchar [note: "Visible recipient name when no user account or catalog entry exists yet."]
+  notes text
+  created_at timestamptz [not null]
 }
 
-Table pt_exit_items {
-  id uuid [pk]
-  pt_exit_id uuid [not null]
-  production_identity_id uuid [not null]
-  quantity_kg decimal(12,3) [not null]
-  disposition_snapshot varchar
-  physical_presentation_snapshot varchar
-  created_at timestamp [not null]
-
-  Note: 'Exit line scoped to one production identity so PT stock can leave partially and remain traceable.'
-
-  Indexes {
-    (pt_exit_id)
-    (production_identity_id)
-  }
-}
-
-Table pt_returns {
-  id uuid [pk]
-  return_number varchar [not null, unique, note: 'Visible PT return number.']
-  original_pt_exit_id uuid [not null]
-  business_date date [not null]
-  returned_at timestamp [not null]
-  received_by_actor_id uuid [note: 'External/shared technical actor id.']
-  return_reason_snapshot text
-  created_at timestamp [not null]
-  updated_at timestamp [not null]
-
-  Note: 'Warehouse-owned PT return header. A return references an original exit and does not create a new production identity.'
-}
-
-Table pt_return_items {
-  id uuid [pk]
-  pt_return_id uuid [not null]
-  pt_exit_item_id uuid [not null]
-  production_identity_id uuid [not null]
-  quantity_kg decimal(12,3) [not null]
-  received_condition_note text
-  resulting_disposition_state pt_disposition_state [note: 'Operational state assigned after the returned PT is reviewed.']
-  created_at timestamp [not null]
-
-  Note: 'Return line scoped to the original exit item so partial returns remain auditable.'
-
-  Indexes {
-    (pt_return_id)
-    (pt_exit_item_id)
-    (production_identity_id)
-  }
-}
-
-Table supply_movements {
-  id uuid [pk]
-  movement_number varchar [not null, unique, note: 'Visible supply movement number.']
-  movement_type supply_movement_type [not null]
-  business_date date [not null]
-  business_shift_id varchar [note: 'External/shared technical shift id when relevant to the movement.']
-  moved_at timestamp [not null]
-  supply_category_id varchar [note: 'External/shared technical supply-category id.']
-  supply_item_id varchar [note: 'External/shared technical supply-item id.']
-  supplier_or_destination_id varchar [note: 'External/shared technical supplier or destination id.']
-  destination_area_id varchar [note: 'External/shared technical production-area id for consumption.']
-  quantity decimal(12,3) [not null]
-  unit_of_measure_id varchar [not null, note: 'External/shared technical unit-of-measure id. Keep visible labels in catalogs or snapshots when historical readability requires them.']
-  handled_by_actor_id uuid [note: 'External/shared technical actor id.']
-  authorized_by_actor_id uuid [note: 'External/shared technical actor id when required by movement type.']
-  authorization_id uuid [note: 'External/shared technical authorization id when required.']
-  note text
-  created_at timestamp [not null]
-  updated_at timestamp [not null]
-
-  Note: 'Warehouse-owned supply stock movement. Separate lifecycle from the production-identity / PT flow.'
-}
-
-Table stock_closures {
-  id uuid [pk]
-  closure_type stock_closure_type [not null]
-  stock_family stock_family [not null]
-  period_start date [not null]
-  period_end date [not null]
-  closed_at timestamp [not null]
-  closed_by_actor_id uuid [note: 'External/shared technical actor id.']
-  note text
-  created_at timestamp [not null]
-
-  Note: 'Warehouse closure header for monthly, annual, or extraordinary stock close. Closed-period movements become read-only by policy.'
-}
-
-Table stock_closure_lines {
-  id uuid [pk]
-  stock_closure_id uuid [not null]
-  item_key varchar [not null, note: 'Identity of the closed stock line: bale, production identity, or supply item key depending on stock family.']
-  opening_quantity decimal(12,3) [not null]
-  incoming_quantity decimal(12,3) [not null]
-  outgoing_quantity decimal(12,3) [not null]
-  closing_quantity decimal(12,3) [not null]
-  unit_of_measure_id varchar [not null, note: 'External/shared technical unit-of-measure id. Keep visible labels in snapshots when needed for historical readability.']
-  snapshot_payload jsonb [note: 'Supporting descriptors kept for historical readability.']
-
-  Note: 'Closure evidence line implementing (opening + entries) - exits = closing.'
-
-  Indexes {
-    (stock_closure_id)
-    (item_key)
-  }
-}
-
-Table warehouse_correction_audit {
-  id uuid [pk]
-  target_table varchar [not null]
-  target_record_id uuid [not null]
-  action_type audit_action_type [not null]
+Table record_corrections {
+  record_correction_id uuid [pk]
+  record_table varchar [not null]
+  record_id uuid [not null]
+  corrected_by_user_id uuid [not null]
+  corrected_at timestamptz [not null]
   correction_reason text [not null]
-  authorization_id uuid [note: 'External/shared technical authorization id for scope or override when relevant.']
-  changed_by_actor_id uuid [not null, note: 'External/shared technical actor id.']
-  business_date_snapshot date [note: 'Copied when useful for review because business date and change time are different concerns.']
-  business_shift_id_snapshot varchar [note: 'Copied when useful for review because shift and change time are different concerns.']
-  changed_fields jsonb [note: 'Field-level diff metadata.']
-  before_payload jsonb
-  after_payload jsonb
-  changed_at timestamp [not null]
-
-  Note: 'Cross-cutting Warehouse correction history. Keeps current business truth editable under policy without silent overwrite.'
-
-  Indexes {
-    (target_table, target_record_id)
-    (changed_at)
-  }
+  authorization_basis text
+  before_values jsonb [not null]
+  after_values jsonb [not null]
 }
-
-Ref: bales.bale_reception_id > bale_receptions.id
-
-Ref: production_identity_bale_allocations.production_identity_id > production_identities.id
-Ref: production_identity_bale_allocations.bale_id > bales.id
-
-Ref: material_emissions.production_identity_id > production_identities.id
-Ref: material_emission_allocations.material_emission_id > material_emissions.id
-Ref: material_emission_allocations.production_identity_bale_allocation_id > production_identity_bale_allocations.id
-Ref: material_emission_allocations.bale_id > bales.id
-
-Ref: finished_product_receptions.production_identity_id > production_identities.id
-Ref: pt_disposition_history.production_identity_id > production_identities.id
-Ref: pt_disposition_history.finished_product_reception_id > finished_product_receptions.id
-Ref: pt_physical_presentation_history.production_identity_id > production_identities.id
-Ref: pt_physical_presentation_history.finished_product_reception_id > finished_product_receptions.id
-
-Ref: pt_exit_items.pt_exit_id > pt_exits.id
-Ref: pt_exit_items.production_identity_id > production_identities.id
-Ref: pt_returns.original_pt_exit_id > pt_exits.id
-Ref: pt_return_items.pt_return_id > pt_returns.id
-Ref: pt_return_items.pt_exit_item_id > pt_exit_items.id
-Ref: pt_return_items.production_identity_id > production_identities.id
-
-Ref: stock_closure_lines.stock_closure_id > stock_closures.id

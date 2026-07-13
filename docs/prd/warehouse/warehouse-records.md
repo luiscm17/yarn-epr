@@ -156,7 +156,6 @@ agrupaciones funcionales para cerrar el significado del dato antes del diseño.
 - cliente o destino
 - tipo, variante o clasificación aplicable
 - requerimientos u observaciones del pedido
-- referencia a los fardos o existencias de MP de origen
 - fecha de negocio de definición
 - responsable que define o autoriza
 
@@ -189,16 +188,16 @@ agrupaciones funcionales para cerrar el significado del dato antes del diseño.
 
 - la emisión mueve stock de MP
 - no redefine la identidad del lote
-- enlaza la existencia física de MP con la ejecución operativa posterior
+- documenta la entrega completa del fardo únicamente a Producción, sin vincularlo a una identidad de producción o código de lote; no requiere ni registra un destino
+- un fardo pasa de no entregado a entregado una sola vez; al entregarlo se registran obligatoriamente fecha de negocio, responsable que entrega y responsable receptor, y antes de entregarlo esos datos no existen
+- una reversión solo puede ocurrir como corrección controlada y auditada
 
 ### Datos de negocio principales
 
 - número de emisión
 - fecha de negocio de emisión
-- identidad de producción asociada
-- fardos o cantidades emitidas
-- cantidad emitida en kg
-- destino o área receptora
+- fardo entregado completo
+- peso del fardo entregado en kg
 - responsable que entrega
 - responsable receptor
 - autorización operativa correspondiente
@@ -226,13 +225,16 @@ agrupaciones funcionales para cerrar el significado del dato antes del diseño.
 
 - **Qué representa:** retorno del historial del lote a Almacén cuando Operación
   entrega producto terminado.
-- **Granularidad:** 1 recepción de PT × 1 lote o entrega operativa equivalente.
+- **Granularidad:** 1 recepción de aceptación de PT × 1 identidad de lote; no se admite una segunda recepción para la misma identidad.
 
 ### Regla de frontera
 
 - Almacén no recrea el historial productivo.
 - Almacén recibe el lote bajo la **misma identidad** que ya fue usada por
   Operación.
+- La única recepción para esa misma identidad es la evidencia de aceptación del
+  único Quality Send. Hasta registrarla, el lote permanece en espera de validación
+  de Almacén; una nota breve de coordinación no constituye aceptación ni otro envío.
 - La recepción puede apoyarse en datos heredados de Operación y en verificación
   física propia de Almacén.
 
@@ -242,15 +244,17 @@ agrupaciones funcionales para cerrar el significado del dato antes del diseño.
 - título
 - color
 - cliente o destino
-- estado documentado por Operación
+- estado documentado por Operación, which remains owned by Lot Processing
 - información relevante de calidad o condición de entrega
+- route-sheet facts already recorded by Inventario and Embolsado
 
 ### Datos que Almacén verifica localmente
 
-- cantidad efectivamente recibida
 - presentación física recibida
-- consistencia general entre lo entregado y lo esperado
+- physical consistency of the route-sheet facts already recorded by Inventario and Embolsado
 - incidencias visibles al momento de la recepción
+
+Almacén no vuelve a cargar peso, cantidad de bolsas ni cantidad de unidades: esos son hechos ya registrados por Operación en la route sheet. La recepción de Almacén registra aceptación, presentación física y diferencias observadas.
 
 ### Datos generados por la recepción
 
@@ -258,8 +262,6 @@ agrupaciones funcionales para cerrar el significado del dato antes del diseño.
 - fecha de negocio de recepción
 - responsable que recibe
 - supervisor o responsable de origen
-- cantidad aceptada
-- unidad principal de control: kg
 - observaciones o diferencias detectadas
 
 ### Datos técnicos automáticos
@@ -293,7 +295,7 @@ agrupaciones funcionales para cerrar el significado del dato antes del diseño.
 
 - identidad de lote
 - fecha de negocio de clasificación
-- estado de calidad informado por Operación (solo referencia)
+- Lot Processing-owned quality state, read only as context and not persisted by Warehouse
 - condición de disponibilidad o disposición operativa definida por Almacén
 - presentación física o modalidad de almacenamiento
 - destino operativo previsto cuando ya se conozca
@@ -310,7 +312,7 @@ agrupaciones funcionales para cerrar el significado del dato antes del diseño.
 
 ### Dimensiones funcionales que no deben mezclarse
 
-- estado de calidad informado por Operación: estándar / con nomenclatura / observado
+- Lot Processing-owned quality state: estándar / con nomenclatura / observado
 - disponibilidad o disposición en Almacén: disponible / observado / disponible con condición / defectuoso / entregado-despachado
 - presentación física: bolsa / suelto u otra presentación relevante
 - modalidad o destino operativo: industrial / ovillado u otra clasificación comercial u operativa relevante
@@ -497,7 +499,7 @@ Este documento debe alimentar, en ese orden:
 2. **modelado de datos**
    - qué registros funcionales deben persistirse
    - qué referencias deben conservar continuidad histórica
-   - qué relaciones existen entre fardos, identidad de producción, PT e insumos
+   - qué relaciones existen entre identidad de producción, PT e insumos, manteniendo los fardos independientes
 3. **formularios y UI**
    - qué pantallas necesita cada acto de negocio
    - qué datos son obligatorios
@@ -522,9 +524,6 @@ significado funcional del dato antes del diseño técnico.
    referencias.
 2. Debe definirse con más detalle el catálogo inicial de estados de
    disponibilidad o clasificación operativa de PT.
-3. Falta precisar qué nivel de trazabilidad unirá cada identidad de producción
-   con los fardos fuente: referencia agrupada, asignación parcial detallada u
-   otro modelo.
 4. Debe decidirse si las devoluciones de PT reingresan siempre a la misma
    clasificación operativa previa o pasan primero por una nueva revisión de
    disponibilidad.

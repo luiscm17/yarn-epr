@@ -30,8 +30,8 @@ Los registros descritos aquí reflejan la operación actual esperada.
 - Esa asignación **no es rígida**: puede cambiar por política de acceso.
 - El proceso mantiene un **historial único del lote**.
 
-Cada etapa no crea un documento aislado de “entrega” y otro de “recepción”.
-En cambio, cada etapa completa **un único registro de etapa**, donde se combinan:
+Each intervention does not create separate “delivery” and “receipt” documents.
+Instead, it creates one specialized stage record containing:
 
 1. **datos heredados** de la etapa anterior o de Almacén
 2. **datos que la etapa puede verificar localmente**
@@ -46,8 +46,9 @@ Además, cada registro de etapa debe distinguir explícitamente entre:
 
 Estas tres piezas no representan el mismo evento y no deben confundirse.
 
-Este enfoque representa mejor la operación real y evita duplicar registros que
-después complican el diseño de dominio, la auditoría y la base de datos.
+This does not impose one record per lot or stage. A lot may have multiple legitimate interventions in the same stage, business date, or shift by different users or at different moments. Business date, shift, actors, and timestamps are history attributes, not uniqueness keys.
+
+Later-stage interventions require completion of the prior stage. This is enforced in the use-case/domain layer across the specialized stage records; it is not expressed as a cross-table database constraint.
 
 ---
 
@@ -57,8 +58,7 @@ En Proceso por Lotes la familia principal es:
 
 1. **Registro de etapa del lote**
 
-Cada etapa aporta un registro al historial único del lote. Ese registro puede
-incluir, según corresponda:
+Each intervention contributes a specialized record to the lot's history. A record can include, as applicable:
 
 - datos de ingreso
 - datos verificados localmente
@@ -78,11 +78,11 @@ del historial del lote.
 ## 4.1 Inventario — Armado del lote
 
 - **Qué representa:** nacimiento físico del lote dentro del proceso.
-- **Granularidad:** 1 lote × 1 registro de etapa Inventario.
+- **Granularity:** one Inventory history record per legitimate assembly intervention; multiple records may belong to the same lot.
 
 ### Datos heredados o de referencia
 
-- código de lote definido por Almacén
+- `production_identity_id` definido por Almacén y su `lot_code` visible
 - título
 - color
 - cliente o destino
@@ -132,11 +132,11 @@ del historial del lote.
 ## 4.2 Tintorería
 
 - **Qué representa:** procesamiento del lote en tinas para aplicar color.
-- **Granularidad:** 1 lote × 1 registro de etapa Tintorería.
+- **Granularity:** one Dyeing history record per legitimate intervention; multiple records may belong to the same lot.
 
 ### Datos heredados o de referencia
 
-- código de lote
+- `production_identity_id` y `lot_code` visible
 - título
 - color requerido
 - cantidad de madejas armadas por Inventario
@@ -203,11 +203,11 @@ del historial del lote.
 ## 4.3 Secado
 
 - **Qué representa:** eliminación de humedad del lote después de Tintorería.
-- **Granularidad:** 1 lote × 1 registro de etapa Secado.
+- **Granularity:** one Drying history record per legitimate intervention; multiple records may belong to the same lot.
 
 ### Datos heredados o de referencia
 
-- código de lote
+- `production_identity_id` y `lot_code` visible
 - cantidad de madejas
 - información relevante de Tintorería
 
@@ -263,11 +263,11 @@ del historial del lote.
 ## 4.4 Devanado / Ovillado
 
 - **Qué representa:** conversión del lote al formato final intermedio.
-- **Granularidad:** 1 lote × 1 registro de etapa Devanado/Ovillado.
+- **Granularity:** one Winding/Balling history record per legitimate intervention; multiple records may belong to the same lot.
 
 ### Datos heredados o de referencia
 
-- código de lote
+- `production_identity_id` y `lot_code` visible
 - cantidad de madejas provenientes de Secado
 - información de condición del lote
 
@@ -324,11 +324,11 @@ del historial del lote.
 ## 4.5 Embolsado
 
 - **Qué representa:** empaque del producto final antes de Calidad.
-- **Granularidad:** 1 lote × 1 registro de etapa Embolsado.
+- **Granularity:** one Bagging history record per legitimate intervention; multiple records may belong to the same lot.
 
 ### Datos heredados o de referencia
 
-- código de lote
+- `production_identity_id` y `lot_code` visible
 - cantidad de conos u ovillos provenientes de Devanado/Ovillado
 - información relevante de la etapa anterior
 
@@ -387,11 +387,11 @@ del historial del lote.
 ## 4.6 Calidad
 
 - **Qué representa:** evaluación final del lote antes de su entrega a Almacén.
-- **Granularidad:** 1 lote × 1 registro de etapa Calidad.
+- **Granularity:** one Quality history record per legitimate inspection intervention; multiple records may belong to the same lot. At most one record may carry the singular Quality Send marker for that lot.
 
 ### Datos heredados o de referencia
 
-- código de lote
+- `production_identity_id` y `lot_code` visible
 - historial completo del lote
 - datos relevantes de Embolsado
 
@@ -411,6 +411,14 @@ del historial del lote.
 - defectos internos detectados
 - estado de calidad del lote al momento de entrega
 - condiciones de entrega a Almacén
+
+### Quality Send
+
+- Quality Send is the one permitted operational action per lot that records an exact send timestamp and actor, leaves the same Warehouse-defined lot in the intermediate awaiting-Warehouse-validation phase, and implies completed Quality validation. The pending handoff is that singular marker, not the latest record or a timestamp-ordered selection. It ends only when Warehouse records its one acceptance receipt for the same lot identity.
+- The UI may show the business date, but the system persists the exact send timestamp for audit and ordering.
+- During this phase Warehouse may leave brief coordination notes. Calidad can see and subsanar those notes; they do not mean acceptance and do not create another send.
+- It does not create separate permissions for implicit inspect, review, or approve sub-steps.
+- Operational actor fields are audit facts, not permission sources.
 
 ### Datos técnicos automáticos
 
@@ -446,8 +454,8 @@ del historial del lote.
 
 1. **Nacimiento físico del lote:** el lote nace físicamente en este proceso,
    cuando Inventario arma el conjunto de madejas.
-2. **Código definido externamente:** el código del lote es definido por Almacén;
-   Operación no crea códigos nuevos.
+2. **Identidad definida externamente:** Almacén define `production_identity_id`
+   y su `lot_code` visible; Operación no crea identidades ni códigos nuevos.
 3. **Historial único del lote:** cada etapa complementa el mismo historial con
    nuevos datos; no se modela como pares separados de entrega/recepción.
 4. **Dato heredado vs dato verificado:** el sistema debe distinguir claramente
@@ -456,14 +464,19 @@ del historial del lote.
 5. **Tiempo de negocio vs tiempo de sistema:** cada etapa debe guardar la fecha
    de negocio y el turno ingresados por el usuario, además del timestamp de
    registro capturado automáticamente por el sistema.
+   El modelo actual no guarda pares de timestamps físicos de entrada/salida ni
+   calcula duración por etapa; esa necesidad queda diferida hasta que el negocio
+   defina los eventos físicos, la captura y el uso de esa duración.
 6. **Corrección con auditoría:** si existe error de carga, el registro puede
    corregirse con auditoría completa.
 7. **Ventana operativa:** los roles operativos pueden corregir dentro de la
    ventana definida por la política vigente.
 8. **Restricción posterior:** fuera de la ventana operativa, solo SysAdmin puede
    editar.
-9. **Sin estados intermedios formales:** demoras u observaciones se registran
-   dentro de la etapa actual.
+9. **Handoff intermedio único:** después de Quality Send, el lote permanece en
+   espera de validación de Almacén hasta que Almacén registra su única recepción
+   de aceptación bajo la misma identidad. Las notas breves de coordinación no
+   equivalen a aceptación ni reinician el envío.
 10. **Permisos configurables:** el registrador actual no equivale a permiso fijo.
 11. **Continuidad del historial en Almacén:** al terminar Operación, el historial
    del lote continúa bajo la misma identidad en la Unidad Almacén.

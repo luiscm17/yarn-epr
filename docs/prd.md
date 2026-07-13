@@ -221,7 +221,8 @@ flowchart TB
 
 | Subdominio | Descripción | Documentado en |
 |---|---|---|
-| **Materia Prima (MP)** | Recepción de fardos de hilado base. Asigna código `NN-GGGG-NNN` a cada lote. Enriquece el lote con datos del pedido (título, color, cliente). Ese código es el identificador único que usa todo el proceso. | `docs/prd/warehouse.md` |
+| **Materia Prima (MP)** | Recepción y custodia de fardos de hilado base. Los fardos son independientes de la identidad de producción y se entregan completos a Operación. | `docs/prd/warehouse.md` |
+| **Identidad de producción** | Almacén define la única identidad del lote mediante `production_identity_id` y el código visible `lot_code`, con título, color, cliente o destino y datos del pedido. | `docs/prd/warehouse.md` |
 | **Producto Terminado (PT)** | Inventario de hilado procesado que llega desde Operación. Almacén registra entradas, salidas y saldos. Fórmula: (Saldo Ant. + Entradas) − Salidas = Saldos. Las nomenclaturas especiales (-D, -FT, etc.) las asigna Control de Calidad en Operación, Almacén solo recibe. | `docs/prd/warehouse.md` |
 | **Tintorería** | Colorantes e insumos químicos. Movimientos: ingreso, muestra, inventario, etc. | `docs/prd/warehouse.md` |
 | **Bolsas, Etiquetas, Fichas, Talonarios** | Insumos de empaque. Unidad: piezas (no kg). | `docs/prd/warehouse.md` |
@@ -231,7 +232,7 @@ flowchart TB
 | Subdominio | Descripción | Documentado en |
 |---|---|---|
 | **Hilatura** | 5 secciones productivas (Preparación, Continuas, Bobinados, Retorcido, Madejeras), 3 turnos. Cada turno tiene un Supervisor a cargo. Producción registrada por máquina/turno/título, avance (peso entrada/salida), calidad de proceso (muestras estadísticas), y desperdicio por grupo de máquinas. Soporte para Madejeras (madejas, no husos) y Bobinados (sin avance, calidad distinta). | `docs/prd/operation.md` _(próximamente)_ |
-| **Lotes** | El código del lote lo asigna Almacén al recibir la MP (`NN-GGGG-NNN`) y es el mismo que usa Operación durante todo el proceso. El lote físico nace en Inventario dentro del Proceso por Lotes. Trazabilidad por 6 etapas secuenciales: Inventario → Tintorería → Secado → Devanado → Embolsado → Calidad. Sin saltos de etapa permitidos. | `docs/prd/operation.md` |
+| **Lotes** | Almacén define la única identidad del lote antes de Operación. Inventario agrega los hechos de armado físico bajo esa misma identidad; no crea otra identidad. La trazabilidad continúa por 6 etapas secuenciales: Inventario → Tintorería → Secado → Devanado → Embolsado → Calidad. | `docs/prd/operation.md` |
 | **Calidad de Proceso** | Muestras estadísticas por máquina/tipo. Control en cada sección, con registro de observaciones, reprocesos y condiciones de entrega cuando corresponda. Asigna nomenclaturas especiales al PT (-AT alta torsion, -FT fuera de tabla, -VARR con varrilla, etc). Historial completo de calidad por lote. | `docs/prd/operation.md` |
 | **Desperdicio** | Registro por grupo de máquinas. Dos tipos: **real** y **acumulado**. Se denomina "desperdicio teórico" a la suma de ambos. | `docs/prd/operation.md` |
 
@@ -261,16 +262,7 @@ flowchart TB
 
 | Catálogo | Usado por |
 |---|---|
-| **Empleados** | Operación, Almacén, Jefe Producción |
-| **Máquinas** | Operación (por sección y grupo) |
-| **Títulos de hilado** | Operación, Lotes |
-| **Secciones** | Operación (Preparación, Continuas, Bobinados, Retorcido, Madejeras) |
-| **Turnos** | Operación, Almacén |
-| **Tipos de MP** | Almacén |
-| **Ubicaciones físicas** | Almacén |
-| **Unidades de medida** | Todos (kg, madejas, conos, bolsas, piezas) |
-| **Proveedores** | Almacén |
-| **Lotes** | Operación, Almacén, Administración |
+| **Títulos de hilado (`yarn_counts`)** | Almacén, Operación y Proceso por Lotes |
 
 ---
 

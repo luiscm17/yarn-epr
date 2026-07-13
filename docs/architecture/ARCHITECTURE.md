@@ -55,10 +55,10 @@ At the domain level, the system is **not** split into just “Warehouse” and
 “Operation”.
 
 The Operation Unit contains **two distinct bounded contexts** because they do
-not share the same identity model, timeline, or record semantics:
+not share the same workflow, timeline, or record semantics:
 
-- **Yarn Spinning** — continuous production before any physical lot exists
-- **Lot Processing** — batch flow where the physical lot is born and tracked
+- **Yarn Spinning** — continuous production before Inventory assembles a lot
+- **Lot Processing** — batch flow that appends operational history to the Warehouse-defined lot
 
 The full bounded-context set is:
 
@@ -81,7 +81,7 @@ flowchart LR
     SRD[Shared Reference Data<br/>Catalogs and IDs]
     W[Warehouse<br/>Custody, stock, production identity,<br/>PT reception and distribution]
     YS[Yarn Spinning<br/>Continuous section records<br/>before lot birth]
-    LP[Lot Processing<br/>Physical lot birth in the Inventory stage<br/>and unified stage history]
+    LP[Lot Processing<br/>Inventory assembly and unified stage history]
     W2[Warehouse<br/>Same identity continues for PT]
 
     AC --> W
@@ -102,7 +102,7 @@ flowchart LR
 |---|---|---|
 | **Warehouse** | Raw-material reception as **bales**, production identity definition, emissions to production, PT reception, warehouse availability/disposition, physical presentation, stock lifecycle | Spinning section records, lot-stage progression, operation quality execution |
 | **Yarn Spinning** | Continuous production records by section / machine / shift / yarn count, process quality in spinning, spinning waste, skein output | Physical lot, lot timeline, warehouse stock |
-| **Lot Processing** | Physical lot birth in the Inventory stage, stage-by-stage lot history, stage notes/exceptions, stage waste, final lot quality at delivery | Warehouse stock balances, warehouse disposition, spinning records |
+| **Lot Processing** | Inventory assembly facts, stage-by-stage lot history, stage notes/exceptions, stage waste, final lot quality at delivery | Warehouse stock balances, warehouse disposition, spinning records |
 | **Access Control** | Authorization policy, scopes, permissions, exceptions, auditability of permission changes | Business workflow meaning |
 | **Shared Reference Data** | Shared catalogs and canonical references reused across contexts | Transactional records and workflow rules |
 
@@ -111,9 +111,9 @@ flowchart LR
 | From | To | Handoff |
 |---|---|---|
 | Warehouse | Yarn Spinning | Production identity and material availability |
-| Yarn Spinning | Lot Processing | skein output ready for physical lot assembly |
+| Yarn Spinning | Lot Processing | skein output ready for Inventory assembly |
 | Warehouse | Lot Processing | Shared production identity, specifications, lot code |
-| Lot Processing | Warehouse | Same production identity / shared lot-code reference with delivery condition and quality state |
+| Lot Processing | Warehouse | One Quality Send per lot records the validated lot, its delivery condition, and the Lot Processing-owned quality state; it moves the same lot to awaiting Warehouse validation until Warehouse accepts it once through its own receipt after physical verification |
 | Access Control | All business contexts | Authorization decisions by action and scope |
 | Shared Reference Data | All business contexts | Shared IDs, catalogs, and controlled vocabularies |
 
@@ -128,9 +128,9 @@ flowchart LR
    Yarn Spinning, and Lot Processing stay separate because they own different
    identities, records, and timelines.
 
-3. **Production identity and physical lot are different concepts.**
-   Warehouse defines the production identity first; the physical lot is born
-   later in the Lot Processing Inventory stage under that same shared identity.
+3. **Warehouse defines the single lot identity.**
+   `production_identity_id` and `lot_code` identify the lot before production;
+   Inventory and later Lot Processing stages append their facts to that same lot.
 
 4. **One traceability view, multiple owners.** The system may expose a broader
    cross-context traceability view, but each context writes only its own
@@ -150,9 +150,9 @@ flowchart LR
    canonical values and IDs, but business rules remain in the owning contexts.
 
 8. **Warehouse dimensions must stay explicit.** The system must distinguish:
-   - operation-reported **quality state**
-   - warehouse **availability / disposition**
-   - **physical presentation** of finished product
+    - Lot Processing-owned **quality state**, read without a Warehouse snapshot
+    - warehouse **availability / disposition**
+    - **physical presentation** of finished product
 
 ---
 
@@ -168,7 +168,7 @@ flowchart LR
     W2[Warehouse<br/>Define production identity and specifications]
     W3[Warehouse<br/>Emit material to production]
     YS[Yarn Spinning<br/>Continuous production and skein output]
-    LP1[Lot Processing Inventory stage<br/>Assemble the physical lot under the same production identity / shared lot-code reference]
+    LP1[Lot Processing Inventory stage<br/>Record assembly facts under the Warehouse-defined lot identity]
     LP2[Lot Processing<br/>Carry the lot through its stage history]
     W4[Warehouse<br/>Receive PT and continue custody, availability,<br/>distribution, transfer, sale, or return]
 
@@ -180,8 +180,9 @@ flowchart LR
 - **Raw material starts as bales in Warehouse**, not as a production lot.
 - **Production identity is defined later** by Warehouse / Production Chief.
 - **Yarn Spinning has no lot entity or lot timeline.**
-- **The physical lot is born in the Lot Processing Inventory stage.**
+- **Inventory records the assembled lot's weight and skein count.**
 - **Lot Processing owns the stage history during operation.**
+- **One Quality Send moves a validated lot to awaiting Warehouse validation; Warehouse acceptance is the one later, distinct receipt for that same `production_identity_id`.**
 - **Warehouse owns its own records after PT reception**, while the system may
   still expose a broader cross-context traceability view.
 
@@ -251,7 +252,7 @@ Only decisions that remain valid under the current PRDs are listed here.
 |---|---|---|
 | ADR-001 | **PRDs are the source of truth for business architecture.** | Prevents technical docs from drifting away from approved product meaning. |
 | ADR-002 | **Operation is modeled as two bounded contexts: Yarn Spinning and Lot Processing.** | They have different identities, timelines, records, and lifecycle responsibilities. |
-| ADR-003 | **Warehouse owns production identity; Lot Processing owns physical lot birth.** | This matches the current boundary document and prevents identity/lot confusion. |
+| ADR-003 | **Warehouse defines the single lot identity; Lot Processing owns its operational history.** | This keeps one technical lot identity while preserving context-owned records. |
 | ADR-004 | **Access Control is a configurable policy context with RBAC and scopes.** | Permissions must evolve without redesigning business workflows. |
 | ADR-005 | **Business records support controlled edits with audit trail.** | Current PRDs explicitly reject strict append-only assumptions. |
 | ADR-006 | **Shared Reference Data is a support context.** | Shared catalogs are needed across contexts, but they must not absorb workflow logic. |

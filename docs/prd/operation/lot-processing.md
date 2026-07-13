@@ -38,20 +38,20 @@ ALMACÉN                        OPERACIÓN (Lot Processing)               ALMAC�
                                                                              └── Clasificación y disposición
 ```
 
-El código único del lote es asignado por Almacén al definir el pedido y se mantiene durante todo este proceso. El formato exacto del código podrá rediseñarse más adelante, pero Operación no genera códigos nuevos. En este proceso el lote nace **físicamente** cuando Inventario arma el conjunto de madejas que será procesado. El sistema es la fuente de toda esta información; cualquier respaldo físico (planilla, etiqueta) es solo una representación impresa de los datos del sistema.
+Almacén define la única identidad del lote mediante `production_identity_id` y su código visible `lot_code`; ambos se mantienen durante todo este proceso. Operación no genera otra identidad ni códigos nuevos. Inventario registra el armado del conjunto de madejas que será procesado bajo esa identidad. El sistema es la fuente de toda esta información; cualquier respaldo físico (planilla, etiqueta) es solo una representación impresa de los datos del sistema.
 
 ### 1.3 Límites del sistema
 
 | Límite         | Detalle                                                                                                                                                                                                                                                                                                                                                        |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Entrada**    | MP emitida por Almacén hacia Operación. Almacén define en el sistema el código único del lote, título, color, cliente y especificaciones del pedido. Inventario recibe esa información digitalmente y arma el lote físico a partir de madejas producidas en Madejeras, según el título y peso especificados.                                                    |
+| **Entrada**    | La identidad de producción definida por Almacén (`production_identity_id`, `lot_code`, título, color, cliente o destino y especificaciones del pedido) y las madejas producidas en Madejeras. Inventario recibe esa información digitalmente y registra el armado físico bajo la misma identidad, según el título y peso especificados. |
 | **Salida**     | Lote procesado, inspeccionado por Calidad con su documentación completa, entregado a Almacén para verificación física y disposición.                                                                                                                                                                                                                           |
 | **No incluye** | La asignación del código de lote, el enriquecimiento con datos del pedido ni la emisión de MP (documentado en `docs/prd/warehouse.md`). La verificación física final del PT, su clasificación en Almacén ni su almacenamiento/distribución (documentado en `docs/prd/warehouse.md`). La producción de hilado en las 5 secciones de Hilatura (`Yarn Spinning`) (documentado en `docs/prd/operation/yarn-spinning.md`). |
 
 ### 1.4 Dependencias
 
 - **Hilatura (`Yarn Spinning`):** Madejeras produce las madejas crudas que Inventario utiliza para armar los lotes físicos. Sin producción en Madejeras no hay lotes.
-- **Almacén:** Define el código de lote y las especificaciones del pedido (título, color, cliente) en el sistema. Esa información es la que guía el armado físico del lote y el proceso productivo.
+- **Almacén:** Define `production_identity_id`, `lot_code` y las especificaciones del pedido (título, color, cliente o destino) en el sistema. Esa información guía el armado físico y el proceso productivo.
 - **Roles de Operación:** Inventario, Personal de Tintorería, Embolsado y Calidad son los actores que registran datos en el sistema a lo largo del proceso.
 
 ---
@@ -60,17 +60,17 @@ El código único del lote es asignado por Almacén al definir el pedido y se ma
 
 Cada lote atraviesa las siguientes etapas en orden secuencial estricto. No se puede registrar una etapa si la anterior no está completada.
 
-El tiempo total del proceso es de aproximadamente 1 a 2 días, pudiendo el lote **físicamente** cruzar múltiples turnos (ej: entra a Tintorería en el turno mañana y sale en el turno tarde). Cada turno registra **solo su parte** del proceso al finalizar su jornada. No hay edición concurrente del mismo registro — cada etapa genera un nuevo registro inmutable con el turno y responsable correspondiente, garantizando trazabilidad multi-turno.
+The process usually lasts approximately one to two days, and a lot may physically cross multiple shifts. Each intervention records only the work actually performed at that moment. A lot may have multiple legitimate records in the same stage, business date, or shift, including records by different users or at different times. Business date, shift, actors, and system timestamps describe process history; they do not define uniqueness. The use-case/domain layer rejects a later-stage intervention until the prior stage is complete; this cross-table invariant is not a DBML constraint. Controlled edits remain subject to the existing audit policy.
 
 ### 2.1 Inventario — Armado del lote
 
-El lote ingresa formalmente al proceso cuando Inventario arma físicamente el conjunto de madejas. Almacén definió previamente en el sistema el código único del lote, el título, el color, el cliente y las especificaciones del pedido. Inventario consulta esa información, busca en las madejas crudas disponibles (producidas por Madejeras) y arma el lote físico según el **título** y **peso** especificados. El color es competencia de Almacén y Tintorería, no de Inventario.
+El lote ingresa formalmente al proceso cuando Inventario arma físicamente el conjunto de madejas bajo la identidad única que Almacén definió previamente (`production_identity_id` y `lot_code`, título, color, cliente o destino y especificaciones del pedido). Inventario consulta esa información, busca en las madejas crudas disponibles (producidas por Madejeras) y registra el armado físico según el **título** y **peso** especificados. El color es competencia de Almacén y Tintorería, no de Inventario.
 
 | Aspecto                     | Descripción                                                                                                                                                                                                                         |
 | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Quién**                   | Inventario                                                                                                                                                                                                                          |
-| **Cuándo**                  | Cuando Almacén emite la MP y hay madejas del título requerido disponibles                                                                                                                                                           |
-| **Qué se registra**         | — Código de lote (definido por Almacén)<br>— Fecha y turno de armado<br>— Responsable que armó el lote<br>— Supervisor a cargo<br>— Título del hilado<br>— Cantidad de madejas que componen el lote<br>— Peso total del lote |
+| **Cuándo**                  | Cuando existe la identidad definida por Almacén y hay madejas del título requerido disponibles |
+| **Qué se registra**         | — `production_identity_id` y `lot_code` (definidos por Almacén)<br>— Fecha y turno de armado<br>— Responsable que armó el lote<br>— Supervisor a cargo<br>— Título del hilado<br>— Cantidad de madejas que componen el lote<br>— Peso total del lote |
 | **Inconvenientes posibles** | — Madejas insuficientes del título requerido<br>— Peso fuera del rango especificado<br>— Datos de emisión incompletos                                                                                                               |
 | **Resultado**               | El lote armado pasa a Tintorería                                                                                                                                                                                                    |
 
@@ -159,13 +159,11 @@ La categoría se selecciona de un listado específico para cada etapa. Si no apl
 
 Además de la categoría, se puede incluir un campo opcional de **detalles** en texto libre para contexto adicional (ej: "la tina T-03 presentó residuos del lote anterior").
 
-### 3.2 Registro de timeline
+### 3.2 Registro de historial
 
-Cada etapa captura el momento en que el lote **entra** y el momento en que **sale**, junto con quién lo recibió y quién lo entregó. Esto permite:
+Cada intervención conserva fecha de negocio, turno, responsables aplicables y timestamps del sistema. No se persisten pares de timestamps físicos de entrada/salida en el modelo actual. La duración física por etapa queda diferida hasta que el negocio defina qué evento inicia y termina esa medición, cómo se capturará y qué decisiones la usarán.
 
-- Saber exactamente cuánto tiempo estuvo el lote en cada etapa
-- Identificar cuellos de botella (etapas donde los lotes pasan más tiempo del esperado)
-- Determinar quién fue responsable en cada momento, incluso cuando el lote cruza múltiples turnos
+Esto permite mantener trazabilidad de responsabilidad y de registro, incluso cuando el lote cruza múltiples turnos, sin inferir una duración física que el negocio aún no definió.
 
 El lote avanza cuando **físicamente** cambia de etapa. No existen estados intermedios formales fuera de estas etapas; si el lote está en Tintorería esperando una decisión sobre un reteñir, sigue estando en Tintorería hasta que sale a Secado. Las demoras, observaciones o decisiones pendientes se registran como parte de la etapa actual.
 
@@ -184,7 +182,8 @@ stateDiagram-v2
     En_Secado --> En_Devanado
     En_Devanado --> En_Embolsado
     En_Embolsado --> En_Calidad
-    En_Calidad --> En_Almacen_PT: Entregado con documentación
+    En_Calidad --> En_Espera_Validacion_Almacen: Quality Send
+    En_Espera_Validacion_Almacen --> En_Almacen_PT: Recepción de Almacén
     En_Almacen_PT --> [*]
 ```
 
@@ -199,7 +198,8 @@ stateDiagram-v2
 | **En_Devanado**   | Lote en proceso de devanado u ovillado.                                                         |
 | **En_Embolsado**  | Lote en proceso de empaque.                                                                     |
 | **En_Calidad**    | Lote en inspección final.                                                                       |
-| **En_Almacen_PT** | Lote entregado a Almacén con su documentación completa de calidad.                              |
+| **En_Espera_Validacion_Almacen** | Quality realizó el único envío permitido; el mismo lote espera la validación y recepción de Almacén. Las notas breves de coordinación no son aceptación ni generan otro envío. |
+| **En_Almacen_PT** | Almacén registró la recepción del mismo lote después de la validación física. |
 
 ### 4.3 Reglas de transición
 
@@ -208,7 +208,8 @@ stateDiagram-v2
 3. **Edición controlada con auditoría:** Los datos de una etapa pueden corregirse si hubo error de carga, pero toda edición debe dejar trazabilidad completa de quién editó, cuándo, qué cambió y por qué.
 4. **Ventana operativa de corrección:** La edición puede permitirse durante una ventana definida posterior al turno o al cierre de la etapa (por ejemplo 24 o 48 horas, según la política vigente).
 5. **Edición restringida fuera de ventana:** Una vez vencida la ventana operativa, solo el rol **SysAdmin** puede editar registros de etapas, manteniendo la misma trazabilidad obligatoria.
-6. **Entrega a Almacén obligatoria:** Todo lote que completa las 6 etapas sale de Operación hacia Almacén con su documentación completa, incluyendo defectos y condiciones de entrega si existieran.
+6. **Quality Send único:** Todo lote que completa las 6 etapas puede realizar un único Quality Send hacia Almacén con su documentación completa, incluyendo defectos y condiciones de entrega si existieran. El envío deja al lote en espera de validación de Almacén; no se repite ni ocurre concurrentemente para la misma identidad.
+7. **Recepción de Almacén:** La aceptación se evidencia solo cuando Almacén registra la recepción para la misma identidad del lote. Las notas breves durante la espera no son aceptación ni otro envío.
 
 ### 4.4 Clasificación de Calidad
 
@@ -228,13 +229,12 @@ Calidad documenta el estado de calidad del lote al momento de la entrega. Esa in
 
 El proceso completo del lote puede durar entre 1 y 2 días, cruzando múltiples turnos. Cada registro de etapa captura:
 
-- El turno en que se recibió el lote en esa etapa
-- El responsable que lo recibió
-- El supervisor a cargo en ese turno
-- El turno en que salió de la etapa
-- El responsable que lo entregó
+- La fecha de negocio y el turno de la intervención
+- El responsable que recibe, entrega o ejecuta, según corresponda a la etapa
+- El supervisor a cargo
+- Los timestamps de registro y corrección del sistema
 
-Esto garantiza que en cualquier momento se pueda responder: ¿quién hizo qué, en qué turno, y cuánto tiempo estuvo el lote en cada etapa?
+Esto permite responder quién hizo qué y en qué turno. La duración física de cada etapa no se calcula ni se infiere hasta que exista una definición de negocio aprobada.
 
 ### 5.2 Peso por etapa
 
@@ -254,7 +254,7 @@ Antes de registrar una etapa, el sistema verifica:
 
 ### 5.5 Cierre del ciclo del lote en Operación
 
-El ciclo del lote en Operación se cierra cuando Calidad completa su inspección y el lote es entregado a Almacén. A partir de ese momento, Almacén recibe el lote con su documentación completa de calidad, verifica lo recibido, clasifica el estado del PT y decide su disposición. Esa decisión ya corresponde al dominio de Almacén, no al de Operación.
+El tramo de Operación concluye cuando Calidad completa su inspección y realiza el único Quality Send. El mismo lote queda en espera de validación de Almacén hasta que Almacén registra su recepción. A partir de esa aceptación, Almacén verifica lo recibido, clasifica el estado del PT y decide su disposición. Esa decisión ya corresponde al dominio de Almacén, no al de Operación.
 
 ---
 

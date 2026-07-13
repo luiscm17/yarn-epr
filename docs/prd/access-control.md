@@ -23,7 +23,7 @@ El sistema debe soportar cambios organizacionales como:
 - creación de nuevos roles
 - retiro de roles existentes
 - división o fusión de responsabilidades
-- reasignación de permisos entre áreas, unidades, procesos o turnos
+- reassignment of access between approved areas, units, or Operational Unit sections
 - excepciones puntuales para usuarios específicos
 
 sin exigir rediseño funcional de los procesos de negocio ya definidos en los PRD
@@ -100,34 +100,57 @@ mapeo puede cambiar con el tiempo.
 
 ### 4.3 Permisos
 
-Son capacidades concretas sobre información o procesos del sistema.
+For the initial release, permissions use this fixed action vocabulary:
 
-Ejemplos de acciones:
+- `read`
+- `write`
+- `edit`
+- `edit_outside_window`
+- `manage_access`
 
-- registrar
-- leer
-- validar
-- aprobar
-- consolidar
-- corregir
-- administrar
+`write` covers recording a new business fact and owner-scope handoffs. `edit`
+is an audited correction of an already recorded fact within the operational
+window; it is not a generic update. `edit_outside_window` and `manage_access`
+are exclusive to System Administrator. No Quality Send or Warehouse Accept
+action is created: both remain domain events authorized by `write` in the
+respective owner scope.
 
 ### 4.4 Ámbitos o scopes
 
-Los permisos no solo dependen de la acción, sino también del ámbito donde
-aplican.
+These permissions depend on both action and scope. The initial scope model is
+deliberately limited to Operational Unit sections and to units or areas
+elsewhere. It has no scope hierarchy, wildcard matching, process, lot-stage,
+or shift scopes. This lets a user act in one approved target without widening
+access elsewhere.
 
-Ejemplos de ámbito:
+For the initial release, each user has exactly one current technical role and
+may hold multiple concurrent scope assignments. Technical role names and codes
+describe capability profiles, never organizational job titles. System
+Administrator alone creates, deactivates, and reactivates users; manages roles
+and scope assignments; grants or revokes exceptions; and performs
+`edit_outside_window`. `manage_access` and `edit_outside_window` may be allowed
+only by the System Administrator role and may never be individually granted.
+Lifecycle and access-administration changes must verify that their actor is an
+active System Administrator. Authorization defaults to deny.
 
-- una dirección
-- una unidad
-- un proceso
-- una sección
-- una etapa de lote
-- un turno
+The mandatory, unique active technical role `sys_admin` is the System
+Administrator role. Initial deployment must create it, its five fixed action
+allowances, and the initial active bootstrap user atomically in one controlled
+database seed or migration transaction. That bootstrap alone may omit a
+pre-existing System Administrator actor for the bootstrap user, role-action,
+and audit records. All later lifecycle and access administration requires an
+active `sys_admin` actor and normal audit evidence.
 
-Esto permite que un usuario tenga capacidad en una parte del sistema y no en
-otra.
+After bootstrap, the database transaction must atomically reject any
+deactivation, reassignment, revocation, or other change that would leave no
+active user whose current role is the active `sys_admin` role.
+
+An active `sys_admin` has automatic global operational authorization for every
+current and future section, unit, and area. It needs no domain scope assignment
+and no individual exception may constrain any of its actions. This is a narrow,
+explicit System Administrator bypass, not a wildcard scope hierarchy or generic
+permission engine. Ordinary roles retain default-deny action-plus-active-scope
+assignment evaluation and time-bounded grant/restrict exceptions.
 
 ---
 
@@ -135,9 +158,8 @@ otra.
 
 ### 5.1 Permisos configurables
 
-El sistema debe permitir configurar quién puede realizar acciones sobre cada
-proceso, sección, etapa o recurso sin alterar el flujo de negocio definido en
-los PRD de dominio.
+The system must permit configuration of who may perform fixed actions in an
+approved scope without altering the business workflow defined in domain PRDs.
 
 ### 5.2 Independencia del organigrama actual
 
@@ -156,32 +178,35 @@ El sistema debe soportar sin rediseño funcional:
 
 ### 5.4 Permisos por ámbito
 
-El sistema debe poder asignar permisos en ámbitos distintos, por ejemplo:
+The first release assigns access only to an Operational Unit section or to a
+unit or area in other contexts. Scope targets remain external business-context
+references; Access does not invent organizational nodes or own workflow data.
+Access maintains only a small approved-scope registry: a target is pending
+until validated with its owning context and confirmed, and only a confirmed
+active target may authorize. Rejected, pending, and inactive targets are
+retained for history but are denied. This validation has no cross-context FK.
 
-- toda una dirección
-- una unidad específica
-- un proceso determinado
-- una sección concreta
-- un turno particular
+### 5.5 Authorization of domain acts
 
-### 5.5 Separación entre registrar, validar y aprobar
+Domain acts may have different business owners, but their first-release
+authorization uses only the fixed action vocabulary and approved scope model.
+The Access context does not derive separate `validate`, `approve`,
+`consolidate`, `send`, or `accept` permissions from operational labels.
 
-El sistema debe distinguir entre:
-
-- quién registra información
-- quién la valida
-- quién la aprueba
-- quién la consolida
-- quién solo la consulta
-
-Estas capacidades pueden recaer en el mismo rol o en roles distintos, según la
-política vigente.
+For a simple operational action, authorization is assigned by action and scope;
+it must not create separate permissions for implicit sub-steps. Quality Send
+and Warehouse acceptance are domain events authorized by `write` in their
+respective owner scopes, rather than separate inspect, review, approve, send,
+or accept permissions. Operational `*_user_id` fields remain audit facts and
+are not permission sources.
 
 ### 5.6 Excepciones controladas
 
-El sistema debe permitir excepciones puntuales para usuarios específicos cuando
-la operación lo requiera, sin convertir esas excepciones en una redefinición del
-modelo general.
+The system must permit direct individual exceptions that grant or restrict one
+action in one scope without redefining the global role. Each exception requires
+an explicit validity start and end date, reason, grant/revoke actor, and
+grant/revoke time. An exception may not grant `manage_access` or
+`edit_outside_window`. This is not a generic policy engine.
 
 ### 5.7 Trazabilidad de permisos
 
@@ -219,12 +244,18 @@ estructura organizacional en el software.
    Los permisos especiales para usuarios puntuales deben quedar identificados y
    auditables.
 
-5. **La lectura y la intervención son capacidades distintas.**
-   Consultar información no implica poder registrarla, validarla o aprobarla.
+5. **Read and intervention are distinct capabilities.**
+   `read` does not imply `write`, `edit`, `edit_outside_window`, or
+   `manage_access`.
 
 6. **El sistema debe tolerar crecimiento organizacional.**
    La aparición de nuevas direcciones, áreas, unidades o funciones no debe
-   invalidar el modelo de acceso existente.
+    invalidar el modelo de acceso existente.
+
+7. **La reactivación requiere una nueva autorización explícita.**
+   La desactivación y la reactivación preservan el historial, pero invalidan
+   para autorización efectiva las asignaciones y excepciones de la generación
+   anterior. Se deben reasignar o reotorgar explícitamente.
 
 ---
 
@@ -300,14 +331,14 @@ producto para la autorización transversal.
    - solo configuración controlada por desarrollo/soporte
    - o interfaz administrativa para gestión de permisos
 
-2. Qué reglas de excepción requieren aprobación especial.
+2. Individual exception grants and revocations are performed only by System
+   Administrator.
 
-3. Qué nivel de granularidad de scopes se necesitará inicialmente:
-   - dirección
-   - unidad
-   - proceso
-   - sección
-   - turno
+3. The initial scope inventory must identify the existing Operational Unit
+    sections and the existing unit/area targets in other contexts. It must not
+    invent organizational nodes. Access confirmation must validate each target
+    with its owning context; pending, rejected, and inactive targets cannot
+    authorize.
 
 ---
 
@@ -320,6 +351,6 @@ producto para la autorización transversal.
 | **Rol del sistema** | Perfil de capacidades usado para asignar permisos dentro de la aplicación. |
 | **Actor organizacional** | Cargo, función o persona definida por la estructura real de la empresa. |
 | **Permiso** | Capacidad concreta para actuar sobre información o procesos del sistema. |
-| **Scope / ámbito** | Alcance donde aplica un permiso, como dirección, unidad, proceso, sección o turno. |
+| **Scope / ámbito** | Approved authorization target: an Operational Unit section, or a unit or area in another context. |
 | **Excepción** | Permiso especial o restricción particular aplicada a un usuario o caso específico. |
 | **Trazabilidad de permisos** | Capacidad de reconstruir históricamente qué permisos existían, cuándo y para quién. |

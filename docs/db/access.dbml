@@ -1,194 +1,163 @@
-// Access Control context only.
-// This DBML models authorization policy records and permission-change auditability.
-// It intentionally keeps business workflow ownership outside the access context.
-
-Project access {
-  database_type: 'PostgreSQL'
-  Note: 'Canonical Access Control schema artifact. Internal policy records use local technical IDs, while external user/employee or business-scope references remain explicit external IDs.'
+Project yarn_epr_access {
+  database_type: "PostgreSQL"
+  Note: "Minimal Access Control write model. Access owns canonical users, authorization lifecycle, technical roles, approved scoped targets, scoped assignments, individual exceptions, and access-change auditability. Business contexts keep their own operational actor evidence. No authentication, sessions, tokens, workflow ownership, generic permission engine, or generic catalog is defined here. Database enforcement required outside DBML: the unique active System Administrator role has code sys_admin and all five fixed actions; its active users bypass scope assignments and individual exceptions for every current and future section, unit, and area. Only that role may have role-action rows for manage_access or edit_outside_window; no individual grant exception may use either action; every post-bootstrap lifecycle or access-administration actor must be an active user in that role; a post-bootstrap transaction must reject atomically any change that would leave no active user whose current role is the active sys_admin role; and a scope may authorize an ordinary user only when its status is active."
 }
 
-Enum assignment_effect {
-  allow
-  deny
+Enum access_action {
+  read
+  write
+  edit
+  edit_outside_window
+  manage_access
 }
 
-Enum scope_kind {
-  directorate
+Enum access_scope_kind {
+  operation_section
   unit
-  process
-  section
-  lot_stage
-  shift
-  warehouse_area
-  global
+  area
 }
 
-Enum override_kind {
-  exception
-  temporary_override
-  emergency_override
-  explicit_restriction
+Enum access_scope_status {
+  pending_confirmation
+  active
+  inactive
+  rejected
 }
 
-Enum audit_action_type {
-  create
-  correct
-  activate
-  deactivate
-  revoke
+Enum access_exception_effect {
+  grant
+  restrict
 }
 
-Table capabilities {
-  id uuid [pk]
-  capability_code varchar [not null, unique, note: 'Visible stable capability code used by policy and application contracts.']
-  bounded_context_code varchar [not null, note: 'Context alias such as warehouse, yarn-production, batch-processing, access, or catalogs.']
-  resource_code varchar [not null, note: 'Protected resource or record family code.']
-  action_code varchar [not null, note: 'Action such as read, register, validate, approve, correct, consolidate, or administer.']
-  capability_name varchar [not null]
-  description text
-  created_at timestamp [not null]
-  updated_at timestamp [not null]
+Enum access_change_kind {
+  initial_bootstrap
+  user_created
+  user_deactivated
+  user_reactivated
+  user_role_changed
+  role_changed
+  role_action_changed
+  scope_changed
+  assignment_granted
+  assignment_revoked
+  exception_granted
+  exception_revoked
+}
 
-  Note: 'Canonical permission capability definition. Business workflow meaning stays in the owning context; Access only governs who may perform the action.'
+Table access_roles {
+  role_id uuid [pk]
+  role_code varchar [not null, unique, note: "Technical capability-profile code, never an organizational job title."]
+  role_name varchar [not null, unique, note: "Human-readable technical capability-profile name."]
+  is_system_administrator boolean [not null, note: "True only for the mandatory, unique active sys_admin technical role, which has global operational authorization and may manage Access and perform edit_outside_window."]
+  is_active boolean [not null, note: "Retires the profile from future use without deleting access history."]
+  created_at timestamptz [not null]
+  updated_at timestamptz
 
-  Indexes {
-    (bounded_context_code, resource_code, action_code) [unique]
+  Note: "Database enforcement required outside DBML: exactly one active role has role_code = sys_admin and is_system_administrator = true; it must have all five access_action rows and is seeded atomically with the initial active bootstrap user. No other role may be System Administrator or receive manage_access or edit_outside_window in access_role_actions."
+}
+
+Table access_users {
+  user_id uuid [pk, note: "Canonical Access-owned user identity. Other contexts retain their *_user_id fields as external audit references and do not own this identity."]
+  role_id uuid [not null, ref: > access_roles.role_id, note: "Exactly one current technical role per user."]
+  user_code varchar [not null, unique, note: "Stable visible user identifier; not an organizational title."]
+  display_name varchar [not null]
+  is_active boolean [not null, note: "Inactive users are denied every new authorization decision, regardless of role, assignment, or exception."]
+  authorization_epoch integer [not null, note: "Current authorization generation. Increment on each deactivation and reactivation; assignments and exceptions from a prior generation remain historical only."]
+  created_by_user_id uuid [ref: > access_users.user_id, note: "Active System Administrator who created the user; null only for the controlled initial System Administrator bootstrap."]
+  created_at timestamptz [not null]
+  deactivated_by_user_id uuid [ref: > access_users.user_id]
+  deactivated_at timestamptz
+  reactivated_by_user_id uuid [ref: > access_users.user_id]
+  reactivated_at timestamptz
+  updated_at timestamptz
+
+  Note: "Database enforcement required outside DBML: lifecycle actors must be active users whose current role is the System Administrator role. Deactivation and reactivation each increment authorization_epoch."
+}
+
+Table access_role_actions {
+  role_action_id uuid [pk]
+  role_id uuid [not null, ref: > access_roles.role_id]
+  action access_action [not null]
+  created_by_user_id uuid [ref: > access_users.user_id, note: "Active System Administrator who created the allowance; null only for one of the five sys_admin allowance rows in the controlled initial bootstrap."]
+  created_at timestamptz [not null]
+
+  indexes {
+    (role_id, action) [unique]
   }
-}
 
-Table roles {
-  id uuid [pk]
-  role_code varchar [not null, unique, note: 'Visible stable system-role code. Separate from technical id and from changing organizational job names.']
-  role_name varchar [not null]
-  description text
-  is_system_role boolean [not null, default: false]
-  created_at timestamp [not null]
-  updated_at timestamp [not null]
-
-  Note: 'System roles define reusable access profiles. They do not freeze the organization chart into the business model.'
-}
-
-Table role_capabilities {
-  id uuid [pk]
-  role_id uuid [not null]
-  capability_id uuid [not null]
-  assignment_effect assignment_effect [not null, default: 'allow']
-  granted_by_actor_id uuid [note: 'External/shared technical actor id for the administrator or policy owner who granted the capability.']
-  created_at timestamp [not null]
-  updated_at timestamp [not null]
-
-  Note: 'Role-level capability assignment baseline. Explicit deny remains available when policy needs an exclusion rule at the role layer.'
-
-  Indexes {
-    (role_id, capability_id) [unique]
-    (capability_id)
-  }
+  Note: "Database enforcement required outside DBML: action IN (manage_access, edit_outside_window) requires the active System Administrator role; every created_by_user_id must be an active System Administrator, except the five sys_admin allowance rows inserted by the controlled initial bootstrap."
 }
 
 Table access_scopes {
-  id uuid [pk]
-  scope_code varchar [not null, unique, note: 'Visible stable scope code for policy configuration and audit readability.']
-  scope_kind scope_kind [not null]
-  scope_name varchar [not null]
-  parent_scope_id uuid [note: 'Optional access-owned parent scope for hierarchical evaluation.']
-  external_scope_target_id varchar [note: 'External/shared technical ID for the organizational or business target represented by this scope. Access does not own that target record.']
-  bounded_context_code varchar [note: 'Owning business/support context of the external scope target when applicable.']
-  active_from date
-  active_to date
-  created_at timestamp [not null]
-  updated_at timestamp [not null]
+  scope_id uuid [pk]
+  scope_code varchar [not null, unique, note: "Stable Access approved-scope registry code for one external target; it is not a resource registry or hierarchy key."]
+  scope_kind access_scope_kind [not null, note: "Operation Unit uses operation_section. All other initial scope targets use unit or area."]
+  owning_context varchar [not null, note: "Business context that owns the referenced section, unit, or area."]
+  external_scope_id uuid [not null, note: "Identifier of the owning context's section, unit, or area. This is an external reference, not an Access-owned entity and has no cross-context foreign key in this DBML."]
+  status access_scope_status [not null, note: "Pending confirmation, active, inactive, or rejected. Only active targets can authorize or receive assignments/exceptions."]
+  confirmed_by_user_id uuid [ref: > access_users.user_id, note: "Active System Administrator who confirmed the external target; required only when status is active."]
+  confirmed_at timestamptz [note: "Confirmation time; required only when status is active."]
+  rejected_by_user_id uuid [ref: > access_users.user_id, note: "Active System Administrator who rejected an unconfirmed target."]
+  rejected_at timestamptz
+  rejection_reason text
+  created_at timestamptz [not null]
+  updated_at timestamptz
 
-  Note: 'Policy scope definition used to limit where permissions apply. The scope points to external organizational or business dimensions without taking ownership of them.'
-
-  Indexes {
-    (parent_scope_id)
-    (scope_kind, bounded_context_code)
+  indexes {
+    (owning_context, external_scope_id) [unique]
   }
+
+  Note: "This is the small Access-owned approved-scope registry, not a cross-context resource registry. Database enforcement required outside DBML: validate the external target against its owning context before setting status to active; retain pending_confirmation, inactive, or rejected records as non-authorizing history; require confirmation actor/time for active and rejection actor/time/reason for rejected; and require all lifecycle actors to be active System Administrators. No cross-context FK is permitted."
 }
 
-Table permission_assignments {
-  id uuid [pk]
-  principal_user_id uuid [note: 'External/shared technical user id. Access does not own the user record.']
-  principal_employee_id uuid [note: 'External/shared technical employee id when policy is tied to the employee identity.']
-  role_id uuid [not null]
-  scope_id uuid [not null]
-  valid_from timestamp [not null]
-  valid_to timestamp
-  assignment_reason text
-  granted_by_actor_id uuid [note: 'External/shared technical actor id for the administrator or approver who created the assignment.']
-  authorization_id uuid [note: 'External/shared technical authorization id when assignment itself required approval.']
-  created_at timestamp [not null]
-  updated_at timestamp [not null]
+Table access_user_scope_assignments {
+  assignment_id uuid [pk]
+  user_id uuid [not null, ref: > access_users.user_id]
+  scope_id uuid [not null, ref: > access_scopes.scope_id]
+  authorization_epoch integer [not null, note: "Must equal the user's current authorization_epoch when granted; authorization requires the same epoch at evaluation."]
+  valid_from date [not null]
+  valid_to date [note: "Inclusive end date when the assignment is time-bounded."]
+  granted_by_user_id uuid [not null, ref: > access_users.user_id]
+  granted_at timestamptz [not null]
+  revoked_by_user_id uuid [ref: > access_users.user_id]
+  revoked_at timestamptz
+  revoke_reason text
+  created_at timestamptz [not null]
 
-  Note: 'Principal-to-role assignment inside one explicit scope. User and employee links remain external references only.'
-
-  Indexes {
-    (principal_user_id)
-    (principal_employee_id)
-    (role_id, scope_id)
-    (valid_from, valid_to)
-  }
+  Note: "Database enforcement required outside DBML: granted_by_user_id and revoked_by_user_id must be active System Administrators. An assignment may authorize only for an active user, active scope, current authorization_epoch, unrevoked validity interval, and active current role."
 }
 
-Table assignment_overrides {
-  id uuid [pk]
-  permission_assignment_id uuid [note: 'Optional baseline assignment affected by this exception or override.']
-  principal_user_id uuid [note: 'External/shared technical user id for direct user-level override.']
-  principal_employee_id uuid [note: 'External/shared technical employee id when the override follows employee identity.']
-  capability_id uuid [not null]
-  scope_id uuid [not null]
-  override_kind override_kind [not null]
-  assignment_effect assignment_effect [not null]
-  valid_from timestamp [not null]
-  valid_to timestamp
-  override_reason text [not null]
-  approved_by_actor_id uuid [note: 'External/shared technical actor id for the person authorizing the exception or restriction.']
-  authorization_id uuid [note: 'External/shared technical authorization id when override approval is persisted separately.']
-  created_at timestamp [not null]
-  updated_at timestamp [not null]
+Table access_user_action_exceptions {
+  exception_id uuid [pk]
+  user_id uuid [not null, ref: > access_users.user_id]
+  scope_id uuid [not null, ref: > access_scopes.scope_id]
+  authorization_epoch integer [not null, note: "Must equal the user's current authorization_epoch when granted; authorization requires the same epoch at evaluation."]
+  action access_action [not null, note: "One explicit action in one scope; an exception never changes the user's global role."]
+  effect access_exception_effect [not null, note: "Grant directly allows the individual action and scope; restrict denies it even when role and assignment would otherwise allow it."]
+  valid_from date [not null]
+  valid_to date [not null, note: "Inclusive explicit expiry date; must not precede valid_from."]
+  reason text [not null]
+  granted_by_user_id uuid [not null, ref: > access_users.user_id, note: "System Administrator who granted the exception."]
+  granted_at timestamptz [not null]
+  revoked_by_user_id uuid [ref: > access_users.user_id]
+  revoked_at timestamptz
+  revoke_reason text
+  created_at timestamptz [not null]
 
-  Note: 'Explicit user- or employee-level exception / override. Keeps special cases traceable without redefining the general role model.'
-
-  Indexes {
-    (permission_assignment_id)
-    (principal_user_id)
-    (principal_employee_id)
-    (capability_id, scope_id)
-    (valid_from, valid_to)
-  }
+  Note: "Database enforcement required outside DBML: granted_by_user_id and revoked_by_user_id must be active System Administrators; effect = grant must reject action IN (manage_access, edit_outside_window); and an exception may authorize only for an active user, active scope, and current authorization_epoch."
 }
 
-Table permission_change_audit {
-  id uuid [pk]
-  target_table varchar [not null]
-  target_record_id uuid [not null]
-  action_type audit_action_type [not null]
-  correction_reason text [not null]
-  authorization_id uuid [note: 'External/shared technical authorization id for approval, exception, or override basis when relevant.']
-  changed_by_actor_id uuid [not null, note: 'External/shared technical actor id.']
-  effective_from_snapshot timestamp [note: 'Copied when useful so reviewers can reconstruct the effective access window before/after the change.']
-  effective_to_snapshot timestamp [note: 'Copied when useful so reviewers can reconstruct the effective access window before/after the change.']
-  changed_fields jsonb [note: 'Field-level diff metadata.']
-  before_payload jsonb
-  after_payload jsonb
-  changed_at timestamp [not null]
+Table access_change_audits {
+  access_change_audit_id uuid [pk]
+  change_kind access_change_kind [not null]
+  subject_table varchar [not null, note: "Access table whose user, role, scope, assignment, or exception changed."]
+  subject_id uuid [not null]
+  performed_by_user_id uuid [ref: > access_users.user_id, note: "Active System Administrator who performed the access change; null only for an initial_bootstrap audit row in the controlled initial deployment transaction."]
+  occurred_at timestamptz [not null]
+  reason text
+  before_values jsonb
+  after_values jsonb
+  created_at timestamptz [not null]
 
-  Note: 'Cross-cutting audit for policy changes. Permission history must remain reconstructable even when current assignments are later corrected.'
-
-  Indexes {
-    (target_table, target_record_id)
-    (changed_at)
-  }
+  Note: "Database enforcement required outside DBML: the controlled initial deployment transaction seeds the active sys_admin role, its five action rows, the initial active bootstrap user, and their initial_bootstrap audit rows atomically. Only those initial_bootstrap audit rows may have performed_by_user_id null. Every later audit row must have an active System Administrator actor."
 }
-
-Ref: role_capabilities.role_id > roles.id
-Ref: role_capabilities.capability_id > capabilities.id
-
-Ref: access_scopes.parent_scope_id > access_scopes.id
-
-Ref: permission_assignments.role_id > roles.id
-Ref: permission_assignments.scope_id > access_scopes.id
-
-Ref: assignment_overrides.permission_assignment_id > permission_assignments.id
-Ref: assignment_overrides.capability_id > capabilities.id
-Ref: assignment_overrides.scope_id > access_scopes.id
