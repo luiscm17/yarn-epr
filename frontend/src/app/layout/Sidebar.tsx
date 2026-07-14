@@ -4,6 +4,8 @@ import {
   Stack,
   Text,
   Box,
+  Tooltip,
+  UnstyledButton,
   useMantineColorScheme,
 } from '@mantine/core'
 import { useNavigate, useLocation } from 'react-router-dom'
@@ -91,11 +93,45 @@ const navData: NavItem[] = [
   },
 ]
 
-export function Sidebar() {
+interface SidebarProps {
+  expanded: boolean
+}
+
+export function Sidebar({ expanded }: SidebarProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const { colorScheme } = useMantineColorScheme()
   const isDark = colorScheme === 'dark'
+  const isActive = (path: string) => location.pathname === path
+
+  if (!expanded) {
+    return (
+      <div className={classes.miniList}>
+        {navData.map((section) => (
+          <div key={section.label}>
+            {section.children?.map((child) => (
+              <Tooltip
+                key={child.path}
+                label={child.label}
+                position="right"
+                openDelay={400}
+                withinPortal
+              >
+                <UnstyledButton
+                  className={classes.miniItem}
+                  data-active={isActive(child.path!)}
+                  onClick={() => navigate(child.path!)}
+                  aria-label={child.label}
+                >
+                  {child.icon}
+                </UnstyledButton>
+              </Tooltip>
+            ))}
+          </div>
+        ))}
+      </div>
+    )
+  }
 
   return (
     <>
@@ -131,7 +167,7 @@ export function Sidebar() {
                     key={child.path}
                     label={child.label}
                     leftSection={child.icon}
-                    active={location.pathname === child.path}
+                    active={isActive(child.path!)}
                     onClick={() => navigate(child.path!)}
                     variant="subtle"
                     color="gray"

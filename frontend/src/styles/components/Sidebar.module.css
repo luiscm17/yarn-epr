@@ -3,6 +3,54 @@
   user-select: none;
 }
 
+/* ============================================================
+   Scroll area — permite que ScrollArea respete el contenedor
+   ============================================================ */
 .scrollArea {
   flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ============================================================
+   Mini sidebar — solo íconos con tooltip
+   ============================================================ */
+.miniList {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 8px 0;
+}
+
+.miniSectionLabel {
+  font-size: 10px;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--mantine-color-dimmed);
+  padding: 12px 0 4px;
+  user-select: none;
+}
+
+.miniItem {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--mantine-radius-sm);
+  color: var(--mantine-color-dimmed);
+  transition: background-color 150ms ease, color 150ms ease;
+  cursor: pointer;
+}
+
+.miniItem:hover {
+  background-color: var(--mantine-color-default-hover);
+  color: var(--mantine-color-text);
+}
+
+.miniItem[data-active='true'] {
+  background-color: var(--mantine-color-brand-cyan-light);
+  color: var(--mantine-color-brand-cyan-6);
 }

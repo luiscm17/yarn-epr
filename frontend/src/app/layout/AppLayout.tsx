@@ -10,7 +10,7 @@ import {
   Menu,
   rem,
 } from '@mantine/core'
-import { useDisclosure } from '@mantine/hooks'
+import { useDisclosure, useMediaQuery } from '@mantine/hooks'
 import {
   IconSun,
   IconMoon,
@@ -34,6 +34,8 @@ export function AppLayout() {
   const isDark = computedScheme === 'dark'
   const { user, logout } = useAuth()
 
+  const isMobile = useMediaQuery('(max-width: 48em)')
+
   const handleToggleSidebar = () => {
     // Consulta síncrona — sin flicker de hidratación
     if (window.matchMedia('(max-width: 48em)').matches) {
@@ -47,10 +49,11 @@ export function AppLayout() {
     <AppShell
       header={{ height: 56 }}
       navbar={{
-        width: 260,
+        width: { sm: desktopOpened ? 260 : 56 },
         breakpoint: 'sm',
-        collapsed: { mobile: !mobileOpened, desktop: !desktopOpened },
+        collapsed: { mobile: !mobileOpened, desktop: false },
       }}
+      transitionDuration={200}
       padding={{ base: 'sm', sm: 'md' }}
     >
       <AppShell.Header>
@@ -123,8 +126,9 @@ export function AppLayout() {
 
       <AppShell.Navbar
         bg={isDark ? 'dark.7' : 'gray.0'}
+        style={{ transition: 'width 200ms ease' }}
       >
-        <Sidebar />
+        <Sidebar expanded={isMobile || desktopOpened} />
       </AppShell.Navbar>
 
       <AppShell.Main>
