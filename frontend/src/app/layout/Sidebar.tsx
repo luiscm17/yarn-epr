@@ -22,19 +22,17 @@ function filterNavItems(
   items: NavItem[],
   isAllowed: (rt: string) => boolean,
 ): NavItem[] {
-  return items
-    .map((item) => {
-      if (item.children) {
-        const filteredChildren = item.children.filter(
-          (c) => !c.resourceType || isAllowed(c.resourceType),
-        )
-        if (filteredChildren.length === 0) return null
-        return { ...item, children: filteredChildren }
-      }
-      if (item.resourceType && !isAllowed(item.resourceType)) return null
-      return item
-    })
-    .filter(Boolean) as NavItem[]
+  return items.flatMap((item) => {
+    if (item.children) {
+      const filteredChildren = item.children.filter(
+        (c) => !c.resourceType || isAllowed(c.resourceType),
+      )
+      return filteredChildren.length === 0
+        ? []
+        : [{ ...item, children: filteredChildren }]
+    }
+    return item.resourceType && !isAllowed(item.resourceType) ? [] : [item]
+  }) as NavItem[]
 }
 
 export function Sidebar({ isResourceAllowed }: SidebarProps) {

@@ -20,7 +20,7 @@ import {
 import { Outlet, useNavigate } from 'react-router-dom'
 import { TopBar } from './TopBar'
 import { Sidebar } from './Sidebar'
-import { useAuth } from '../../features/auth/context/AuthContext'
+import { useAuth } from '../../features/auth/context/auth-context'
 import { ErrorBoundary } from '../../common/components/ErrorBoundary'
 import { AppBreadcrumbs } from '../../common/components/AppBreadcrumbs'
 import { usePageTitle } from '../../common/hooks/usePageTitle'

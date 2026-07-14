@@ -10,7 +10,7 @@ import {
   Alert,
 } from '@mantine/core'
 import { IconAlertCircle } from '@tabler/icons-react'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/auth-context'
 import classes from '../../../styles/components/LoginPage.module.css'
 
 export default function LoginPage() {

@@ -1,10 +1,5 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  type ReactNode,
-} from 'react'
+import { useState, useCallback, useMemo, type ReactNode } from 'react'
+import { AuthContext } from './auth-context'
 
 export interface User {
   id: string
@@ -18,21 +13,6 @@ export interface User {
    */
   allowedResources: string[]
 }
-
-interface AuthContextValue {
-  user: User | null
-  isAuthenticated: boolean
-  /**
-   * Verifica si el usuario tiene acceso a un resource_type.
-   * Si allowedResources está vacío, retorna true (sin restricción).
-   * Si el recurso no está listado, retorna false.
-   */
-  isResourceAllowed: (resourceType: string) => boolean
-  login: (username: string, password: string) => Promise<void>
-  logout: () => void
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
@@ -63,25 +43,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }, [])
 
+  const value = useMemo(
+    () => ({
+      user,
+      isAuthenticated: user !== null,
+      isResourceAllowed,
+      login,
+      logout,
+    }),
+    [user, isResourceAllowed, login, logout],
+  )
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: user !== null,
-        isResourceAllowed,
-        login,
-        logout,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   )
 }
 
-export function useAuth() {
-  const ctx = useContext(AuthContext)
-  if (!ctx) {
-    throw new Error('useAuth must be used within AuthProvider')
-  }
-  return ctx
-}
+
