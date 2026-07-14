@@ -19,7 +19,7 @@ export default function LoginPage() {
   const { login, isAuthenticated } = useAuth()
 
   const from = (location.state as { from?: { pathname: string } })?.from
-    ?.pathname || '/almacen/recepcion'
+    ?.pathname || '/warehouse/reception'
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')

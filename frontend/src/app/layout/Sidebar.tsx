@@ -1,20 +1,19 @@
 import {
-  NavLink,
+  AppShell,
   ScrollArea,
   Stack,
   Text,
-  Box,
   useMantineColorScheme,
 } from '@mantine/core'
-import { useNavigate, useLocation } from 'react-router-dom'
 import { navData, type NavItem } from '../navigation-data'
+import { SidebarLinksGroup } from './SidebarLinksGroup'
 import classes from '../../styles/components/Sidebar.module.css'
 
 interface SidebarProps {
   /**
-   * Callback opcional para filtrado RBAC.
-   * Recibe el resourceType del item y devuelve true si el usuario tiene acceso.
-   * Si no se provee, todos los items son visibles.
+   * Optional RBAC filter callback.
+   * Receives the item's resourceType, returns true if the user has access.
+   * When omitted, all items are visible.
    */
   isResourceAllowed?: (resourceType: string) => boolean
 }
@@ -39,8 +38,6 @@ function filterNavItems(
 }
 
 export function Sidebar({ isResourceAllowed }: SidebarProps) {
-  const navigate = useNavigate()
-  const location = useLocation()
   const { colorScheme } = useMantineColorScheme()
   const isDark = colorScheme === 'dark'
 
@@ -50,49 +47,33 @@ export function Sidebar({ isResourceAllowed }: SidebarProps) {
 
   return (
     <>
-      <Text
-        size="xs"
-        fw={600}
-        c={isDark ? 'gray.5' : 'gray.6'}
-        px="md"
-        pt="md"
-        pb="xs"
-        tt="uppercase"
-        className={classes.sectionLabel}
-      >
-        Navegación
-      </Text>
+      <AppShell.Section>
+        <Text
+          size="xs"
+          fw={600}
+          c={isDark ? 'gray.5' : 'gray.6'}
+          px="md"
+          pt="md"
+          pb="xs"
+          tt="uppercase"
+          className={classes.sectionLabel}
+        >
+          Navegación
+        </Text>
+      </AppShell.Section>
 
-      <Box className={classes.scrollArea}>
-        <ScrollArea px="xs">
-          <Stack gap={2}>
-            {visibleNavData.map((section) => (
-              <NavLink
-                key={section.label}
-                label={section.label}
-                leftSection={section.icon}
-                defaultOpened={section.children?.some(
-                  (child) => location.pathname === child.path
-                )}
-                variant="light"
-                color="gray"
-              >
-                {section.children?.map((child) => (
-                  <NavLink
-                    key={child.path}
-                    label={child.label}
-                    leftSection={child.icon}
-                    active={location.pathname === child.path}
-                    onClick={() => navigate(child.path!)}
-                    variant="subtle"
-                    color="gray"
-                  />
-                ))}
-              </NavLink>
-            ))}
-          </Stack>
-        </ScrollArea>
-      </Box>
+      <AppShell.Section grow component={ScrollArea}>
+        <Stack gap={0} px="xs">
+          {visibleNavData.map((section) => (
+            <SidebarLinksGroup
+              key={section.label}
+              icon={section.icon}
+              label={section.label}
+              links={section.children}
+            />
+          ))}
+        </Stack>
+      </AppShell.Section>
     </>
   )
 }
