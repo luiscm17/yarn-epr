@@ -11,11 +11,23 @@ export interface User {
   username: string
   name: string
   initials: string
+  /**
+   * Resource types a los que el usuario tiene acceso `read`.
+   * Vacío/indefinido = todos visibles (fallback mientras el backend
+   * de RBAC no está conectado).
+   */
+  allowedResources: string[]
 }
 
 interface AuthContextValue {
   user: User | null
   isAuthenticated: boolean
+  /**
+   * Verifica si el usuario tiene acceso a un resource_type.
+   * Si allowedResources está vacío, retorna true (sin restricción).
+   * Si el recurso no está listado, retorna false.
+   */
+  isResourceAllowed: (resourceType: string) => boolean
   login: (username: string, password: string) => Promise<void>
   logout: () => void
 }
@@ -25,15 +37,25 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
 
+  const isResourceAllowed = useCallback(
+    (resourceType: string) => {
+      if (!user || user.allowedResources.length === 0) return true
+      return user.allowedResources.includes(resourceType)
+    },
+    [user],
+  )
+
   const login = useCallback(async (username: string, _password: string) => {
     // Mock login — en producción reemplazar con llamada a API
     await new Promise((r) => setTimeout(r, 400))
 
+    // TODO: el backend devolverá allowedResources basado en roles + scopes
     setUser({
       id: '1',
       username,
       name: username.charAt(0).toUpperCase() + username.slice(1),
       initials: username.charAt(0).toUpperCase(),
+      allowedResources: [], // vacío = acceso total (sin backend aún)
     })
   }, [])
 
@@ -43,7 +65,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, isAuthenticated: user !== null, login, logout }}
+      value={{
+        user,
+        isAuthenticated: user !== null,
+        isResourceAllowed,
+        login,
+        logout,
+      }}
     >
       {children}
     </AuthContext.Provider>

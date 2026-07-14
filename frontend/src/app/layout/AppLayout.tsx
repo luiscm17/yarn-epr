@@ -32,7 +32,7 @@ export function AppLayout() {
   const { setColorScheme } = useMantineColorScheme()
   const computedScheme = useComputedColorScheme('light')
   const isDark = computedScheme === 'dark'
-  const { user, logout } = useAuth()
+  const { user, logout, isResourceAllowed } = useAuth()
 
   const isMobile = useMediaQuery('(max-width: 48em)')
 
@@ -128,7 +128,10 @@ export function AppLayout() {
         bg={isDark ? 'dark.7' : 'gray.0'}
         style={{ transition: 'width 200ms ease' }}
       >
-        <Sidebar expanded={isMobile || desktopOpened} />
+        <Sidebar
+          expanded={isMobile || desktopOpened}
+          isResourceAllowed={isResourceAllowed}
+        />
       </AppShell.Navbar>
 
       <AppShell.Main>
