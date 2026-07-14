@@ -10,13 +10,12 @@ import {
   Menu,
   rem,
 } from '@mantine/core'
-import { useDisclosure, useMediaQuery } from '@mantine/hooks'
+import { useDisclosure } from '@mantine/hooks'
 import {
   IconSun,
   IconMoon,
   IconChevronDown,
   IconMenu2,
-  IconMenuOrder,
 } from '@tabler/icons-react'
 import { Outlet, useNavigate } from 'react-router-dom'
 import { TopBar } from './TopBar'
@@ -30,14 +29,14 @@ export function AppLayout() {
   const navigate = useNavigate()
   const [mobileOpened, { toggle: toggleMobile }] = useDisclosure(false)
   const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(true)
-  const isMobile = useMediaQuery('(max-width: 48em)')
   const { setColorScheme } = useMantineColorScheme()
   const computedScheme = useComputedColorScheme('light')
   const isDark = computedScheme === 'dark'
   const { user, logout } = useAuth()
 
   const handleToggleSidebar = () => {
-    if (isMobile) {
+    // Consulta síncrona — sin flicker de hidratación
+    if (window.matchMedia('(max-width: 48em)').matches) {
       toggleMobile()
     } else {
       toggleDesktop()
@@ -64,11 +63,7 @@ export function AppLayout() {
                 onClick={handleToggleSidebar}
                 aria-label="Toggle sidebar"
               >
-                {isMobile ? (
-                  <IconMenuOrder style={{ width: rem(18) }} />
-                ) : (
-                  <IconMenu2 style={{ width: rem(18) }} />
-                )}
+                <IconMenu2 style={{ width: rem(18) }} />
               </ActionIcon>
 
               <Text size="lg" fw={700} c="brand-cyan.3">
