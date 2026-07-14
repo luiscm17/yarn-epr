@@ -3,7 +3,7 @@ import { brandCyan } from './colors'
 
 export const theme = createTheme({
   primaryColor: 'brand-cyan',
-  primaryShade: { light: 5, dark: 3 },
+  primaryShade: { light: 5, dark: 4 },
 
   colors: {
     'brand-cyan': brandCyan,
