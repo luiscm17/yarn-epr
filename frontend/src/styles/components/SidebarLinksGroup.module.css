@@ -12,6 +12,7 @@
   .control {
     padding-top: 12px;
     padding-bottom: 12px;
+    font-size: 1rem;
   }
 }
 
@@ -57,6 +58,7 @@
   .link {
     padding-top: 12px;
     padding-bottom: 12px;
+    font-size: 1rem;
   }
 }
 
