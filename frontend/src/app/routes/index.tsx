@@ -1,7 +1,10 @@
 import { lazy } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { AppLayout } from '../layout/AppLayout'
+import { ProtectedRoute } from './ProtectedRoute'
 
+const LoginPage = lazy(() => import('../../features/auth/pages/LoginPage'))
+const NotFoundPage = lazy(() => import('../../features/not-found/pages/NotFoundPage'))
 const WarehousePage = lazy(() => import('../../features/warehouse/pages/WarehousePage'))
 const SpinningPage = lazy(() => import('../../features/spinning/pages/SpinningPage'))
 const LotsPage = lazy(() => import('../../features/lots/pages/LotsPage'))
@@ -10,8 +13,16 @@ const AdminPage = lazy(() => import('../../features/admin/pages/AdminPage'))
 
 export const router = createBrowserRouter([
   {
+    path: '/login',
+    element: <LoginPage />,
+  },
+  {
     path: '/',
-    element: <AppLayout />,
+    element: (
+      <ProtectedRoute>
+        <AppLayout />
+      </ProtectedRoute>
+    ),
     children: [
       { index: true, element: <Navigate to="/almacen/recepcion" replace /> },
       { path: 'almacen/recepcion', element: <WarehousePage /> },
@@ -35,6 +46,7 @@ export const router = createBrowserRouter([
       { path: 'reportes/produccion', element: <ReportsPage /> },
       { path: 'reportes/trazabilidad', element: <ReportsPage /> },
       { path: 'admin/datos-maestros', element: <AdminPage /> },
+      { path: '*', element: <NotFoundPage /> },
     ],
   },
 ])

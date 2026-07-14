@@ -16,14 +16,17 @@ import {
   IconChevronDown,
   IconMenu2,
 } from '@tabler/icons-react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useNavigate } from 'react-router-dom'
 import { TopBar } from './TopBar'
 import { Sidebar } from './Sidebar'
+import { useAuth } from '../../features/auth/context/AuthContext'
 
 export function AppLayout() {
+  const navigate = useNavigate()
   const [sidebarOpened, setSidebarOpened] = useState(true)
   const { colorScheme, toggleColorScheme } = useMantineColorScheme()
   const isDark = colorScheme === 'dark'
+  const { user, logout } = useAuth()
 
   return (
     <AppShell
@@ -69,11 +72,11 @@ export function AppLayout() {
                   <Group gap={6} style={{ cursor: 'pointer' }} wrap="nowrap">
                     <Indicator size={8} offset={2} color="green" withBorder>
                       <Avatar size={28} color="brand-cyan" radius="xl">
-                        JD
+                        {user?.initials ?? '?'}
                       </Avatar>
                     </Indicator>
                     <Text size="sm" visibleFrom="sm">
-                      Juan Pérez
+                      {user?.name ?? 'Usuario'}
                     </Text>
                     <IconChevronDown
                       size={14}
@@ -85,7 +88,15 @@ export function AppLayout() {
                 <Menu.Dropdown>
                   <Menu.Label>Usuario</Menu.Label>
                   <Menu.Item>Perfil</Menu.Item>
-                  <Menu.Item color="red">Cerrar sesión</Menu.Item>
+                  <Menu.Item
+                    color="red"
+                    onClick={() => {
+                      logout()
+                      navigate('/login', { replace: true })
+                    }}
+                  >
+                    Cerrar sesión
+                  </Menu.Item>
                 </Menu.Dropdown>
               </Menu>
             </Group>
