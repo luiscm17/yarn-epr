@@ -8,7 +8,6 @@ import {
   useMantineColorScheme,
   type MantineStyleProp,
 } from '@mantine/core'
-import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
   IconBuildingWarehouse,
@@ -143,20 +142,6 @@ export function Sidebar({ expanded, isResourceAllowed }: SidebarProps) {
 
   const isActive = (path: string) => location.pathname === path
 
-  // ── Acordeón: solo una sección abierta a la vez ──
-  const findSectionForPath = (path: string) =>
-    visibleNavData.find((s) => s.children?.some((c) => c.path === path))
-      ?.label ?? null
-
-  const [openSection, setOpenSection] = useState<string | null>(() =>
-    findSectionForPath(location.pathname),
-  )
-
-  // Cuando cambia la ruta, abrir la sección correspondiente
-  useEffect(() => {
-    setOpenSection(findSectionForPath(location.pathname))
-  }, [location.pathname])
-
   // ── Utility: estilo compacto para NavLink en mini mode ──
   const miniLinkStyles: MantineStyleProp = {
     padding: '6px 10px',
@@ -221,12 +206,9 @@ export function Sidebar({ expanded, isResourceAllowed }: SidebarProps) {
                 key={section.label}
                 label={section.label}
                 leftSection={section.icon}
-                opened={openSection === section.label}
-                onToggle={() =>
-                  setOpenSection(
-                    openSection === section.label ? null : section.label,
-                  )
-                }
+                defaultOpened={section.children?.some(
+                  (child) => location.pathname === child.path,
+                )}
                 variant="light"
                 color="gray"
               >
