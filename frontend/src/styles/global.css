@@ -1,0 +1,82 @@
+/* ============================================================
+   Yarn EPR — Design tokens y resets globales
+   ============================================================ */
+
+:root {
+  --yarn-font-sans: 'Fira Sans', system-ui, -apple-system, 'Segoe UI', Roboto,
+    sans-serif;
+  --yarn-font-mono: 'Fira Code', ui-monospace, 'SF Mono', Consolas, monospace;
+  --yarn-radius-sm: 4px;
+  --yarn-radius-md: 6px;
+  --yarn-radius-lg: 8px;
+  --yarn-radius-full: 9999px;
+  --yarn-border-width: 1px;
+  --yarn-border-width-thick: 2px;
+  --yarn-transition-fast: 150ms ease;
+  --yarn-transition-normal: 200ms ease;
+  --yarn-transition-slow: 300ms ease;
+}
+
+/* ---- Colores semánticos (para badges custom) ---- */
+:root,
+[data-mantine-color-scheme='light'] {
+  --yarn-success-bg: #c8e6c9;
+  --yarn-success-text: #1b5e20;
+  --yarn-warning-bg: #fff8e1;
+  --yarn-warning-text: #e65100;
+  --yarn-error-bg: #ffebee;
+  --yarn-error-text: #b71c1c;
+  --yarn-info-bg: #e3f2fd;
+  --yarn-info-text: #0d47a1;
+}
+
+[data-mantine-color-scheme='dark'] {
+  --yarn-success-bg: #1b362a;
+  --yarn-success-text: #3fb950;
+  --yarn-warning-bg: #2d2414;
+  --yarn-warning-text: #d29922;
+  --yarn-error-bg: #2d1518;
+  --yarn-error-text: #f85149;
+  --yarn-info-bg: #0b1e33;
+  --yarn-info-text: #58a6ff;
+}
+
+body {
+  margin: 0;
+}
+
+/* ============================================================
+   Mobile: bump up font sizes, spacing, y touch targets
+   ============================================================ */
+@media (max-width: 48em) {
+  :root {
+    /* Fuentes más grandes en mobile para legibilidad */
+    --mantine-font-size-xs: 0.85rem;
+    --mantine-font-size-sm: 0.95rem;
+    --mantine-font-size-md: 1.05rem;
+    --mantine-font-size-lg: 1.2rem;
+
+    /* Más espacio para respirar */
+    --mantine-spacing-xs: 0.75rem;
+    --mantine-spacing-sm: 0.9rem;
+    --mantine-spacing-md: 1.15rem;
+
+    /* Inputs: 16px mínimo evita zoom automático en iOS */
+  }
+}
+
+/* ---- Transición de página: fade-in sutil al navegar ---- */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-enter {
+  animation: page-enter 200ms ease-out;
+}
