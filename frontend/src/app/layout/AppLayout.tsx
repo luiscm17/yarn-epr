@@ -35,6 +35,13 @@ export function AppLayout() {
   const isDark = computedScheme === 'dark'
   const { user, logout, isResourceAllowed } = useAuth()
 
+  const handleNavClick = () => {
+    // Cierra el sidebar en mobile después de navegar
+    if (window.matchMedia('(max-width: 48em)').matches) {
+      toggleMobile()
+    }
+  }
+
   const handleToggleSidebar = () => {
     // Consulta síncrona — sin flicker de hidratación
     if (window.matchMedia('(max-width: 48em)').matches) {
@@ -125,7 +132,10 @@ export function AppLayout() {
       <AppShell.Navbar
         bg={isDark ? 'dark.7' : 'gray.0'}
       >
-        <Sidebar isResourceAllowed={isResourceAllowed} />
+        <Sidebar
+          isResourceAllowed={isResourceAllowed}
+          onNavigate={handleNavClick}
+        />
       </AppShell.Navbar>
 
       <AppShell.Main>

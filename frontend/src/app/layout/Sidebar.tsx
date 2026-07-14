@@ -10,12 +10,10 @@ import { SidebarLinksGroup } from './SidebarLinksGroup'
 import classes from '../../styles/components/Sidebar.module.css'
 
 interface SidebarProps {
-  /**
-   * Optional RBAC filter callback.
-   * Receives the item's resourceType, returns true if the user has access.
-   * When omitted, all items are visible.
-   */
+  /** Optional RBAC filter callback */
   isResourceAllowed?: (resourceType: string) => boolean
+  /** Se llama después de navegar — cierra el sidebar en mobile */
+  onNavigate?: () => void
 }
 
 function filterNavItems(
@@ -35,7 +33,7 @@ function filterNavItems(
   }) as NavItem[]
 }
 
-export function Sidebar({ isResourceAllowed }: SidebarProps) {
+export function Sidebar({ isResourceAllowed, onNavigate }: SidebarProps) {
   const { colorScheme } = useMantineColorScheme()
   const isDark = colorScheme === 'dark'
 
@@ -68,6 +66,7 @@ export function Sidebar({ isResourceAllowed }: SidebarProps) {
               icon={section.icon}
               label={section.label}
               links={section.children}
+              onNavigate={onNavigate}
             />
           ))}
         </Stack>

@@ -14,9 +14,11 @@ interface LinksGroupProps {
   icon?: ReactNode
   label: string
   links?: NavItem[]
+  /** Se llama después de navegar — cierra el sidebar en mobile */
+  onNavigate?: () => void
 }
 
-export function SidebarLinksGroup({ icon, label, links }: LinksGroupProps) {
+export function SidebarLinksGroup({ icon, label, links, onNavigate }: LinksGroupProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const hasLinks = Array.isArray(links) && links.length > 0
@@ -34,7 +36,12 @@ export function SidebarLinksGroup({ icon, label, links }: LinksGroupProps) {
         key={child.path}
         className={classes.link}
         data-active={isActive || undefined}
-        onClick={() => child.path && navigate(child.path)}
+        onClick={() => {
+          if (child.path) {
+            navigate(child.path)
+            onNavigate?.()
+          }
+        }}
       >
         {child.label}
       </UnstyledButton>
