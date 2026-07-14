@@ -127,7 +127,11 @@ por modo.
 
 ## 5. Color por dominio de negocio
 
-Cada contexto tiene un color asociado para navegación, badges y encabezados
+> **Deprecado.** Con RBAC los usuarios pueden operar en múltiples dominios,
+> por lo que el color por contexto de negocio no se aplica en la navegación.
+> El color primario cian es el único color de interacción del sistema.
+
+~~Cada contexto tiene un color asociado para navegación, badges y encabezados
 de sección. Se usan con moderación: el color dominante sigue siendo el
 primario cian.
 
@@ -137,7 +141,7 @@ primario cian.
 | Hilatura | `#D97706` | `#FBBF24` | Ámbar — proceso continuo, calor |
 | Proceso por Lotes | `#7C3AED` | `#A78BFA` | Violeta — trazabilidad de lote |
 | Reportes | `#52525B` | `#A1A1AA` | Zinc — neutral, datos |
-| Admin | `#78716C` | `#D6D3D1` | Piedra — utilitario, baja prioridad |
+| Admin | `#78716C` | `#D6D3D1` | Piedra — utilitario, baja prioridad |~~
 
 ---
 

@@ -12,9 +12,11 @@
    Almacén, Hilatura y Proceso por Lotes aparecen como áreas separadas porque
    sus conceptos, timelines y usuarios son distintos.
 
-2. **La fecha de negocio y el turno son estado global.** La mayor parte de la
+2. **La fecha de negocio y el turno son estado de sesión.** La mayor parte de la
    captura ocurre al cierre del turno, no en tiempo real. El turno y la fecha
-   de negocio deben estar visibles y editables desde cualquier pantalla.
+   de negocio se proveen mediante contexto compartido, y cada pantalla los
+   incorpora según los necesite (dashboard, formularios, reportes). No forman
+   parte del chrome global (top bar).
 
 3. **La captura tipo planilla es el modo principal para datos repetitivos.**
    Hilatura (descargas por máquina) y ciertos registros de calidad requieren
@@ -47,7 +49,7 @@ El layout se organiza en tres zonas permanentes:
 ```
 ┌─────────────────────────────────────────────────┐
 │  Top bar                                         │
-│  [Logo] [Título de página]     [Turno] [Usuario] │
+│ [☰] [Logo]                  [🌙] [Usuario ▼] │
 ├──────────┬──────────────────────────────────────┤
 │ Sidebar  │  Main content area                    │
 │          │                                       │
@@ -63,12 +65,11 @@ El layout se organiza en tres zonas permanentes:
 ### 2.1 Top bar
 
 | Elemento | Comportamiento |
-|---|---|
+|---|---|---|
 | Logo / nombre del sistema | Enlace a dashboard o ruta por defecto |
-| Título de página | Texto dinámico según la ruta activa |
-| Selector de turno | Dropdown con A, B, C. Persiste en la sesión |
-| Selector de fecha de negocio | Date picker. Persiste en la sesión |
-| Usuario actual | Nombre + indicador de sesión. Menú de perfil/cierre |
+| Toggle sidebar | Botón para colapsar/expandir la navegación |
+| Toggle de tema | Modo claro / oscuro |
+| Usuario actual | Nombre + avatar. Menú de perfil/cierre de sesión |
 
 ### 2.2 Sidebar
 
@@ -392,11 +393,14 @@ Para corrección de registros existentes.
 
 ### 4.5 Selector de turno y fecha
 
-Componente global en la top bar.
+Componente de contexto de sesión, disponible mediante hook. Cada pantalla lo
+ubica donde corresponda (junto a formularios, en dashboard o en encabezados
+de sección). No forma parte del chrome global.
 
 - Turno: dropdown con A/B/C y opción de "todos"
 - Fecha negocio: date picker con atajo para "hoy"
-- Cambios actualizan todas las pantallas que usan estos valores
+- Cambios actualizan todas las pantallas que usan estos valores mediante
+  un contexto compartido (BusinessContext)
 
 ---
 
