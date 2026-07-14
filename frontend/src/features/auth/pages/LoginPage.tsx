@@ -11,7 +11,7 @@ import {
 } from '@mantine/core'
 import { IconAlertCircle } from '@tabler/icons-react'
 import { useAuth } from '../context/AuthContext'
-import classes from './LoginPage.module.css'
+import classes from '../../../styles/components/LoginPage.module.css'
 
 export default function LoginPage() {
   const navigate = useNavigate()

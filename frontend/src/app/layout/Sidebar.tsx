@@ -30,7 +30,7 @@ import {
   IconFileAnalytics,
   IconRoute,
 } from '@tabler/icons-react'
-import classes from './Sidebar.module.css'
+import classes from '../../styles/components/Sidebar.module.css'
 
 interface NavItem {
   label: string
