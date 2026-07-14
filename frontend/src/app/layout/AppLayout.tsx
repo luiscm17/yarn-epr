@@ -105,7 +105,7 @@ export function AppLayout() {
 
                 <Menu.Dropdown>
                   <Menu.Label>Usuario</Menu.Label>
-                  <Menu.Item>Perfil</Menu.Item>
+                  <Menu.Item onClick={() => navigate('/profile')}>Perfil</Menu.Item>
                   <Menu.Item
                     color="red"
                     onClick={() => {

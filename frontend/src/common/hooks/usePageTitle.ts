@@ -23,6 +23,7 @@ const titles: Record<string, string> = {
   '/reports/production': 'Producción vs plan',
   '/reports/traceability': 'Trazabilidad de lote',
   '/admin/master-data': 'Datos maestros',
+  '/profile': 'Mi perfil',
 }
 
 export function usePageTitle() {

@@ -10,6 +10,7 @@ const SpinningPage = lazy(() => import('../../features/spinning/pages/SpinningPa
 const LotsPage = lazy(() => import('../../features/lots/pages/LotsPage'))
 const ReportsPage = lazy(() => import('../../features/reports/pages/ReportsPage'))
 const AdminPage = lazy(() => import('../../features/admin/pages/AdminPage'))
+const ProfilePage = lazy(() => import('../../features/profile/pages/ProfilePage'))
 
 export const router = createBrowserRouter([
   {
@@ -46,6 +47,7 @@ export const router = createBrowserRouter([
       { path: 'reports/production', element: <ReportsPage /> },
       { path: 'reports/traceability', element: <ReportsPage /> },
       { path: 'admin/master-data', element: <AdminPage /> },
+      { path: 'profile', element: <ProfilePage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },
