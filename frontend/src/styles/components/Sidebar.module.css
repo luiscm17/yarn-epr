@@ -3,41 +3,6 @@
   user-select: none;
 }
 
-/* ============================================================
-   Scroll area — min-height:0 permite que ScrollArea se
-   contraiga dentro del flex container del Navbar
-   ============================================================ */
 .scrollArea {
   flex: 1;
-  min-height: 0;
-  overflow: hidden;
-}
-
-/* ============================================================
-   Mini sidebar — mismo NavLink, solo ícono visible
-   ============================================================ */
-.miniList {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1px;
-  padding: 8px 0;
-}
-
-.miniNavRoot {
-  --nl-padding: 6px 10px;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--mantine-radius-sm);
-}
-
-/* Override label y chevron vía selectores estáticos de Mantine */
-.miniNavRoot :global(.mantine-NavLink-body),
-.miniNavRoot :global(.mantine-NavLink-chevron) {
-  display: none;
-}
-
-.miniNavRoot :global(.mantine-NavLink-section) {
-  margin-right: 0;
 }

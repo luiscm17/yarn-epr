@@ -10,7 +10,7 @@ import {
   Menu,
   rem,
 } from '@mantine/core'
-import { useDisclosure, useMediaQuery } from '@mantine/hooks'
+import { useDisclosure } from '@mantine/hooks'
 import {
   IconSun,
   IconMoon,
@@ -22,6 +22,7 @@ import { TopBar } from './TopBar'
 import { Sidebar } from './Sidebar'
 import { useAuth } from '../../features/auth/context/AuthContext'
 import { ErrorBoundary } from '../../common/components/ErrorBoundary'
+import { AppBreadcrumbs } from '../../common/components/AppBreadcrumbs'
 import { usePageTitle } from '../../common/hooks/usePageTitle'
 
 export function AppLayout() {
@@ -33,8 +34,6 @@ export function AppLayout() {
   const computedScheme = useComputedColorScheme('light')
   const isDark = computedScheme === 'dark'
   const { user, logout, isResourceAllowed } = useAuth()
-
-  const isMobile = useMediaQuery('(max-width: 48em)')
 
   const handleToggleSidebar = () => {
     // Consulta síncrona — sin flicker de hidratación
@@ -49,11 +48,10 @@ export function AppLayout() {
     <AppShell
       header={{ height: 56 }}
       navbar={{
-        width: { sm: desktopOpened ? 260 : 56 },
+        width: 260,
         breakpoint: 'sm',
-        collapsed: { mobile: !mobileOpened, desktop: false },
+        collapsed: { mobile: !mobileOpened, desktop: !desktopOpened },
       }}
-      transitionDuration={200}
       padding={{ base: 'sm', sm: 'md' }}
     >
       <AppShell.Header>
@@ -126,17 +124,14 @@ export function AppLayout() {
 
       <AppShell.Navbar
         bg={isDark ? 'dark.7' : 'gray.0'}
-        style={{ transition: 'width 200ms ease' }}
       >
-        <Sidebar
-          expanded={isMobile || desktopOpened}
-          isResourceAllowed={isResourceAllowed}
-        />
+        <Sidebar isResourceAllowed={isResourceAllowed} />
       </AppShell.Navbar>
 
       <AppShell.Main>
         <ErrorBoundary>
           <div className="page-enter">
+            <AppBreadcrumbs />
             <Outlet />
           </div>
         </ErrorBoundary>
