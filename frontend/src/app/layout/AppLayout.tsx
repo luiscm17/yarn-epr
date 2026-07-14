@@ -23,8 +23,10 @@ import { TopBar } from './TopBar'
 import { Sidebar } from './Sidebar'
 import { useAuth } from '../../features/auth/context/AuthContext'
 import { ErrorBoundary } from '../../common/components/ErrorBoundary'
+import { usePageTitle } from '../../common/hooks/usePageTitle'
 
 export function AppLayout() {
+  usePageTitle()
   const navigate = useNavigate()
   const [mobileOpened, { toggle: toggleMobile }] = useDisclosure(false)
   const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(true)
