@@ -8,6 +8,13 @@
   border-radius: var(--mantine-radius-sm);
 }
 
+@media (max-width: 48em) {
+  .control {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+}
+
 .control:hover {
   background-color: light-dark(
     var(--mantine-color-gray-0),
@@ -44,6 +51,13 @@
     var(--mantine-color-black),
     var(--mantine-color-dark-0)
   );
+}
+
+@media (max-width: 48em) {
+  .link {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
 }
 
 .link[data-active='true'] {
