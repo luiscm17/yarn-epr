@@ -20,6 +20,7 @@ import { Outlet, useNavigate } from 'react-router-dom'
 import { TopBar } from './TopBar'
 import { Sidebar } from './Sidebar'
 import { useAuth } from '../../features/auth/context/AuthContext'
+import { ErrorBoundary } from '../../common/components/ErrorBoundary'
 
 export function AppLayout() {
   const navigate = useNavigate()
@@ -109,7 +110,9 @@ export function AppLayout() {
       </AppShell.Navbar>
 
       <AppShell.Main>
-        <Outlet />
+        <ErrorBoundary>
+          <Outlet />
+        </ErrorBoundary>
       </AppShell.Main>
     </AppShell>
   )
