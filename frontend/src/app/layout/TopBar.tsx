@@ -14,7 +14,7 @@ interface TopBarProps {
 export function TopBar({ left, center, right }: TopBarProps) {
   return (
     <Group h="100%" px="md" justify="space-between" wrap="nowrap">
-      <Group gap="xs" wrap="nowrap" visibleFrom="sm">
+      <Group gap="xs" wrap="nowrap">
         {left}
       </Group>
       <Group

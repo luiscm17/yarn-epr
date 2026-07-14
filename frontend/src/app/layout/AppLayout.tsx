@@ -1,20 +1,22 @@
-import { useState } from 'react'
 import {
   AppShell,
   Group,
   Text,
   ActionIcon,
   useMantineColorScheme,
+  useComputedColorScheme,
   Indicator,
   Avatar,
   Menu,
   rem,
 } from '@mantine/core'
+import { useDisclosure, useMediaQuery } from '@mantine/hooks'
 import {
   IconSun,
   IconMoon,
   IconChevronDown,
   IconMenu2,
+  IconMenuOrder,
 } from '@tabler/icons-react'
 import { Outlet, useNavigate } from 'react-router-dom'
 import { TopBar } from './TopBar'
@@ -24,10 +26,21 @@ import { ErrorBoundary } from '../../common/components/ErrorBoundary'
 
 export function AppLayout() {
   const navigate = useNavigate()
-  const [sidebarOpened, setSidebarOpened] = useState(true)
-  const { colorScheme, toggleColorScheme } = useMantineColorScheme()
-  const isDark = colorScheme === 'dark'
+  const [mobileOpened, { toggle: toggleMobile }] = useDisclosure(false)
+  const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(true)
+  const isMobile = useMediaQuery('(max-width: 48em)')
+  const { setColorScheme } = useMantineColorScheme()
+  const computedScheme = useComputedColorScheme('light')
+  const isDark = computedScheme === 'dark'
   const { user, logout } = useAuth()
+
+  const handleToggleSidebar = () => {
+    if (isMobile) {
+      toggleMobile()
+    } else {
+      toggleDesktop()
+    }
+  }
 
   return (
     <AppShell
@@ -35,9 +48,9 @@ export function AppLayout() {
       navbar={{
         width: 260,
         breakpoint: 'sm',
-        collapsed: { desktop: !sidebarOpened },
+        collapsed: { mobile: !mobileOpened, desktop: !desktopOpened },
       }}
-      padding="md"
+      padding={{ base: 'sm', sm: 'md' }}
     >
       <AppShell.Header>
         <TopBar
@@ -46,10 +59,14 @@ export function AppLayout() {
               <ActionIcon
                 variant="subtle"
                 color="gray"
-                onClick={() => setSidebarOpened((o) => !o)}
+                onClick={handleToggleSidebar}
                 aria-label="Toggle sidebar"
               >
-                <IconMenu2 style={{ width: rem(18) }} />
+                {isMobile ? (
+                  <IconMenuOrder style={{ width: rem(18) }} />
+                ) : (
+                  <IconMenu2 style={{ width: rem(18) }} />
+                )}
               </ActionIcon>
 
               <Text size="lg" fw={700} c="brand-cyan.3">
@@ -62,7 +79,9 @@ export function AppLayout() {
               <ActionIcon
                 variant="subtle"
                 color="gray"
-                onClick={toggleColorScheme}
+                onClick={() =>
+                  setColorScheme(isDark ? 'light' : 'dark')
+                }
                 aria-label="Toggle color scheme"
               >
                 {isDark ? <IconSun size={18} /> : <IconMoon size={18} />}
