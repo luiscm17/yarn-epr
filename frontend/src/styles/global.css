@@ -3,9 +3,9 @@
    ============================================================ */
 
 :root {
-  --yarn-font-sans: system-ui, -apple-system, 'Segoe UI', Roboto,
-    'Helvetica Neue', sans-serif;
-  --yarn-font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', Consolas, monospace;
+  --yarn-font-sans: 'Fira Sans', system-ui, -apple-system, 'Segoe UI', Roboto,
+    sans-serif;
+  --yarn-font-mono: 'Fira Code', ui-monospace, 'SF Mono', Consolas, monospace;
   --yarn-radius-sm: 4px;
   --yarn-radius-md: 6px;
   --yarn-radius-lg: 8px;
@@ -43,4 +43,20 @@
 
 body {
   margin: 0;
+}
+
+/* ---- Transición de página: fade-in sutil al navegar ---- */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-enter {
+  animation: page-enter 200ms ease-out;
 }

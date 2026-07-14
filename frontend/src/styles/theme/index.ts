@@ -9,10 +9,8 @@ export const theme = createTheme({
     'brand-cyan': brandCyan,
   },
 
-  fontFamily:
-    "system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif",
-  fontFamilyMonospace:
-    "ui-monospace, 'SF Mono', 'Cascadia Code', Consolas, monospace",
+  fontFamily: "'Fira Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+  fontFamilyMonospace: "'Fira Code', ui-monospace, 'SF Mono', Consolas, monospace",
 
   fontSizes: {
     xs: '12px',

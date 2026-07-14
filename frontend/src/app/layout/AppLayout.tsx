@@ -121,13 +121,17 @@ export function AppLayout() {
         />
       </AppShell.Header>
 
-      <AppShell.Navbar>
+      <AppShell.Navbar
+        bg={isDark ? 'dark.7' : 'gray.0'}
+      >
         <Sidebar />
       </AppShell.Navbar>
 
       <AppShell.Main>
         <ErrorBoundary>
-          <Outlet />
+          <div className="page-enter">
+            <Outlet />
+          </div>
         </ErrorBoundary>
       </AppShell.Main>
     </AppShell>

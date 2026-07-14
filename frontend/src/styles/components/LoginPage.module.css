@@ -3,10 +3,42 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--mantine-color-body);
+  background: light-dark(#f5f7fa, #0d1117);
 }
 
 .card {
   width: 100%;
   max-width: 400px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Barra decorativa superior */
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--mantine-color-brand-cyan-4),
+    var(--mantine-color-brand-cyan-6)
+  );
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.brandDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--mantine-color-brand-cyan-4);
 }

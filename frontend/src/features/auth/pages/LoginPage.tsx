@@ -53,15 +53,13 @@ export default function LoginPage() {
 
   return (
     <div className={classes.wrapper}>
-      <Paper
-        className={classes.card}
-        p="xl"
-        radius="md"
-        withBorder
-      >
-        <Title order={1} size="h2" ta="center" mb="xs">
-          Yarn EPR
-        </Title>
+      <Paper className={classes.card} p="xl" radius="md" withBorder>
+        <div className={classes.brand}>
+          <span className={classes.brandDot} />
+          <Title order={1} size="h2" ta="center">
+            Yarn EPR
+          </Title>
+        </div>
         <Text c="dimmed" size="sm" ta="center" mb="lg">
           Producción textil — Iniciar sesión
         </Text>
