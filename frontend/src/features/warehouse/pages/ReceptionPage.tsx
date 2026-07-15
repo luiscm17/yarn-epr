@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Stack, Title, TextInput, Button, Group, Paper, Alert } from "@mantine/core";
+import { Stack, Title, TextInput, Button, Group, Paper, SimpleGrid, Alert } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { IconAlertCircle } from "@tabler/icons-react";
 import { DataGrid, renderTextEditor } from "react-data-grid";
@@ -58,6 +58,12 @@ export default function ReceptionPage() {
             materialCode: "",
             lotCode: "",
         },
+        validate: {
+            truckLicensePlate: (value) => (!value ? "La patente es obligatoria" : null),
+            carrier: (value) => (!value ? "El transportista es obligatorio" : null),
+            materialCode: (value) => (!value ? "El código de material es obligatorio" : null),
+            lotCode: (value) => (!value ? "El lote es obligatorio" : null),
+        },
     });
 
     const [rows, setRows] = useState<BaleRow[]>([]);
@@ -67,8 +73,7 @@ export default function ReceptionPage() {
         setRows((prev) => [...prev, emptyBale(materialCode, lotCode)]);
     }, [form]);
 
-    const handleSubmit = useCallback(async () => {
-        const formValues = form.getValues();
+    const handleSubmit = useCallback(async (formValues: TruckReceptionFormData) => {
         const payload: CreateReceptionPayload = {
             truck_license_plate: formValues.truckLicensePlate,
             carrier: formValues.carrier,
@@ -96,36 +101,38 @@ export default function ReceptionPage() {
         } finally {
             setSubmitting(false);
         }
-    }, [form, rows]);
+    }, [rows]);
 
     return (
         <Stack>
             <Title order={2}>Recepción de fardos</Title>
 
-            <Paper withBorder p="md">
-                <Group>
-                    <TextInput
-                        label="Patente"
-                        placeholder="AA000BB"
-                        {...form.getInputProps("truckLicensePlate")}
-                    />
-                    <TextInput
-                        label="Transportista"
-                        placeholder="Nombre o razón social"
-                        {...form.getInputProps("carrier")}
-                    />
-                    <TextInput
-                        label="Código de material"
-                        placeholder="Ej: ALG-PE-01"
-                        {...form.getInputProps("materialCode")}
-                    />
-                    <TextInput
-                        label="Lote"
-                        placeholder="Ej: LOTE-001"
-                        {...form.getInputProps("lotCode")}
-                    />
-                </Group>
-            </Paper>
+            <form id="reception-form" onSubmit={form.onSubmit(handleSubmit)}>
+                <Paper withBorder p="md">
+                    <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }}>
+                        <TextInput
+                            label="Patente"
+                            placeholder="AA000BB"
+                            {...form.getInputProps("truckLicensePlate")}
+                        />
+                        <TextInput
+                            label="Transportista"
+                            placeholder="Nombre o razón social"
+                            {...form.getInputProps("carrier")}
+                        />
+                        <TextInput
+                            label="Código de material"
+                            placeholder="Ej: ALG-PE-01"
+                            {...form.getInputProps("materialCode")}
+                        />
+                        <TextInput
+                            label="Lote"
+                            placeholder="Ej: LOTE-001"
+                            {...form.getInputProps("lotCode")}
+                        />
+                    </SimpleGrid>
+                </Paper>
+            </form>
 
             <Group>
                 <Button onClick={addRow}>Agregar fardo</Button>
@@ -148,7 +155,7 @@ export default function ReceptionPage() {
             )}
 
             <Group>
-                <Button onClick={handleSubmit} loading={submitting} disabled={rows.length === 0}>
+                <Button type="submit" form="reception-form" loading={submitting} disabled={rows.length === 0}>
                     Enviar recepción
                 </Button>
             </Group>
