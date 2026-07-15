@@ -1,0 +1,13 @@
+/* Layout — estilos que Mantine no expresa como props directas */
+
+.fill {
+  flex: 1;
+}
+
+.scrollArea {
+  overflow: auto;
+}
+
+.clickable {
+  cursor: pointer;
+}

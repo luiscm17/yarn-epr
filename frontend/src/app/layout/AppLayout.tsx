@@ -12,7 +12,6 @@ import {
     Indicator,
     Avatar,
     Menu,
-    rem,
 } from "@mantine/core";
 import { useDisclosure, useMediaQuery, type SplitterPaneSize, type UseSplitterReturnValue } from "@mantine/hooks";
 import { IconSun, IconMoon, IconChevronDown, IconMenu2 } from "@tabler/icons-react";
@@ -23,6 +22,7 @@ import { useAuth } from "../../features/auth/context/auth-context";
 import { ErrorBoundary } from "../../common/components/ErrorBoundary";
 import { AppBreadcrumbs } from "../../common/components/AppBreadcrumbs";
 import { usePageTitle } from "../../common/hooks/usePageTitle";
+import classes from "../../styles/components/AppLayout.module.css";
 
 export function AppLayout() {
     usePageTitle();
@@ -93,7 +93,7 @@ export function AppLayout() {
                                 onClick={handleToggleSidebar}
                                 aria-label="Toggle sidebar"
                             >
-                                <IconMenu2 style={{ width: rem(18) }} />
+                                <IconMenu2 size={18} />
                             </ActionIcon>
 
                             <Text size="lg" fw={700} c="brand-cyan.3">
@@ -114,7 +114,7 @@ export function AppLayout() {
 
                             <Menu shadow="md" width={180}>
                                 <Menu.Target>
-                                    <Group gap={6} style={{ cursor: "pointer" }} wrap="nowrap">
+                                    <Group gap={6} className={classes.clickable} wrap="nowrap">
                                         <Indicator size={8} offset={2} color="green" withBorder>
                                             <Avatar size={28} color="brand-cyan" radius="xl">
                                                 {user?.initials ?? "?"}
@@ -125,7 +125,7 @@ export function AppLayout() {
                                         </Text>
                                         <IconChevronDown
                                             size={14}
-                                            style={{ color: "var(--mantine-color-dimmed)" }}
+                                            color="var(--mantine-color-dimmed)"
                                         />
                                     </Group>
                                 </Menu.Target>
@@ -169,7 +169,7 @@ export function AppLayout() {
                 splitterRef={splitterRef}
                 sizes={sizes}
                 onSizeChange={handleSizeChange}
-                style={{ flex: 1 }}
+                className={classes.fill}
             >
                 <Splitter.Pane
                     defaultSize={20}
@@ -179,11 +179,11 @@ export function AppLayout() {
                     collapseThreshold={1}
                     bg={isDark ? "dark.7" : "gray.0"}
                 >
-                    <Box visibleFrom="sm" style={{ height: "100%" }}>
+                    <Box visibleFrom="sm" h="100%">
                         <Sidebar isResourceAllowed={isResourceAllowed} onNavigate={handleNavClick} />
                     </Box>
                 </Splitter.Pane>
-                <Splitter.Pane defaultSize={80} p="md" style={{ overflow: "auto" }}>
+                <Splitter.Pane defaultSize={80} p="md" className={classes.scrollArea}>
                     <ErrorBoundary>
                         <div className="page-enter">
                             <AppBreadcrumbs />
