@@ -1,51 +1,15 @@
 import { useState, useCallback } from "react";
-import { Stack, TextInput, Button, Group, Paper, SimpleGrid, Alert } from "@mantine/core";
+import { Stack, Button, Group, Alert } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { IconAlertCircle } from "@tabler/icons-react";
-import { DataGrid, renderTextEditor } from "react-data-grid";
-import type { Column } from "react-data-grid";
-import "react-data-grid/lib/styles.css";
 
 import type { BaleRow, TruckReceptionFormData } from "../types/reception-types";
 import type { CreateReceptionPayload } from "../types/reception-types";
 import { createReception } from "../api/receptionApi";
+import { emptyBale } from "../components/reception-columns";
+import { ReceptionForm } from "../components/ReceptionForm";
+import { BaleDataGrid } from "../components/BaleDataGrid";
 import { PageHeader } from "../../../common/components/PageHeader";
-
-function createTempId(): BaleRow["id"] {
-    return `temp-${crypto.randomUUID()}`;
-}
-
-function emptyBale(materialCode: string, lotCode: string): BaleRow {
-    return {
-        id: createTempId(),
-        baleCode: "",
-        materialCode,
-        grossWeight: 0,
-        tares: [],
-        netWeight: 0,
-        lotCode,
-        observations: "",
-    };
-}
-
-const COLUMNS: Column<BaleRow>[] = [
-    { key: "baleCode", name: "Código fardo", editable: true, renderEditCell: renderTextEditor },
-    { key: "materialCode", name: "Material" },
-    {
-        key: "grossWeight",
-        name: "Peso bruto (kg)",
-        editable: true,
-        renderEditCell: renderTextEditor,
-    },
-    { key: "netWeight", name: "Peso neto (kg)" },
-    { key: "lotCode", name: "Lote" },
-    {
-        key: "observations",
-        name: "Observaciones",
-        editable: true,
-        renderEditCell: renderTextEditor,
-    },
-];
 
 export default function ReceptionPage() {
     const [submitting, setSubmitting] = useState(false);
@@ -108,46 +72,13 @@ export default function ReceptionPage() {
         <Stack>
             <PageHeader title="Recepción de fardos" />
 
-            <form id="reception-form" onSubmit={form.onSubmit(handleSubmit)}>
-                <Paper withBorder p="md">
-                    <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }}>
-                        <TextInput
-                            label="Patente"
-                            placeholder="AA000BB"
-                            {...form.getInputProps("truckLicensePlate")}
-                        />
-                        <TextInput
-                            label="Transportista"
-                            placeholder="Nombre o razón social"
-                            {...form.getInputProps("carrier")}
-                        />
-                        <TextInput
-                            label="Código de material"
-                            placeholder="Ej: ALG-PE-01"
-                            {...form.getInputProps("materialCode")}
-                        />
-                        <TextInput
-                            label="Lote"
-                            placeholder="Ej: LOTE-001"
-                            {...form.getInputProps("lotCode")}
-                        />
-                    </SimpleGrid>
-                </Paper>
-            </form>
+            <ReceptionForm form={form} onSubmit={handleSubmit} />
 
             <Group>
                 <Button onClick={addRow}>Agregar fardo</Button>
             </Group>
 
-            <Paper withBorder p="md">
-                <DataGrid
-                    columns={COLUMNS}
-                    rows={rows}
-                    onRowsChange={setRows}
-                    style={{ minHeight: rows.length === 0 ? 120 : undefined }}
-                    defaultColumnOptions={{ resizable: true }}
-                />
-            </Paper>
+            <BaleDataGrid rows={rows} onRowsChange={setRows} />
 
             {error && (
                 <Alert icon={<IconAlertCircle size={16} />} color="red" variant="outline">
