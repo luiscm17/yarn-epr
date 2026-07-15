@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import {
     Box,
+    Flex,
     Splitter,
     Group,
     Text,
     ActionIcon,
+    Drawer,
     useMantineColorScheme,
     useComputedColorScheme,
     Indicator,
@@ -12,7 +14,7 @@ import {
     Menu,
     rem,
 } from "@mantine/core";
-import { useMediaQuery, type SplitterPaneSize, type UseSplitterReturnValue } from "@mantine/hooks";
+import { useDisclosure, useMediaQuery, type SplitterPaneSize, type UseSplitterReturnValue } from "@mantine/hooks";
 import { IconSun, IconMoon, IconChevronDown, IconMenu2 } from "@tabler/icons-react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { TopBar } from "./TopBar";
@@ -26,8 +28,9 @@ export function AppLayout() {
     usePageTitle();
     const navigate = useNavigate();
     const splitterRef = useRef<UseSplitterReturnValue>(null);
-    const isMobile = useMediaQuery("(max-width: 48em)");
+    const isMobile = useMediaQuery("(max-width: 47.99em)");
     const wasMobile = useRef<boolean | undefined>(undefined);
+    const [mobileNavOpen, { open: openMobileNav, close: closeMobileNav }] = useDisclosure(false);
     const [sizes, setSizes] = useState<SplitterPaneSize[]>(() => {
         const saved = localStorage.getItem("sidebarSizes");
         return saved ? (JSON.parse(saved) as SplitterPaneSize[]) : [20, 80];
@@ -38,28 +41,39 @@ export function AppLayout() {
     const isDark = computedScheme === "dark";
     const { user, logout, isResourceAllowed } = useAuth();
 
-    // Auto-collapse sidebar on mobile, expand on desktop
-    // Tracks breakpoint transitions without fighting user toggles.
-    // Ignores the undefined → false/true transition on mount (hydration).
+    // Mobile: Splitter sidebar pane stays collapsed (0px), Drawer overlays nav instead.
+    // Desktop: Splitter sidebar pane works normally.
+    // Uses collapse/expand directly (not toggleCollapse) to guarantee state regardless
+    // of previous breakpoint or localStorage persistence.
     useEffect(() => {
         if (isMobile === undefined) return;
         if (wasMobile.current === undefined) {
             wasMobile.current = isMobile;
+            if (isMobile) {
+                splitterRef.current?.collapse(0);
+            }
             return;
         }
         if (wasMobile.current === isMobile) return;
         wasMobile.current = isMobile;
-        splitterRef.current?.toggleCollapse(0);
+        closeMobileNav();
+        if (isMobile) {
+            splitterRef.current?.collapse(0);
+        } else {
+            splitterRef.current?.expand(0);
+        }
     }, [isMobile]);
 
     const handleNavClick = () => {
-        if (isMobile) {
-            splitterRef.current?.toggleCollapse(0);
-        }
+        closeMobileNav();
     };
 
     const handleToggleSidebar = () => {
-        splitterRef.current?.toggleCollapse(0);
+        if (isMobile) {
+            openMobileNav();
+        } else {
+            splitterRef.current?.toggleCollapse(0);
+        }
     };
 
     const handleSizeChange = (newSizes: SplitterPaneSize[]) => {
@@ -68,8 +82,8 @@ export function AppLayout() {
     };
 
     return (
-        <Box style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
-            <Box style={{ height: 56, flexShrink: 0 }}>
+        <Flex direction="column" h="100vh">
+            <Box h={56} style={{ flexShrink: 0 }}>
                 <TopBar
                     left={
                         <>
@@ -137,6 +151,20 @@ export function AppLayout() {
                 />
             </Box>
 
+            {/* Mobile: Drawer overlay for navigation */}
+            <Drawer
+                opened={mobileNavOpen}
+                onClose={closeMobileNav}
+                size={260}
+                padding={0}
+                hiddenFrom="sm"
+                styles={{
+                    body: { height: "100%", padding: 0 },
+                }}
+            >
+                <Sidebar isResourceAllowed={isResourceAllowed} onNavigate={handleNavClick} />
+            </Drawer>
+
             <Splitter
                 splitterRef={splitterRef}
                 sizes={sizes}
@@ -151,7 +179,9 @@ export function AppLayout() {
                     collapseThreshold={1}
                     bg={isDark ? "dark.7" : "gray.0"}
                 >
-                    <Sidebar isResourceAllowed={isResourceAllowed} onNavigate={handleNavClick} />
+                    <Box visibleFrom="sm" style={{ height: "100%" }}>
+                        <Sidebar isResourceAllowed={isResourceAllowed} onNavigate={handleNavClick} />
+                    </Box>
                 </Splitter.Pane>
                 <Splitter.Pane defaultSize={80} p="md" style={{ overflow: "auto" }}>
                     <ErrorBoundary>
@@ -162,6 +192,6 @@ export function AppLayout() {
                     </ErrorBoundary>
                 </Splitter.Pane>
             </Splitter>
-        </Box>
+        </Flex>
     );
 }
