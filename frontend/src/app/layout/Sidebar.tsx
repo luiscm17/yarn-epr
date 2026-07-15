@@ -1,7 +1,6 @@
 import { AppShell, ScrollArea, Stack, Text, useMantineColorScheme } from "@mantine/core";
 import { navData, type NavItem } from "../navigation-data";
 import { SidebarLinksGroup } from "./SidebarLinksGroup";
-import { ResizeHandle } from "./ResizeHandle";
 import classes from "../../styles/components/Sidebar.module.css";
 
 interface SidebarProps {
@@ -9,12 +8,6 @@ interface SidebarProps {
     isResourceAllowed?: (resourceType: string) => boolean;
     /** Se llama después de navegar — cierra el sidebar en mobile */
     onNavigate?: () => void;
-    /** Callback para redimensionar el ancho del sidebar */
-    onResize?: (width: number) => void;
-    /** Callback when user starts resizing */
-    onResizeStart?: () => void;
-    /** Callback when user ends resizing */
-    onResizeEnd?: () => void;
 }
 
 function filterNavItems(items: NavItem[], isAllowed: (rt: string) => boolean): NavItem[] {
@@ -29,13 +22,7 @@ function filterNavItems(items: NavItem[], isAllowed: (rt: string) => boolean): N
     }) as NavItem[];
 }
 
-export function Sidebar({
-    isResourceAllowed,
-    onNavigate,
-    onResize,
-    onResizeStart,
-    onResizeEnd,
-}: SidebarProps) {
+export function Sidebar({ isResourceAllowed, onNavigate }: SidebarProps) {
     const { colorScheme } = useMantineColorScheme();
     const isDark = colorScheme === "dark";
 
@@ -71,14 +58,6 @@ export function Sidebar({
                     ))}
                 </Stack>
             </AppShell.Section>
-
-            {onResize && (
-                <ResizeHandle
-                    onResize={onResize}
-                    onResizeStart={onResizeStart}
-                    onResizeEnd={onResizeEnd}
-                />
-            )}
         </>
     );
 }
