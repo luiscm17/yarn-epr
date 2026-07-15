@@ -1,25 +1,7 @@
-/* react-data-grid theming — overrides RDG CSS vars with Mantine theme tokens.
-   RDG's structural CSS is still imported; this module only customizes colors/fonts.
-   Applied directly to the DataGrid element via className to override defaults. */
+/* react-data-grid theming — structural overrides only.
+   Color/font variables are set via inline style on DataGrid to
+   guarantee they beat RDG's @layer defaults. */
 
 .grid {
-  --rdg-color: light-dark(var(--mantine-color-text), var(--mantine-color-text));
-  --rdg-border-color: light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4));
-  --rdg-summary-border-color: light-dark(var(--mantine-color-gray-5), var(--mantine-color-dark-3));
-  --rdg-background-color: light-dark(var(--mantine-color-white), var(--mantine-color-dark-7));
-  --rdg-header-background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6));
-  --rdg-header-draggable-background-color: light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-5));
-  --rdg-row-hover-background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6));
-  --rdg-row-selected-background-color: light-dark(
-    var(--mantine-color-brand-cyan-0),
-    var(--mantine-color-brand-cyan-9)
-  );
-  --rdg-row-selected-hover-background-color: light-dark(
-    var(--mantine-color-brand-cyan-1),
-    color-mix(in srgb, var(--mantine-color-brand-cyan-9) 60%, transparent)
-  );
-  --rdg-selection-color: var(--mantine-color-brand-cyan-6);
-  --rdg-checkbox-focus-color: var(--mantine-color-brand-cyan-5);
-  --rdg-font-size: var(--mantine-font-size-sm);
-  --rdg-border-width: 1px;
+  /* Reserved for structural overrides (e.g. height) */
 }
