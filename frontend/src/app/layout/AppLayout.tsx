@@ -1,6 +1,6 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-    AppShell,
+    Box,
     Splitter,
     Group,
     Text,
@@ -12,7 +12,7 @@ import {
     Menu,
     rem,
 } from "@mantine/core";
-import type { UseSplitterReturnValue } from "@mantine/hooks";
+import { useMediaQuery, type SplitterPaneSize, type UseSplitterReturnValue } from "@mantine/hooks";
 import { IconSun, IconMoon, IconChevronDown, IconMenu2 } from "@tabler/icons-react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { TopBar } from "./TopBar";
@@ -26,9 +26,11 @@ export function AppLayout() {
     usePageTitle();
     const navigate = useNavigate();
     const splitterRef = useRef<UseSplitterReturnValue>(null);
-    const [sizes, setSizes] = useState<(number | string)[]>(() => {
-        const saved = localStorage.getItem("sidebarWidth");
-        return saved ? [saved, 100] : ["260px", 100];
+    const isMobile = useMediaQuery("(max-width: 48em)");
+    const wasMobile = useRef<boolean | undefined>(undefined);
+    const [sizes, setSizes] = useState<SplitterPaneSize[]>(() => {
+        const saved = localStorage.getItem("sidebarSizes");
+        return saved ? (JSON.parse(saved) as SplitterPaneSize[]) : [20, 80];
     });
 
     const { setColorScheme } = useMantineColorScheme();
@@ -36,8 +38,22 @@ export function AppLayout() {
     const isDark = computedScheme === "dark";
     const { user, logout, isResourceAllowed } = useAuth();
 
+    // Auto-collapse sidebar on mobile, expand on desktop
+    // Tracks breakpoint transitions without fighting user toggles.
+    // Ignores the undefined → false/true transition on mount (hydration).
+    useEffect(() => {
+        if (isMobile === undefined) return;
+        if (wasMobile.current === undefined) {
+            wasMobile.current = isMobile;
+            return;
+        }
+        if (wasMobile.current === isMobile) return;
+        wasMobile.current = isMobile;
+        splitterRef.current?.toggleCollapse(0);
+    }, [isMobile]);
+
     const handleNavClick = () => {
-        if (window.matchMedia("(max-width: 48em)").matches) {
+        if (isMobile) {
             splitterRef.current?.toggleCollapse(0);
         }
     };
@@ -46,17 +62,14 @@ export function AppLayout() {
         splitterRef.current?.toggleCollapse(0);
     };
 
-    const handleSizeChange = (newSizes: (number | string)[]) => {
+    const handleSizeChange = (newSizes: SplitterPaneSize[]) => {
         setSizes(newSizes);
-        const width = newSizes[0];
-        if (typeof width === "string" && width.endsWith("px")) {
-            localStorage.setItem("sidebarWidth", width);
-        }
+        localStorage.setItem("sidebarSizes", JSON.stringify(newSizes));
     };
 
     return (
-        <AppShell header={{ height: 56 }}>
-            <AppShell.Header>
+        <Box style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
+            <Box style={{ height: 56, flexShrink: 0 }}>
                 <TopBar
                     left={
                         <>
@@ -122,24 +135,25 @@ export function AppLayout() {
                         </Group>
                     }
                 />
-            </AppShell.Header>
+            </Box>
 
             <Splitter
                 splitterRef={splitterRef}
                 sizes={sizes}
                 onSizeChange={handleSizeChange}
-                style={{ height: "calc(100vh - 56px)" }}
+                style={{ flex: 1 }}
             >
                 <Splitter.Pane
-                    defaultSize="260px"
-                    min={200}
-                    max={400}
+                    defaultSize={20}
+                    min={15}
+                    max={25}
                     collapsible
+                    collapseThreshold={1}
                     bg={isDark ? "dark.7" : "gray.0"}
                 >
                     <Sidebar isResourceAllowed={isResourceAllowed} onNavigate={handleNavClick} />
                 </Splitter.Pane>
-                <Splitter.Pane defaultSize={100} p="md" style={{ overflow: "auto" }}>
+                <Splitter.Pane defaultSize={80} p="md" style={{ overflow: "auto" }}>
                     <ErrorBoundary>
                         <div className="page-enter">
                             <AppBreadcrumbs />
@@ -148,6 +162,6 @@ export function AppLayout() {
                     </ErrorBoundary>
                 </Splitter.Pane>
             </Splitter>
-        </AppShell>
+        </Box>
     );
 }

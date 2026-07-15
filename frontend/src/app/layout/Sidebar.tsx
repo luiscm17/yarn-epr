@@ -1,4 +1,4 @@
-import { AppShell, ScrollArea, Stack, Text, useMantineColorScheme } from "@mantine/core";
+import { ScrollArea, Stack, Text, useMantineColorScheme } from "@mantine/core";
 import { navData, type NavItem } from "../navigation-data";
 import { SidebarLinksGroup } from "./SidebarLinksGroup";
 import classes from "../../styles/components/Sidebar.module.css";
@@ -29,23 +29,21 @@ export function Sidebar({ isResourceAllowed, onNavigate }: SidebarProps) {
     const visibleNavData = isResourceAllowed ? filterNavItems(navData, isResourceAllowed) : navData;
 
     return (
-        <>
-            <AppShell.Section>
-                <Text
-                    size="xs"
-                    fw={600}
-                    c={isDark ? "gray.5" : "gray.6"}
-                    px="md"
-                    pt="md"
-                    pb="xs"
-                    tt="uppercase"
-                    className={classes.sectionLabel}
-                >
-                    Navegación
-                </Text>
-            </AppShell.Section>
+        <Stack gap={0} style={{ height: "100%" }}>
+            <Text
+                size="xs"
+                fw={600}
+                c={isDark ? "gray.5" : "gray.6"}
+                px="md"
+                pt="md"
+                pb="xs"
+                tt="uppercase"
+                className={classes.sectionLabel}
+            >
+                Navegación
+            </Text>
 
-            <AppShell.Section grow component={ScrollArea}>
+            <ScrollArea style={{ flex: 1 }}>
                 <Stack gap={0} px="xs">
                     {visibleNavData.map((section) => (
                         <SidebarLinksGroup
@@ -57,7 +55,7 @@ export function Sidebar({ isResourceAllowed, onNavigate }: SidebarProps) {
                         />
                     ))}
                 </Stack>
-            </AppShell.Section>
-        </>
+            </ScrollArea>
+        </Stack>
     );
 }
