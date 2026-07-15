@@ -1,19 +1,18 @@
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
 import { Stack, Button, Group, Alert } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { IconAlertCircle } from "@tabler/icons-react";
 
-import type { BaleRow, TruckReceptionFormData } from "../types/reception-types";
-import type { CreateReceptionPayload } from "../types/reception-types";
-import { createReception } from "../api/receptionApi";
-import { emptyBale } from "../components/reception-columns";
+import type { TruckReceptionFormData } from "../types/reception-types";
 import { ReceptionForm } from "../components/ReceptionForm";
 import { BaleDataGrid } from "../components/BaleDataGrid";
 import { PageHeader } from "@/common/components/PageHeader";
+import { useBaleGrid } from "../hooks/useBaleGrid";
+import { useReceptionSubmit } from "../hooks/useReceptionSubmit";
 
 export default function ReceptionPage() {
-    const [submitting, setSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const { rows, setRows, addRow } = useBaleGrid();
+    const { submit, submitting, error } = useReceptionSubmit();
 
     const form = useForm<TruckReceptionFormData>({
         mode: "uncontrolled",
@@ -31,42 +30,17 @@ export default function ReceptionPage() {
         },
     });
 
-    const [rows, setRows] = useState<BaleRow[]>([]);
-
-    const addRow = useCallback(() => {
+    const handleAddRow = useCallback(() => {
         const { materialCode, lotCode } = form.getValues();
-        setRows((prev) => [...prev, emptyBale(materialCode, lotCode)]);
-    }, [form]);
+        addRow(materialCode, lotCode);
+    }, [form, addRow]);
 
-    const handleSubmit = useCallback(async (formValues: TruckReceptionFormData) => {
-        const payload: CreateReceptionPayload = {
-            truck_license_plate: formValues.truckLicensePlate,
-            carrier: formValues.carrier,
-            material_code: formValues.materialCode,
-            lot_code: formValues.lotCode,
-            bales: rows.map((r) => ({
-                bale_code: r.baleCode,
-                material_code: r.materialCode,
-                gross_weight_kg: r.grossWeight,
-                tares_kg: r.tares,
-                net_weight_kg: r.netWeight,
-                lot_code: r.lotCode,
-                observations: r.observations || undefined,
-            })),
-        };
-
-        setSubmitting(true);
-        setError(null);
-        try {
-            const result = await createReception(payload);
-            console.log("Reception created:", result);
-            // TODO: show success notification, reset form
-        } catch (e) {
-            setError(e instanceof Error ? e.message : "Error desconocido");
-        } finally {
-            setSubmitting(false);
-        }
-    }, [rows]);
+    const handleSubmit = useCallback(
+        async (formValues: TruckReceptionFormData) => {
+            await submit(formValues, rows);
+        },
+        [submit, rows],
+    );
 
     return (
         <Stack>
@@ -75,7 +49,7 @@ export default function ReceptionPage() {
             <ReceptionForm form={form} onSubmit={handleSubmit} />
 
             <Group>
-                <Button onClick={addRow}>Agregar fardo</Button>
+                <Button onClick={handleAddRow}>Agregar fardo</Button>
             </Group>
 
             <BaleDataGrid rows={rows} onRowsChange={setRows} />
