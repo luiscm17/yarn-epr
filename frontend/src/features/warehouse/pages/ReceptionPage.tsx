@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Stack, Title, TextInput, Button, Group, Paper, SimpleGrid, Alert } from "@mantine/core";
+import { Stack, TextInput, Button, Group, Paper, SimpleGrid, Alert } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { IconAlertCircle } from "@tabler/icons-react";
 import { DataGrid, renderTextEditor } from "react-data-grid";
@@ -9,6 +9,7 @@ import "react-data-grid/lib/styles.css";
 import type { BaleRow, TruckReceptionFormData } from "../types/reception-types";
 import type { CreateReceptionPayload } from "../types/reception-types";
 import { createReception } from "../api/receptionApi";
+import { PageHeader } from "../../../common/components/PageHeader";
 
 function createTempId(): BaleRow["id"] {
     return `temp-${crypto.randomUUID()}`;
@@ -105,7 +106,7 @@ export default function ReceptionPage() {
 
     return (
         <Stack>
-            <Title order={2}>Recepción de fardos</Title>
+            <PageHeader title="Recepción de fardos" />
 
             <form id="reception-form" onSubmit={form.onSubmit(handleSubmit)}>
                 <Paper withBorder p="md">
