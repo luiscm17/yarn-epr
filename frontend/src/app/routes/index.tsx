@@ -1,19 +1,19 @@
-import { lazy } from 'react'
-import { createBrowserRouter, Navigate } from 'react-router-dom'
-import { AppLayout } from '../layout/AppLayout'
+import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
+import { AppLayout } from '@/app/layout/AppLayout'
 import { ProtectedRoute } from './ProtectedRoute'
+import {
+  AdminPage,
+  LoginPage,
+  LotsPage,
+  NotFoundPage,
+  ProfilePage,
+  ReceptionPage,
+  ReportsPage,
+  SpinningPage,
+  WarehousePage,
+} from './lazy-pages'
 
-const LoginPage = lazy(() => import('../../features/auth/pages/LoginPage'))
-const NotFoundPage = lazy(() => import('../../features/not-found/pages/NotFoundPage'))
-const WarehousePage = lazy(() => import('../../features/warehouse/pages/WarehousePage'))
-const ReceptionPage = lazy(() => import('../../features/warehouse/pages/ReceptionPage'))
-const SpinningPage = lazy(() => import('../../features/spinning/pages/SpinningPage'))
-const LotsPage = lazy(() => import('../../features/lots/pages/LotsPage'))
-const ReportsPage = lazy(() => import('../../features/reports/pages/ReportsPage'))
-const AdminPage = lazy(() => import('../../features/admin/pages/AdminPage'))
-const ProfilePage = lazy(() => import('../../features/profile/pages/ProfilePage'))
-
-export const router = createBrowserRouter([
+const router = createBrowserRouter([
   {
     path: '/login',
     element: <LoginPage />,
@@ -53,3 +53,7 @@ export const router = createBrowserRouter([
     ],
   },
 ])
+
+export function AppRouter() {
+  return <RouterProvider router={router} />
+}

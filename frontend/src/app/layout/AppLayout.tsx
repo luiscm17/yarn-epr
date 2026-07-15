@@ -18,11 +18,11 @@ import { IconSun, IconMoon, IconChevronDown, IconMenu2 } from "@tabler/icons-rea
 import { Outlet, useNavigate } from "react-router-dom";
 import { TopBar } from "./TopBar";
 import { Sidebar } from "./Sidebar";
-import { useAuth } from "../../features/auth/context/auth-context";
-import { ErrorBoundary } from "../../common/components/ErrorBoundary";
-import { AppBreadcrumbs } from "../../common/components/AppBreadcrumbs";
-import { usePageTitle } from "../../common/hooks/usePageTitle";
-import classes from "../../styles/components/AppLayout.module.css";
+import { useAuth } from "@/features/auth/context/auth-context";
+import { ErrorBoundary } from "@/common/components/ErrorBoundary";
+import { AppBreadcrumbs } from "@/common/components/AppBreadcrumbs";
+import { usePageTitle } from "@/common/hooks/usePageTitle";
+import classes from "@/styles/components/AppLayout.module.css";
 
 export function AppLayout() {
     usePageTitle();

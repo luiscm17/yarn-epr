@@ -8,7 +8,7 @@ import {
 } from '@mantine/core'
 import { IconChevronRight } from '@tabler/icons-react'
 import { type NavItem } from '../navigation-data'
-import classes from '../../styles/components/SidebarLinksGroup.module.css'
+import classes from '@/styles/components/SidebarLinksGroup.module.css'
 
 interface LinksGroupProps {
   icon?: ReactNode

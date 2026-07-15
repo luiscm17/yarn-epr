@@ -1,7 +1,6 @@
 import { Suspense } from 'react'
-import { RouterProvider } from 'react-router-dom'
 import { Loader, Center } from '@mantine/core'
-import { router } from './app/routes'
+import { AppRouter } from './app/routes'
 
 function Fallback() {
   return (
@@ -14,7 +13,7 @@ function Fallback() {
 export default function App() {
   return (
     <Suspense fallback={<Fallback />}>
-      <RouterProvider router={router} />
+      <AppRouter />
     </Suspense>
   )
 }

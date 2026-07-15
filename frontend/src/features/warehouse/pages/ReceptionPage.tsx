@@ -9,7 +9,7 @@ import { createReception } from "../api/receptionApi";
 import { emptyBale } from "../components/reception-columns";
 import { ReceptionForm } from "../components/ReceptionForm";
 import { BaleDataGrid } from "../components/BaleDataGrid";
-import { PageHeader } from "../../../common/components/PageHeader";
+import { PageHeader } from "@/common/components/PageHeader";
 
 export default function ReceptionPage() {
     const [submitting, setSubmitting] = useState(false);

@@ -1,7 +1,7 @@
 import { ScrollArea, Stack, Text, useMantineColorScheme } from "@mantine/core";
 import { navData, type NavItem } from "../navigation-data";
 import { SidebarLinksGroup } from "./SidebarLinksGroup";
-import classes from "../../styles/components/Sidebar.module.css";
+import classes from "@/styles/components/Sidebar.module.css";
 
 interface SidebarProps {
     /** Optional RBAC filter callback */
