@@ -1,8 +1,8 @@
 import { Paper } from "@mantine/core";
 import { DataGrid } from "react-data-grid";
-import "react-data-grid/lib/styles.css";
 import type { BaleRow } from "../types/reception-types";
 import { COLUMNS } from "./reception-columns";
+import classes from "@/styles/components/BaleDataGrid.module.css";
 
 interface BaleDataGridProps {
     rows: BaleRow[];
@@ -11,12 +11,11 @@ interface BaleDataGridProps {
 
 export function BaleDataGrid({ rows, onRowsChange }: BaleDataGridProps) {
     return (
-        <Paper withBorder p="md">
+        <Paper withBorder p="md" className={classes.wrapper}>
             <DataGrid
                 columns={COLUMNS}
                 rows={rows}
                 onRowsChange={onRowsChange}
-                style={{ minHeight: rows.length === 0 ? 120 : undefined }}
                 defaultColumnOptions={{ resizable: true }}
             />
         </Paper>
