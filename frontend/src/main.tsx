@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { MantineProvider } from '@mantine/core'
 import { Notifications } from '@mantine/notifications'
 import { theme } from './styles/theme'
-import { AuthProvider } from './features/auth/context/AuthContext'
+import { AuthProvider } from '@/features/auth'
 
 import '@mantine/core/styles.css'
 import '@mantine/notifications/styles.css'

@@ -8,7 +8,7 @@ import {
   Grid,
   Badge,
 } from '@mantine/core'
-import { useAuth } from '@/features/auth/context/auth-context'
+import { useAuth } from '@/features/auth'
 import { PageHeader } from '@/common/components/PageHeader'
 
 export default function ProfilePage() {
