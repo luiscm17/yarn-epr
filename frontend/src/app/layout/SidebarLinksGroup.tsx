@@ -55,10 +55,10 @@ export function SidebarLinksGroup({ icon, label, links, onNavigate }: LinksGroup
         className={classes.control}
       >
         <Group justify="space-between" gap={0}>
-          <div className={classes.iconWrapper}>
-            {icon && <span className={classes.icon}>{icon}</span>}
-            <span>{label}</span>
-          </div>
+          <Group gap="sm" wrap="nowrap">
+            {icon && <Box component="span">{icon}</Box>}
+            <Box component="span">{label}</Box>
+          </Group>
           {hasLinks && (
             <IconChevronRight
               className={classes.chevron}
