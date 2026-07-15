@@ -6,6 +6,7 @@ import { ProtectedRoute } from './ProtectedRoute'
 const LoginPage = lazy(() => import('../../features/auth/pages/LoginPage'))
 const NotFoundPage = lazy(() => import('../../features/not-found/pages/NotFoundPage'))
 const WarehousePage = lazy(() => import('../../features/warehouse/pages/WarehousePage'))
+const ReceptionPage = lazy(() => import('../../features/warehouse/pages/ReceptionPage'))
 const SpinningPage = lazy(() => import('../../features/spinning/pages/SpinningPage'))
 const LotsPage = lazy(() => import('../../features/lots/pages/LotsPage'))
 const ReportsPage = lazy(() => import('../../features/reports/pages/ReportsPage'))
@@ -26,7 +27,7 @@ export const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <Navigate to="/warehouse/reception" replace /> },
-      { path: 'warehouse/reception', element: <WarehousePage /> },
+      { path: 'warehouse/reception', element: <ReceptionPage /> },
       { path: 'warehouse/identity', element: <WarehousePage /> },
       { path: 'warehouse/issue', element: <WarehousePage /> },
       { path: 'warehouse/finished-product', element: <WarehousePage /> },
