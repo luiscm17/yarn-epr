@@ -32,7 +32,7 @@ export function AppLayout() {
     const wasMobile = useRef<boolean | undefined>(undefined);
     const [mobileNavOpen, { open: openMobileNav, close: closeMobileNav }] = useDisclosure(false);
     const [sizes, setSizes] = useState<SplitterPaneSize[]>(() => {
-        const saved = localStorage.getItem("sidebarSizes");
+        const saved = localStorage.getItem("sidebarSizes:v1");
         return saved ? (JSON.parse(saved) as SplitterPaneSize[]) : [20, 80];
     });
 
@@ -62,7 +62,7 @@ export function AppLayout() {
         } else {
             splitterRef.current?.expand(0);
         }
-    }, [isMobile]);
+    }, [isMobile, closeMobileNav]);
 
     const handleNavClick = () => {
         closeMobileNav();
@@ -78,7 +78,7 @@ export function AppLayout() {
 
     const handleSizeChange = (newSizes: SplitterPaneSize[]) => {
         setSizes(newSizes);
-        localStorage.setItem("sidebarSizes", JSON.stringify(newSizes));
+        localStorage.setItem("sidebarSizes:v1", JSON.stringify(newSizes));
     };
 
     return (
