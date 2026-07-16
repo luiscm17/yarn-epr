@@ -1,7 +1,0 @@
-/* react-data-grid theming — structural overrides only.
-   Color/font variables are set via inline style on DataGrid to
-   guarantee they beat RDG's @layer defaults. */
-
-.grid {
-  /* Reserved for structural overrides (e.g. height) */
-}

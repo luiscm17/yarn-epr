@@ -11,7 +11,7 @@ import { useBaleGrid } from "../hooks/useBaleGrid";
 import { useReceptionSubmit } from "../hooks/useReceptionSubmit";
 
 export default function ReceptionPage() {
-    const { rows, handleRowsChange, updateFormValues } = useBaleGrid();
+    const { rows, handleRowsChange, updateFormValues, resetGrid } = useBaleGrid();
     const { submit, submitting, error } = useReceptionSubmit();
 
     const form = useForm<TruckReceptionFormData>({
@@ -41,32 +41,34 @@ export default function ReceptionPage() {
 
     const handleSubmit = useCallback(
         async (formValues: TruckReceptionFormData) => {
-            await submit(formValues, rows);
+            await submit(formValues, rows, resetGrid);
         },
-        [submit, rows],
+        [submit, rows, resetGrid],
     );
 
     const hasData = rows.some((r) => r.baleCode || r.grossWeight > 0);
 
     return (
-        <Stack>
-            <PageHeader title="Recepción de fardos" />
+        <form onSubmit={form.onSubmit(handleSubmit)}>
+            <Stack>
+                <PageHeader title="Recepción de fardos" />
 
-            <ReceptionForm form={form} onSubmit={handleSubmit} />
+                <ReceptionForm form={form} />
 
-            <BaleDataGrid rows={rows} onRowsChange={onRowsChange} />
+                <BaleDataGrid rows={rows} onRowsChange={onRowsChange} />
 
-            {error && (
-                <Alert icon={<IconAlertCircle size={16} />} color="red" variant="outline">
-                    {error}
-                </Alert>
-            )}
+                {error && (
+                    <Alert icon={<IconAlertCircle size={16} />} color="red" variant="outline">
+                        {error}
+                    </Alert>
+                )}
 
-            <Group>
-                <Button type="submit" form="reception-form" loading={submitting} disabled={!hasData}>
-                    Enviar recepción
-                </Button>
-            </Group>
-        </Stack>
+                <Group>
+                    <Button type="submit" loading={submitting} disabled={!hasData}>
+                        Enviar recepción
+                    </Button>
+                </Group>
+            </Stack>
+        </form>
     );
 }

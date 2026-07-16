@@ -3,7 +3,7 @@ import type { BaleRow, TruckReceptionFormData, CreateReceptionPayload } from '..
 import { createReception } from '../api/receptionApi'
 
 interface UseReceptionSubmitReturn {
-  submit: (formValues: TruckReceptionFormData, rows: BaleRow[]) => Promise<void>
+  submit: (formValues: TruckReceptionFormData, rows: BaleRow[], onSuccess?: () => void) => Promise<void>
   submitting: boolean
   error: string | null
   clearError: () => void
@@ -13,7 +13,7 @@ export function useReceptionSubmit(): UseReceptionSubmitReturn {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const submit = useCallback(async (formValues: TruckReceptionFormData, rows: BaleRow[]) => {
+  const submit = useCallback(async (formValues: TruckReceptionFormData, rows: BaleRow[], onSuccess?: () => void) => {
     const payload: CreateReceptionPayload = {
       truck_license_plate: formValues.truckLicensePlate,
       carrier: formValues.carrier,
@@ -34,7 +34,7 @@ export function useReceptionSubmit(): UseReceptionSubmitReturn {
     setError(null)
     try {
       await createReception(payload)
-      // TODO: show success notification, reset form + rows
+      onSuccess?.()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error desconocido')
     } finally {

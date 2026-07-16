@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, Navigate } from 'react-router-dom'
 import {
   Paper,
   TextInput,
@@ -26,9 +26,8 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  // Si ya está autenticado, redirigir
   if (isAuthenticated) {
-    navigate(from, { replace: true })
+    return <Navigate to={from} replace />
   }
 
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
@@ -71,7 +70,7 @@ export default function LoginPage() {
               color="red"
               variant="light"
               mb="md"
-              styles={{ body: { fontSize: '14px' } }}
+              styles={{ body: { fontSize: 'var(--mantine-font-size-sm)' } }}
             >
               {error}
             </Alert>

@@ -29,7 +29,7 @@ export function SidebarLinksGroup({ icon, label, links, onNavigate }: LinksGroup
 
   const [opened, setOpened] = useState(initiallyOpened)
 
-  const items = (hasLinks ? links! : []).map((child) => {
+  const items = (links ?? []).map((child) => {
     const isActive = location.pathname === child.path
     return (
       <UnstyledButton
