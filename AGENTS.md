@@ -1,84 +1,38 @@
-# Yarn EPR — Production Management System
+# Yarn EPR Agent Guide
 
-> Textile plant production management. Stack: Python + React + TypeScript + PostgreSQL (planned).
+Textile production-management monorepo. Product and architecture documents currently carry more business truth than the implementation.
 
-## Python workspace
+## Workspaces and commands
 
-- Use `uv` exclusively: `uv sync --locked` to provision, `uv run --locked python <file>` to run.
-- Python 3.13 — pinned via `.python-version` and `pyproject.toml` `requires-python`.
-- Dependencies: `openpyxl>=3.1.5`, `pandas>=3.0.3` only. Keep `uv.lock` synced with changes.
-- **No Python test framework, linter, or type checker installed.** Do not claim or enforce one.
-- `main.py` is a scaffold entrypoint, not production code.
+- Root Python workspace: Python 3.13 (`.python-version`), managed only with `uv`; `backend/` is a workspace member.
+- Provision exactly from the lockfile with `uv sync --locked`. Keep `uv.lock` synchronized with either `pyproject.toml`.
+- Root package dependencies are `openpyxl>=3.1.5` and `pandas>=3.0.3`; the `backend` member depends on `fastapi[standard]>=0.138.1`.
+- `uv run --locked python main.py` and `uv run --locked --package backend python backend/main.py` only print scaffold messages. There is no ASGI application or API route yet.
+- No Python test runner, linter, formatter, or type checker is configured. Do not invent commands or claim those checks passed.
+- Frontend commands run from `frontend/` with `pnpm`: `pnpm install --frozen-lockfile`, `pnpm dev`, `pnpm build`, `pnpm lint`, `pnpm preview`.
+- `pnpm build` runs `tsc -b && vite build`; `pnpm lint` runs ESLint over the workspace. No frontend test runner is configured.
+- `frontend/pnpm-workspace.yaml` enforces a 24-hour package release age and no-downgrade trust policy, with explicit exclusions. Preserve those supply-chain settings.
 
-## Frontend workspace
+## Package boundaries and entrypoints
 
-- `frontend/` is a Vite + React 19 + Mantine 9 + TypeScript project. Uses **pnpm**.
-- Commands (run from `frontend/`):
-  - `pnpm dev` — dev server
-  - `pnpm build` — `tsc -b && vite build` (type-check + bundle)
-  - `pnpm lint` — ESLint (flat config, TypeScript + React hooks rules)
-  - `pnpm preview` — preview production build
-- **No frontend test framework installed.** Do not claim one.
-- Feature stubs: `auth`, `warehouse`, `spinning`, `lots`, `reports`, `admin`, `profile`, `not-found`.
+- `backend/shared/domain/user/` is implemented as a package facade (`__init__.py`) over the entity, events, and value objects. Import its public API from `shared.domain.user`, not internal files.
+- Backend production contexts are still largely unimplemented; do not infer routes, persistence, migrations, or database behavior from design documents.
+- Frontend bootstrap is `frontend/src/main.tsx`; it installs Mantine, notifications, and `AuthProvider`, then renders `App` and the browser router.
+- Frontend code is feature-oriented under `frontend/src/features/`; `frontend/src/app/` owns shell, navigation, and routing. Use the configured `@/*` alias for `frontend/src/*`.
+- Most frontend routes are placeholders, but `/warehouse/reception` has concrete form/grid code. Do not describe the entire frontend as stubs.
 
-## Architecture
+## Domain and architecture constraints
 
-- **DDD** with **Hexagonal Architecture** per bounded context.
-- **Bounded contexts**: `warehouse`, `yarn-spinning`, `lot-processing`, `access-control`, `shared-reference-data`.
-- `docs/architecture/` — context boundaries, ownership decisions, backend/frontend/stack design.
-- `docs/domain/` — ubiquitous language naming contract (canonical English + code terms).
-- `docs/db/` — one DBML schema per bounded context with dictionary files. **No actual database exists yet.**
-- `docs/prd/` — PRDs are the source of truth for business meaning and rules.
-- `docs/plan/` — delivery schedule (3 milestones, ~10 weeks) and spec roadmap for Phase 2.
+- PRDs in `docs/prd/` are authoritative for business meaning and rules. Then consult `docs/architecture/`, `docs/domain/ubiquitous-language.md`, and finally `docs/db/` for technical detail; DBML is design only, not evidence of a live database.
+- Keep these bounded contexts distinct: Warehouse, Yarn Spinning, Lot Processing, Access Control, and Shared Reference Data. DDD with hexagonal dependency direction is the target architecture.
+- Code-facing aliases are `warehouse`, `yarn-production`, `batch-processing`, `access`, and `catalogs`; do not create a generic `operation` context or use `shared` as a business-context dumping ground.
+- Warehouse receives raw material as bales and later defines the single production identity. Yarn Spinning has no lot aggregate or lot timeline; Lot Processing owns stage history after Inventory assembles the lot.
+- Access Control owns configurable authorization policy, not workflow meaning. Keep quality state, warehouse disposition, and physical presentation as separate concepts.
+- Frontend validation is advisory; backend policy and domain decisions remain authoritative.
 
-## Backend structure — what actually exists vs. what is planned
+## Repository conventions
 
-| Path | State |
-|------|-------|
-| `backend/auth/domain/` | Domain code exists **with broken imports**: imports `UserId` from `shared.domain.user` which does not exist (directory is empty). |
-| `backend/shared/domain/yarn_count/` | Two files, outdated vs current DBML. |
-| `backend/shared/domain/user/` | Empty directory. |
-| `backend/shared/domain/machine/` | Empty. |
-| `backend/shared/domain/section/` | Empty. |
-| `backend/shared/base/` | Empty. |
-| `backend/warehouse/` | Empty placeholder (intended for Warehouse context). |
-| `backend/operation/` | Empty placeholder (will become `yarn-production` + `batch-processing`). |
-| `pyproject.toml` | No web framework dependency declared — FastAPI is aspirational. |
-
-**No routes, no FastAPI app, no database adapter, no migrations exist.** The project is in early domain-modeling phase.
-
-## Git / PR workflow
-
-See `docs/dev-guide/git-workflow.md` for full rules. TL;DR:
-
-- Branch format: `<layer>/<short-topic>` where layer is `back/`, `front/`, `devops/`, or `docs/`.
-- Conventional Commits: `type(scope): description` — imperative mood, max 200 chars, no period.
-- Squash merge to `main`, one concern per PR.
-- Rebase, never merge main into feature branches.
-
-## Conventions
-
-- Python naming: `snake_case` for files/functions/variables, `PascalCase` for classes, `UPPER_SNAKE_CASE` for constants.
-- DB columns: `snake_case`, singular; technical IDs end in `_id`, visible codes end in `_code`.
-- Full naming rules: `docs/dev-guide/naming-conventions.md`.
-
-## SDD (Spec-Driven Development)
-
-- Used for structured changes via OpenCode SDD.
-- SDD artifacts live in `openspec/changes/<change-name>/` (proposal → spec → design → tasks).
-- First change: `raw-bale-receipt` — Warehouse raw-material bale receipt capability.
-- When creating spec artifacts, trust source precedence: PRDs → architecture decisions → ubiquitous language → DBML.
-
-## Gentle AI receipts
-
-Gentle AI stores review receipts in `.git/gentle-ai/review-transactions/`. A stale receipt in `reviewing` state can block `git push`. If push is blocked, delete the specific receipt lineage or the entire directory:
-
-```bash
-rm -rf .git/gentle-ai/review-transactions/v2/<lineage-id>/
-```
-
-Receipts are not per-branch — they track tree hashes.
-
-## What does NOT exist (anything not listed above)
-
-No CI, pre-commit hooks, task runner, code generator, OpenCode config (`opencode.json`), `.opencode/` directory, GitHub templates, or test framework for either Python or frontend. Do not claim or enforce conventions that lack tooling.
+- Follow `docs/dev-guide/naming-conventions.md`; notably, Python package names use `snake_case`, React component files use `PascalCase.tsx`, DB tables are plural `snake_case`, and DB columns are singular `snake_case`.
+- Follow `docs/dev-guide/git-workflow.md`: branches are `<layer>/<short-topic>` using `front/`, `back/`, `devops/`, or `docs/`; commits use Conventional Commits; rebase on `main`; squash merge one concern per PR.
+- Structured changes live in `openspec/changes/<change-name>/`. Treat proposal, spec, design, and tasks as planning artifacts, not proof that implementation exists or is authorized.
+- No versioned CI, pre-commit configuration, task runner, code generator, repository-local OpenCode configuration, or GitHub templates exist. Do not impose absent tooling.
