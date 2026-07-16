@@ -9,7 +9,7 @@
 
 | Scope | Python | JavaScript / TypeScript |
 |-------|--------|------------------------|
-| **Directories** | `kebab-case`, singular | `kebab-case`, singular |
+| **Directories** | `snake_case` (packages), `kebab-case` (non-package) | `kebab-case`, singular |
 | **Source files** | `snake_case.py` | `camelCase.ts` / `PascalCase.tsx` |
 | **Test files** | `test_{name}.py` | `{name}.test.ts` |
 | **Packages / Modules** | package dir + `__init__.py` | ES module, file name = module name |
@@ -28,7 +28,9 @@
 
 ### 1.1 Rules
 
-- **`kebab-case`**, all lowercase.
+- **Non-package directories** → `kebab-case`, all lowercase (docs, config, CI, etc.).
+- **Python package directories** → `snake_case`, all lowercase. Python imports require valid identifiers — hyphens are not valid.
+- **JS/TS directories** → `kebab-case`, all lowercase.
 - **Singular nouns** — no plurals. Exceptions: clearly collective like `tests/`, `fixtures/`, `mocks/`.
 - Short — prefer one or two words. Three max.
 - Group by **domain** or **feature**, not by technology.
@@ -60,7 +62,7 @@ The directory layout depends on the framework and architecture. Use these rules 
 |-------|-----|
 | `src/` (top-level) | Tells nothing about the content |
 | `utils/` | Dumping ground — always split by concern |
-| `my_package/` | Underscores in directory names: use `kebab-case` |
+| `my-package/` | Hyphens in Python package names break imports: use `snake_case` |
 | `feature/` | Flat by layer, not by domain — doesn't scale |
 | `Controllers/` | PascalCase in directory names |
 | `misc/`, `helpers/`, `common/` | Vague names that accumulate unrelated code |
@@ -151,6 +153,37 @@ import { api } from './services/api'
 export { useForm } from './useForm'
 export { useData } from './useData'
 ```
+
+### 3.4 Domain entities: flat → package transition
+
+In Hexagonal / DDD projects, domain entities grow over time. Use this rule:
+
+- **Start flat**: a single `snake_case.py` file when the entity has no value objects, events, or services of its own.
+  ```
+  shared/domain/user.py          # from shared.domain.user import User
+  ```
+
+- **Promote to package** once the entity needs value objects, events, or grows past ~200 lines.
+  ```
+  user/
+  ├── __init__.py        # Re-exports public API
+  ├── user.py            # Entity class
+  ├── events.py          # UserCreated, UserRoleChanged
+  └── value_objects.py   # UserRole, Email
+  ```
+
+- **The `__init__.py` is the facade.** It re-exports so consumers import from the package, never from the internal module:
+  ```python
+  # user/__init__.py
+  from .user import User
+  from .events import UserCreated
+  from .value_objects import UserRole
+
+  # Consumer — never sees the internal module name
+  from shared.domain.user import User, UserRole
+  ```
+
+- **Scope the package on actual complexity.** Do not create the directory until you need it. A flat file is cheaper to navigate and rename. This rule is Python-specific. TypeScript achieves the same with `index.ts` barrel files.
 
 ---
 
@@ -379,7 +412,7 @@ APP_NAME_JWT_EXPIRY_HOURS=24
 
 | Context | Convention | Rule of thumb |
 |---------|-----------|---------------|
-| Directory | `kebab-case` | singular, domain-grouped |
+| Directory | `snake_case` (Python packages), `kebab-case` (others) | singular, domain-grouped |
 | Python file | `snake_case.py` | one concern per file |
 | JS/TS file | `camelCase.ts` / `PascalCase.tsx` | components get PascalCase |
 | Python test | `test_{name}.py` | matches source |
