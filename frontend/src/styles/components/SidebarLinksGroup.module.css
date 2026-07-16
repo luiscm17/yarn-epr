@@ -75,11 +75,4 @@
   transition: transform 200ms ease;
 }
 
-.iconWrapper {
-  display: flex;
-  align-items: center;
-}
 
-.icon {
-  margin-right: var(--mantine-spacing-sm);
-}

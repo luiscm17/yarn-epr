@@ -1,151 +1,197 @@
+import { useEffect, useRef, useState } from "react";
 import {
-  AppShell,
-  Group,
-  Text,
-  ActionIcon,
-  useMantineColorScheme,
-  useComputedColorScheme,
-  Indicator,
-  Avatar,
-  Menu,
-  rem,
-} from '@mantine/core'
-import { useDisclosure } from '@mantine/hooks'
-import {
-  IconSun,
-  IconMoon,
-  IconChevronDown,
-  IconMenu2,
-} from '@tabler/icons-react'
-import { Outlet, useNavigate } from 'react-router-dom'
-import { TopBar } from './TopBar'
-import { Sidebar } from './Sidebar'
-import { useAuth } from '../../features/auth/context/auth-context'
-import { ErrorBoundary } from '../../common/components/ErrorBoundary'
-import { AppBreadcrumbs } from '../../common/components/AppBreadcrumbs'
-import { usePageTitle } from '../../common/hooks/usePageTitle'
+    Box,
+    Flex,
+    Splitter,
+    Group,
+    Text,
+    ActionIcon,
+    Drawer,
+    useMantineColorScheme,
+    useComputedColorScheme,
+    Indicator,
+    Avatar,
+    Menu,
+} from "@mantine/core";
+import { useDisclosure, useMediaQuery, type SplitterPaneSize, type UseSplitterReturnValue } from "@mantine/hooks";
+import { IconSun, IconMoon, IconChevronDown, IconMenu2 } from "@tabler/icons-react";
+import { Outlet, useNavigate } from "react-router-dom";
+import { TopBar } from "./TopBar";
+import { Sidebar } from "./Sidebar";
+import { useAuth } from "@/features/auth";
+import { ErrorBoundary } from "@/common/components/ErrorBoundary";
+import { AppBreadcrumbs } from "@/common/components/AppBreadcrumbs";
+import { usePageTitle } from "@/common/hooks/usePageTitle";
+import classes from "@/styles/components/AppLayout.module.css";
 
 export function AppLayout() {
-  usePageTitle()
-  const navigate = useNavigate()
-  const [mobileOpened, { toggle: toggleMobile }] = useDisclosure(false)
-  const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(true)
-  const { setColorScheme } = useMantineColorScheme()
-  const computedScheme = useComputedColorScheme('light')
-  const isDark = computedScheme === 'dark'
-  const { user, logout, isResourceAllowed } = useAuth()
+    usePageTitle();
+    const navigate = useNavigate();
+    const splitterRef = useRef<UseSplitterReturnValue>(null);
+    const isMobile = useMediaQuery("(max-width: 47.99em)");
+    const wasMobile = useRef<boolean | undefined>(undefined);
+    const [mobileNavOpen, { open: openMobileNav, close: closeMobileNav }] = useDisclosure(false);
+    const [sizes, setSizes] = useState<SplitterPaneSize[]>(() => {
+        const saved = localStorage.getItem("sidebarSizes:v1");
+        return saved ? (JSON.parse(saved) as SplitterPaneSize[]) : [20, 80];
+    });
 
-  const handleNavClick = () => {
-    // Cierra el sidebar en mobile después de navegar
-    if (window.matchMedia('(max-width: 48em)').matches) {
-      toggleMobile()
-    }
-  }
+    const { setColorScheme } = useMantineColorScheme();
+    const computedScheme = useComputedColorScheme("light");
+    const isDark = computedScheme === "dark";
+    const { user, logout, isResourceAllowed } = useAuth();
 
-  const handleToggleSidebar = () => {
-    // Consulta síncrona — sin flicker de hidratación
-    if (window.matchMedia('(max-width: 48em)').matches) {
-      toggleMobile()
-    } else {
-      toggleDesktop()
-    }
-  }
+    // Mobile: Splitter sidebar pane stays collapsed (0px), Drawer overlays nav instead.
+    // Desktop: Splitter sidebar pane works normally.
+    // Uses collapse/expand directly (not toggleCollapse) to guarantee state regardless
+    // of previous breakpoint or localStorage persistence.
+    useEffect(() => {
+        if (isMobile === undefined) return;
+        if (wasMobile.current === undefined) {
+            wasMobile.current = isMobile;
+            if (isMobile) {
+                splitterRef.current?.collapse(0);
+            }
+            return;
+        }
+        if (wasMobile.current === isMobile) return;
+        wasMobile.current = isMobile;
+        closeMobileNav();
+        if (isMobile) {
+            splitterRef.current?.collapse(0);
+        } else {
+            splitterRef.current?.expand(0);
+        }
+    }, [isMobile, closeMobileNav]);
 
-  return (
-    <AppShell
-      header={{ height: 56 }}
-      navbar={{
-        width: 260,
-        breakpoint: 'sm',
-        collapsed: { mobile: !mobileOpened, desktop: !desktopOpened },
-      }}
-      padding={{ base: 'sm', sm: 'md' }}
-    >
-      <AppShell.Header>
-        <TopBar
-          left={
-            <>
-              <ActionIcon
-                variant="subtle"
-                color="gray"
-                onClick={handleToggleSidebar}
-                aria-label="Toggle sidebar"
-              >
-                <IconMenu2 style={{ width: rem(18) }} />
-              </ActionIcon>
+    const handleNavClick = () => {
+        closeMobileNav();
+    };
 
-              <Text size="lg" fw={700} c="brand-cyan.3">
-                Yarn EPR
-              </Text>
-            </>
-          }
-          right={
-            <Group gap="sm" wrap="nowrap">
-              <ActionIcon
-                variant="subtle"
-                color="gray"
-                onClick={() =>
-                  setColorScheme(isDark ? 'light' : 'dark')
-                }
-                aria-label="Toggle color scheme"
-              >
-                {isDark ? <IconSun size={18} /> : <IconMoon size={18} />}
-              </ActionIcon>
+    const handleToggleSidebar = () => {
+        if (isMobile) {
+            openMobileNav();
+        } else {
+            splitterRef.current?.toggleCollapse(0);
+        }
+    };
 
-              <Menu shadow="md" width={180}>
-                <Menu.Target>
-                  <Group gap={6} style={{ cursor: 'pointer' }} wrap="nowrap">
-                    <Indicator size={8} offset={2} color="green" withBorder>
-                      <Avatar size={28} color="brand-cyan" radius="xl">
-                        {user?.initials ?? '?'}
-                      </Avatar>
-                    </Indicator>
-                    <Text size="sm" visibleFrom="sm">
-                      {user?.name ?? 'Usuario'}
-                    </Text>
-                    <IconChevronDown
-                      size={14}
-                      style={{ color: 'var(--mantine-color-dimmed)' }}
-                    />
-                  </Group>
-                </Menu.Target>
+    const handleSizeChange = (newSizes: SplitterPaneSize[]) => {
+        setSizes(newSizes);
+        localStorage.setItem("sidebarSizes:v1", JSON.stringify(newSizes));
+    };
 
-                <Menu.Dropdown>
-                  <Menu.Label>Usuario</Menu.Label>
-                  <Menu.Item onClick={() => navigate('/profile')}>Perfil</Menu.Item>
-                  <Menu.Item
-                    color="red"
-                    onClick={() => {
-                      logout()
-                      navigate('/login', { replace: true })
-                    }}
-                  >
-                    Cerrar sesión
-                  </Menu.Item>
-                </Menu.Dropdown>
-              </Menu>
-            </Group>
-          }
-        />
-      </AppShell.Header>
+    return (
+        <Flex direction="column" h="100vh">
+            <Box h={56} style={{ flexShrink: 0 }}>
+                <TopBar
+                    left={
+                        <>
+                            <ActionIcon
+                                variant="subtle"
+                                color="gray"
+                                onClick={handleToggleSidebar}
+                                aria-label="Toggle sidebar"
+                            >
+                                <IconMenu2 size={18} />
+                            </ActionIcon>
 
-      <AppShell.Navbar
-        bg={isDark ? 'dark.7' : 'gray.0'}
-      >
-        <Sidebar
-          isResourceAllowed={isResourceAllowed}
-          onNavigate={handleNavClick}
-        />
-      </AppShell.Navbar>
+                            <Text size="lg" fw={700} c="brand-cyan.3">
+                                Yarn EPR
+                            </Text>
+                        </>
+                    }
+                    right={
+                        <Group gap="sm" wrap="nowrap">
+                            <ActionIcon
+                                variant="subtle"
+                                color="gray"
+                                onClick={() => setColorScheme(isDark ? "light" : "dark")}
+                                aria-label="Toggle color scheme"
+                            >
+                                {isDark ? <IconSun size={18} /> : <IconMoon size={18} />}
+                            </ActionIcon>
 
-      <AppShell.Main>
-        <ErrorBoundary>
-          <div className="page-enter">
-            <AppBreadcrumbs />
-            <Outlet />
-          </div>
-        </ErrorBoundary>
-      </AppShell.Main>
-    </AppShell>
-  )
+                            <Menu shadow="md" width={180}>
+                                <Menu.Target>
+                                    <Group gap={6} className={classes.clickable} wrap="nowrap">
+                                        <Indicator size={8} offset={2} color="green" withBorder>
+                                            <Avatar size={28} color="brand-cyan" radius="xl">
+                                                {user?.initials ?? "?"}
+                                            </Avatar>
+                                        </Indicator>
+                                        <Text size="sm" visibleFrom="sm">
+                                            {user?.name ?? "Usuario"}
+                                        </Text>
+                                        <IconChevronDown
+                                            size={14}
+                                            color="var(--mantine-color-dimmed)"
+                                        />
+                                    </Group>
+                                </Menu.Target>
+
+                                <Menu.Dropdown>
+                                    <Menu.Label>Usuario</Menu.Label>
+                                    <Menu.Item onClick={() => navigate("/profile")}>
+                                        Perfil
+                                    </Menu.Item>
+                                    <Menu.Item
+                                        color="red"
+                                        onClick={() => {
+                                            logout();
+                                            navigate("/login", { replace: true });
+                                        }}
+                                    >
+                                        Cerrar sesión
+                                    </Menu.Item>
+                                </Menu.Dropdown>
+                            </Menu>
+                        </Group>
+                    }
+                />
+            </Box>
+
+            {/* Mobile: Drawer overlay for navigation */}
+            <Drawer
+                opened={mobileNavOpen}
+                onClose={closeMobileNav}
+                size={260}
+                padding={0}
+                hiddenFrom="sm"
+                styles={{
+                    body: { height: "100%", padding: 0 },
+                }}
+            >
+                <Sidebar isResourceAllowed={isResourceAllowed} onNavigate={handleNavClick} />
+            </Drawer>
+
+            <Splitter
+                splitterRef={splitterRef}
+                sizes={sizes}
+                onSizeChange={handleSizeChange}
+                className={classes.fill}
+            >
+                <Splitter.Pane
+                    defaultSize={20}
+                    min={15}
+                    max={25}
+                    collapsible
+                    collapseThreshold={1}
+                    bg={isDark ? "dark.7" : "gray.0"}
+                >
+                    <Box visibleFrom="sm" h="100%">
+                        <Sidebar isResourceAllowed={isResourceAllowed} onNavigate={handleNavClick} />
+                    </Box>
+                </Splitter.Pane>
+                <Splitter.Pane defaultSize={80} p="md" className={classes.scrollArea}>
+                    <ErrorBoundary>
+                        <div className="page-enter">
+                            <AppBreadcrumbs />
+                            <Outlet />
+                        </div>
+                    </ErrorBoundary>
+                </Splitter.Pane>
+            </Splitter>
+        </Flex>
+    );
 }

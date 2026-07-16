@@ -8,7 +8,7 @@ import {
 } from '@mantine/core'
 import { IconChevronRight } from '@tabler/icons-react'
 import { type NavItem } from '../navigation-data'
-import classes from '../../styles/components/SidebarLinksGroup.module.css'
+import classes from '@/styles/components/SidebarLinksGroup.module.css'
 
 interface LinksGroupProps {
   icon?: ReactNode
@@ -29,7 +29,7 @@ export function SidebarLinksGroup({ icon, label, links, onNavigate }: LinksGroup
 
   const [opened, setOpened] = useState(initiallyOpened)
 
-  const items = (hasLinks ? links! : []).map((child) => {
+  const items = (links ?? []).map((child) => {
     const isActive = location.pathname === child.path
     return (
       <UnstyledButton
@@ -55,10 +55,10 @@ export function SidebarLinksGroup({ icon, label, links, onNavigate }: LinksGroup
         className={classes.control}
       >
         <Group justify="space-between" gap={0}>
-          <div className={classes.iconWrapper}>
-            {icon && <span className={classes.icon}>{icon}</span>}
-            <span>{label}</span>
-          </div>
+          <Group gap="sm" wrap="nowrap">
+            {icon && <Box component="span">{icon}</Box>}
+            <Box component="span">{label}</Box>
+          </Group>
           {hasLinks && (
             <IconChevronRight
               className={classes.chevron}

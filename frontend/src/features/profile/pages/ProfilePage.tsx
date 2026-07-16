@@ -4,12 +4,12 @@ import {
   Group,
   Stack,
   Text,
-  Title,
   Divider,
   Grid,
   Badge,
 } from '@mantine/core'
-import { useAuth } from '../../auth/context/auth-context'
+import { useAuth } from '@/features/auth'
+import { PageHeader } from '@/common/components/PageHeader'
 
 export default function ProfilePage() {
   const { user } = useAuth()
@@ -18,7 +18,7 @@ export default function ProfilePage() {
 
   return (
     <Stack gap="lg">
-      <Title order={2}>Mi perfil</Title>
+      <PageHeader title="Mi perfil" />
 
       {/* Avatar + nombre */}
       <Card withBorder radius="md" padding="lg">

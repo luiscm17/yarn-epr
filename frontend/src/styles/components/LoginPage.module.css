@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: light-dark(#f5f7fa, #0d1117);
+  background: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-8));
 }
 
 .card {

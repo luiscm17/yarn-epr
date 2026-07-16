@@ -1,0 +1,6 @@
+minimumReleaseAge: 1440
+minimumReleaseAgeExclude:
+  - react-data-grid@7.0.0-beta.61
+trustPolicy: no-downgrade
+trustPolicyExclude:
+  - semver
