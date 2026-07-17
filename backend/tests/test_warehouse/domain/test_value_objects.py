@@ -1,0 +1,171 @@
+import unittest
+from decimal import Decimal
+from uuid import UUID
+
+from warehouse.domain.value_objects import (
+    BaleNumber,
+    BaleWeight,
+    MaterialType,
+    RawMaterialBaleId,
+    RawMaterialReceptionId,
+)
+from warehouse.domain.exceptions import (
+    InvalidBaleNumberError,
+    InvalidBaleWeightError,
+    InvalidMaterialTypeError,
+)
+
+
+class TestBaleNumber(unittest.TestCase):
+    def test_valid_bale_number(self) -> None:
+        bale = BaleNumber("BAL-001")
+        self.assertEqual(bale.value, "BAL-001")
+
+    def test_normalizes_to_uppercase(self) -> None:
+        bale = BaleNumber("bal-001")
+        self.assertEqual(bale.value, "BAL-001")
+
+    def test_strips_whitespace(self) -> None:
+        bale = BaleNumber("  bal-001  ")
+        self.assertEqual(bale.value, "BAL-001")
+
+    def test_rejects_empty_string(self) -> None:
+        with self.assertRaises(InvalidBaleNumberError):
+            BaleNumber("")
+
+    def test_rejects_whitespace_only(self) -> None:
+        with self.assertRaises(InvalidBaleNumberError):
+            BaleNumber("   ")
+
+    def test_rejects_too_long(self) -> None:
+        with self.assertRaises(InvalidBaleNumberError):
+            BaleNumber("X" * 11)
+
+    def test_accepts_max_length(self) -> None:
+        bale = BaleNumber("X" * 10)
+        self.assertEqual(len(bale.value), 10)
+
+    def test_is_frozen(self) -> None:
+        bale = BaleNumber("BAL-001")
+        with self.assertRaises(AttributeError):
+            bale.value = "OTHER"  # type: ignore[misc]
+
+    def test_is_hashable(self) -> None:
+        bale = BaleNumber("BAL-001")
+        s = {bale}
+        self.assertIn(BaleNumber("BAL-001"), s)
+
+
+class TestMaterialType(unittest.TestCase):
+    def test_valid_material(self) -> None:
+        mt = MaterialType("ALGODÓN")
+        self.assertEqual(mt.value, "ALGODÓN")
+
+    def test_normalizes_to_uppercase(self) -> None:
+        mt = MaterialType("algodón")
+        self.assertEqual(mt.value, "ALGODÓN")
+
+    def test_strips_whitespace(self) -> None:
+        mt = MaterialType("  alpaca  ")
+        self.assertEqual(mt.value, "ALPACA")
+
+    def test_rejects_empty(self) -> None:
+        with self.assertRaises(InvalidMaterialTypeError):
+            MaterialType("")
+
+    def test_rejects_too_long(self) -> None:
+        with self.assertRaises(InvalidMaterialTypeError):
+            MaterialType("X" * 21)
+
+    def test_is_frozen(self) -> None:
+        mt = MaterialType("ALGODÓN")
+        with self.assertRaises(AttributeError):
+            mt.value = "OTRO"  # type: ignore[misc]
+
+
+class TestRawMaterialBaleId(unittest.TestCase):
+    def test_accepts_uuid(self) -> None:
+        uid = UUID("12345678-1234-5678-1234-567812345678")
+        bale_id = RawMaterialBaleId(uid)
+        self.assertEqual(bale_id.value, uid)
+
+    def test_is_frozen(self) -> None:
+        bale_id = RawMaterialBaleId(UUID(int=1))
+        with self.assertRaises(AttributeError):
+            bale_id.value = UUID(int=2)  # type: ignore[misc]
+
+
+class TestRawMaterialReceptionId(unittest.TestCase):
+    def test_accepts_uuid(self) -> None:
+        uid = UUID("87654321-4321-8765-4321-876543210987")
+        reception_id = RawMaterialReceptionId(uid)
+        self.assertEqual(reception_id.value, uid)
+
+    def test_is_frozen(self) -> None:
+        reception_id = RawMaterialReceptionId(UUID(int=1))
+        with self.assertRaises(AttributeError):
+            reception_id.value = UUID(int=2)  # type: ignore[misc]
+
+
+class TestBaleWeight(unittest.TestCase):
+    def setUp(self) -> None:
+        self.gross = Decimal("120.00")
+        self.net = Decimal("100.00")
+        self.container = Decimal("20.00")
+
+    def test_valid_weight(self) -> None:
+        weight = BaleWeight(self.gross, self.net, self.container)
+        self.assertEqual(weight.gross_kg, self.gross)
+        self.assertEqual(weight.net_kg, self.net)
+        self.assertEqual(weight.container_kg, self.container)
+
+    def test_accepts_decimal_strings_via_decimal(self) -> None:
+        weight = BaleWeight(
+            Decimal("150.5"),
+            Decimal("130.25"),
+            Decimal("20.25"),
+        )
+        self.assertEqual(weight.gross_kg, Decimal("150.5"))
+        self.assertEqual(weight.net_kg, Decimal("130.25"))
+        self.assertEqual(weight.container_kg, Decimal("20.25"))
+
+    def test_gross_must_be_positive(self) -> None:
+        with self.assertRaises(InvalidBaleWeightError):
+            BaleWeight(Decimal("0"), self.net, self.container)
+
+    def test_gross_must_be_greater_than_zero(self) -> None:
+        with self.assertRaises(InvalidBaleWeightError):
+            BaleWeight(Decimal("-1"), self.net, self.container)
+
+    def test_net_must_be_positive(self) -> None:
+        with self.assertRaises(InvalidBaleWeightError):
+            BaleWeight(self.gross, Decimal("0"), self.container)
+
+    def test_net_must_be_greater_than_zero(self) -> None:
+        with self.assertRaises(InvalidBaleWeightError):
+            BaleWeight(self.gross, Decimal("-1"), self.container)
+
+    def test_gross_must_equal_net_plus_container(self) -> None:
+        with self.assertRaises(InvalidBaleWeightError):
+            BaleWeight(self.gross, Decimal("90"), Decimal("20"))
+
+    def test_rejects_nan(self) -> None:
+        with self.assertRaises(InvalidBaleWeightError):
+            BaleWeight(Decimal("NaN"), self.net, self.container)
+
+    def test_rejects_infinity(self) -> None:
+        with self.assertRaises(InvalidBaleWeightError):
+            BaleWeight(
+                Decimal("Infinity"),
+                self.net,
+                self.container,
+            )
+
+    def test_is_frozen(self) -> None:
+        weight = BaleWeight(self.gross, self.net, self.container)
+        with self.assertRaises(AttributeError):
+            weight.gross_kg = Decimal("999")  # type: ignore[misc]
+
+
+if __name__ == "__main__":
+    unittest.main()
