@@ -39,7 +39,6 @@ class TestBaleStatus(unittest.TestCase):
             material=MaterialType("ALGODÓN"),
             weight=BaleWeight(
                 Decimal("120"),
-                Decimal("100"),
                 Decimal("20"),
             ),
         )
@@ -54,7 +53,6 @@ class TestRawMaterialBale(unittest.TestCase):
             material=MaterialType("ALGODÓN"),
             weight=BaleWeight(
                 Decimal("120"),
-                Decimal("100"),
                 Decimal("20"),
             ),
         )

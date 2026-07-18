@@ -110,19 +110,17 @@ class TestRawMaterialReceptionId(unittest.TestCase):
 class TestBaleWeight(unittest.TestCase):
     def setUp(self) -> None:
         self.gross = Decimal("120.00")
-        self.net = Decimal("100.00")
         self.container = Decimal("20.00")
 
     def test_valid_weight(self) -> None:
-        weight = BaleWeight(self.gross, self.net, self.container)
+        weight = BaleWeight(self.gross, self.container)
         self.assertEqual(weight.gross_kg, self.gross)
-        self.assertEqual(weight.net_kg, self.net)
+        self.assertEqual(weight.net_kg, self.gross - self.container)
         self.assertEqual(weight.container_kg, self.container)
 
     def test_accepts_decimal_strings_via_decimal(self) -> None:
         weight = BaleWeight(
             Decimal("150.5"),
-            Decimal("130.25"),
             Decimal("20.25"),
         )
         self.assertEqual(weight.gross_kg, Decimal("150.5"))
@@ -131,38 +129,37 @@ class TestBaleWeight(unittest.TestCase):
 
     def test_gross_must_be_positive(self) -> None:
         with self.assertRaises(InvalidBaleWeightError):
-            BaleWeight(Decimal("0"), self.net, self.container)
+            BaleWeight(Decimal("0"), self.container)
 
     def test_gross_must_be_greater_than_zero(self) -> None:
         with self.assertRaises(InvalidBaleWeightError):
-            BaleWeight(Decimal("-1"), self.net, self.container)
+            BaleWeight(Decimal("-1"), self.container)
 
-    def test_net_must_be_positive(self) -> None:
+    def test_container_must_be_positive(self) -> None:
         with self.assertRaises(InvalidBaleWeightError):
-            BaleWeight(self.gross, Decimal("0"), self.container)
+            BaleWeight(self.gross, Decimal("0"))
 
-    def test_net_must_be_greater_than_zero(self) -> None:
+    def test_container_must_be_greater_than_zero(self) -> None:
         with self.assertRaises(InvalidBaleWeightError):
-            BaleWeight(self.gross, Decimal("-1"), self.container)
+            BaleWeight(self.gross, Decimal("-1"))
 
-    def test_gross_must_equal_net_plus_container(self) -> None:
+    def test_gross_must_exceed_container(self) -> None:
         with self.assertRaises(InvalidBaleWeightError):
-            BaleWeight(self.gross, Decimal("90"), Decimal("20"))
+            BaleWeight(Decimal("90"), Decimal("100"))
 
     def test_rejects_nan(self) -> None:
         with self.assertRaises(InvalidBaleWeightError):
-            BaleWeight(Decimal("NaN"), self.net, self.container)
+            BaleWeight(Decimal("NaN"), self.container)
 
     def test_rejects_infinity(self) -> None:
         with self.assertRaises(InvalidBaleWeightError):
             BaleWeight(
                 Decimal("Infinity"),
-                self.net,
                 self.container,
             )
 
     def test_is_frozen(self) -> None:
-        weight = BaleWeight(self.gross, self.net, self.container)
+        weight = BaleWeight(self.gross, self.container)
         with self.assertRaises(AttributeError):
             weight.gross_kg = Decimal("999")  # type: ignore[misc]
 
