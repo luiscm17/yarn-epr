@@ -5,13 +5,17 @@ from uuid import UUID
 from warehouse.domain.value_objects import (
     BaleNumber,
     BaleWeight,
+    Dtex,
     MaterialType,
     RawMaterialBaleId,
     RawMaterialReceptionId,
+    ShipmentNumber,
 )
 from warehouse.domain.exceptions import (
+    DomainError,
     InvalidBaleNumberError,
     InvalidBaleWeightError,
+    InvalidDtexNumberError,
     InvalidMaterialTypeError,
 )
 
@@ -162,6 +166,82 @@ class TestBaleWeight(unittest.TestCase):
         weight = BaleWeight(self.gross, self.container)
         with self.assertRaises(AttributeError):
             weight.gross_kg = Decimal("999")  # type: ignore[misc]
+
+
+class TestShipmentNumber(unittest.TestCase):
+    def test_valid_shipment_number(self) -> None:
+        sn = ShipmentNumber("SHIP-001")
+        self.assertEqual(sn.value, "SHIP-001")
+
+    def test_normalizes_to_uppercase(self) -> None:
+        sn = ShipmentNumber("ship-001")
+        self.assertEqual(sn.value, "SHIP-001")
+
+    def test_strips_whitespace(self) -> None:
+        sn = ShipmentNumber("  ship-001  ")
+        self.assertEqual(sn.value, "SHIP-001")
+
+    def test_rejects_empty_string(self) -> None:
+        with self.assertRaises(DomainError):
+            ShipmentNumber("")
+
+    def test_rejects_whitespace_only(self) -> None:
+        with self.assertRaises(DomainError):
+            ShipmentNumber("   ")
+
+    def test_rejects_too_long(self) -> None:
+        with self.assertRaises(DomainError):
+            ShipmentNumber("X" * 11)
+
+    def test_accepts_max_length(self) -> None:
+        sn = ShipmentNumber("X" * 10)
+        self.assertEqual(len(sn.value), 10)
+
+    def test_is_frozen(self) -> None:
+        sn = ShipmentNumber("SHIP-001")
+        with self.assertRaises(AttributeError):
+            sn.value = "OTHER"  # type: ignore[misc]
+
+    def test_is_hashable(self) -> None:
+        sn = ShipmentNumber("SHIP-001")
+        s = {sn}
+        self.assertIn(ShipmentNumber("SHIP-001"), s)
+
+
+class TestDtex(unittest.TestCase):
+    def test_valid_dtex(self) -> None:
+        dtex = Dtex(Decimal("2.2"))
+        self.assertEqual(dtex.value, Decimal("2.2"))
+
+    def test_accepts_integer(self) -> None:
+        dtex = Dtex(Decimal("100"))
+        self.assertEqual(dtex.value, Decimal("100"))
+
+    def test_rejects_zero(self) -> None:
+        with self.assertRaises(InvalidDtexNumberError):
+            Dtex(Decimal("0"))
+
+    def test_rejects_negative(self) -> None:
+        with self.assertRaises(InvalidDtexNumberError):
+            Dtex(Decimal("-1"))
+
+    def test_rejects_nan(self) -> None:
+        with self.assertRaises(InvalidDtexNumberError):
+            Dtex(Decimal("NaN"))
+
+    def test_rejects_infinity(self) -> None:
+        with self.assertRaises(InvalidDtexNumberError):
+            Dtex(Decimal("Infinity"))
+
+    def test_is_frozen(self) -> None:
+        dtex = Dtex(Decimal("2.2"))
+        with self.assertRaises(AttributeError):
+            dtex.value = Decimal("999")  # type: ignore[misc]
+
+    def test_is_hashable(self) -> None:
+        dtex = Dtex(Decimal("2.2"))
+        s = {dtex}
+        self.assertIn(Dtex(Decimal("2.2")), s)
 
 
 if __name__ == "__main__":
