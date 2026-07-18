@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from warehouse.domain.exceptions.domain_errors import InvalidBaleNumberError
 
+
 @dataclass(frozen=True, slots=True)
 class BaleNumber:
     value: str
@@ -9,13 +10,9 @@ class BaleNumber:
         normalized = self.value.strip().upper()
 
         if not normalized:
-            raise InvalidBaleNumberError(
-                "Bale number cannot be empty."
-            )
-        
+            raise InvalidBaleNumberError("Bale number cannot be empty.")
+
         if len(normalized) > 10:
-            raise InvalidBaleNumberError(
-                "Bale number cannot exceed 10 characters."
-            )
-        
+            raise InvalidBaleNumberError("Bale number cannot exceed 10 characters.")
+
         object.__setattr__(self, "value", normalized)

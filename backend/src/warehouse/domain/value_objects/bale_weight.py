@@ -1,9 +1,8 @@
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 
-from warehouse.domain.exceptions.domain_errors import (
-    InvalidBaleWeightError
-)
+from warehouse.domain.exceptions.domain_errors import InvalidBaleWeightError
+
 
 @dataclass(frozen=True, slots=True)
 class BaleWeight:
@@ -15,19 +14,13 @@ class BaleWeight:
         container = self._normalize(self.container_kg, "Container Weight")
 
         if gross <= Decimal("0"):
-            raise InvalidBaleWeightError(
-                "Gross weight must be greater than zero."
-            )
-        
+            raise InvalidBaleWeightError("Gross weight must be greater than zero.")
+
         if container <= Decimal("0"):
-            raise InvalidBaleWeightError(
-                "Container weight must be greater than zero."
-            )
+            raise InvalidBaleWeightError("Container weight must be greater than zero.")
 
         if gross <= container:
-            raise InvalidBaleWeightError(
-                "Gross weight must exceed container weight."
-            )
+            raise InvalidBaleWeightError("Gross weight must exceed container weight.")
 
         object.__setattr__(self, "gross_kg", gross)
         object.__setattr__(self, "container_kg", container)
@@ -35,20 +28,15 @@ class BaleWeight:
     @property
     def net_kg(self) -> Decimal:
         return self.gross_kg - self.container_kg
-    
+
     @staticmethod
     def _normalize(value: Decimal, field_name: str) -> Decimal:
         try:
             normalized = Decimal(str(value))
-        except (InvalidOperation, ValueError) as error:
-            raise InvalidBaleWeightError(
-                f"{field_name} must be a valid decimal value."
-            )
+        except (InvalidOperation, ValueError):
+            raise InvalidBaleWeightError(f"{field_name} must be a valid decimal value.")
 
         if not normalized.is_finite():
-            raise InvalidBaleWeightError(
-                f"{field_name} must be finite."
-            )
+            raise InvalidBaleWeightError(f"{field_name} must be finite.")
 
         return normalized
-    

@@ -40,28 +40,24 @@ from warehouse.ports.warehouse_transaction import WarehouseTransaction
 
 class RegisterRawMaterialReception:
     def __init__(
-            self,
-            reception_repository: RawMaterialReceptionRepository,
-            bale_repository: RawMaterialBaleRepository,
-            warehouse_transaction: WarehouseTransaction,
-            identity_generator: IdentityGenerator
+        self,
+        reception_repository: RawMaterialReceptionRepository,
+        bale_repository: RawMaterialBaleRepository,
+        warehouse_transaction: WarehouseTransaction,
+        identity_generator: IdentityGenerator,
     ) -> None:
         self._reception_repository = reception_repository
         self._bale_repository = bale_repository
         self._warehouse_transaction = warehouse_transaction
-        self._identity_generator  = identity_generator
+        self._identity_generator = identity_generator
 
     def execute(
-            self,
-            reception_input: RawMaterialReceptionInput,
+        self,
+        reception_input: RawMaterialReceptionInput,
     ) -> RawMaterialReceptionResult:
-        self._ensure_unique_bale_numbers(
-            reception_input.bales
-        )
+        self._ensure_unique_bale_numbers(reception_input.bales)
 
-        reception_id = RawMaterialReceptionId(
-            self._identity_generator.next_id()
-        )
+        reception_id = RawMaterialReceptionId(self._identity_generator.next_id())
 
         bales = self._create_raw_material_bales(
             reception_id=reception_id,
@@ -69,69 +65,51 @@ class RegisterRawMaterialReception:
         )
         reception = RawMaterialReception(
             id=reception_id,
-            received_at=ReceptionDateTime(
-                reception_input.received_at
-            ),
-            shipment_number=ShipmentNumber(
-                reception_input.shipment_number
-            ),
+            received_at=ReceptionDateTime(reception_input.received_at),
+            shipment_number=ShipmentNumber(reception_input.shipment_number),
             provider_name=reception_input.provider_name.strip(),
             bale_ids=tuple(bale.id for bale in bales),
         )
 
         with self._warehouse_transaction:
-            self._reception_repository.add(reception=reception)
-            self._bale_repository.add_all(bales=bales)
+            self._reception_repository.add(reception)
+            self._bale_repository.add_all(bales)
             self._warehouse_transaction.commit()
 
         return RawMaterialReceptionResult(
             reception_id=reception.id.value,
             bale_ids=tuple(bale.id.value for bale in bales),
             bale_count=reception.bale_count,
-            total_net_weight_kg=self._calculate_total_net_weight(
-                bales=bales
-            )
+            total_net_weight_kg=self._calculate_total_net_weight(bales=bales),
         )
 
     def _create_raw_material_bales(
-            self,
-            reception_id: RawMaterialReceptionId,
-            bale_inputs: tuple[
-                RawMaterialBaleReceptionInput,
-                ...
-            ]
+        self,
+        reception_id: RawMaterialReceptionId,
+        bale_inputs: tuple[RawMaterialBaleReceptionInput, ...],
     ) -> tuple[RawMaterialBale, ...]:
         return tuple(
             self._create_raw_material_bale(
-                reception_id=reception_id,
-                bale_input=bale_input
+                reception_id=reception_id, bale_input=bale_input
             )
             for bale_input in bale_inputs
         )
-    
+
     def _create_raw_material_bale(
-            self,
-            reception_id: RawMaterialReceptionId,
-            bale_input: RawMaterialBaleReceptionInput
+        self,
+        reception_id: RawMaterialReceptionId,
+        bale_input: RawMaterialBaleReceptionInput,
     ) -> RawMaterialBale:
         return RawMaterialBale(
-            id=RawMaterialBaleId(
-                self._identity_generator.next_id()
-            ),
+            id=RawMaterialBaleId(self._identity_generator.next_id()),
             reception_id=reception_id,
-            bale_number=BaleNumber(
-                bale_input.bale_number
-            ),
-            material=MaterialType(
-                bale_input.material_type
-            ),
-            dtex=Dtex(
-                bale_input.dtex
-            ),
+            bale_number=BaleNumber(bale_input.bale_number),
+            material=MaterialType(bale_input.material_type),
+            dtex=Dtex(bale_input.dtex),
             weight=BaleWeight(
                 gross_kg=bale_input.gross_weight_kg,
-                container_kg=bale_input.container_weight_kg
-            )
+                container_kg=bale_input.container_weight_kg,
+            ),
         )
 
     @staticmethod
@@ -139,18 +117,17 @@ class RegisterRawMaterialReception:
         bale_inputs: tuple[
             RawMaterialBaleReceptionInput,
             ...,
-            ]
+        ],
     ) -> None:
         bale_numbers = tuple(
-            BaleNumber(bale_input.bale_number)
-            for bale_input in bale_inputs
+            BaleNumber(bale_input.bale_number) for bale_input in bale_inputs
         )
 
         if len(bale_numbers) != len(set(bale_numbers)):
             raise DuplicateBaleNumberInReceptionError(
-                "Raw material reception cannot contain "
+                "Raw material reception cannot contain duplicate bale numbers."
             )
-        
+
     @staticmethod
     def _calculate_total_net_weight(
         bales: tuple[RawMaterialBale, ...],
@@ -159,4 +136,3 @@ class RegisterRawMaterialReception:
             (bale.weight.net_kg for bale in bales),
             start=Decimal("0"),
         )
-

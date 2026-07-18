@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from uuid import UUID
 
+
 @dataclass(frozen=True, slots=True)
 class RawMaterialReceptionResult:
     reception_id: UUID

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from warehouse.domain.enums.bale_status import BaleStatus
-from warehouse.domain.exceptions.domain_errors import ( InvalidBaleStateTransitionError )
+from warehouse.domain.exceptions.domain_errors import InvalidBaleStateTransitionError
 from warehouse.domain.value_objects.bale_number import BaleNumber
 from warehouse.domain.value_objects.bale_weight import BaleWeight
 from warehouse.domain.value_objects.material_type import MaterialType
@@ -29,7 +29,7 @@ class RawMaterialBale:
             raise InvalidBaleStateTransitionError(
                 f"Bale {self.bale_number.value} is not available in warehouse."
             )
-        
+
         self.status = BaleStatus.DELIVERED
 
     @property

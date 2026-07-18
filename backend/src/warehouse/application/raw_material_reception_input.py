@@ -3,7 +3,6 @@ from decimal import Decimal
 from datetime import datetime
 
 
-
 @dataclass(frozen=True, slots=True)
 class RawMaterialBaleReceptionInput:
     bale_number: str
@@ -11,6 +10,7 @@ class RawMaterialBaleReceptionInput:
     dtex: Decimal
     gross_weight_kg: Decimal
     container_weight_kg: Decimal
+
 
 @dataclass(frozen=True, slots=True)
 class RawMaterialReceptionInput:

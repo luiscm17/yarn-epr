@@ -12,7 +12,6 @@ from warehouse.domain.value_objects import (
     ShipmentNumber,
 )
 from warehouse.domain.exceptions import (
-    DomainError,
     InvalidBaleNumberError,
     InvalidBaleWeightError,
     InvalidDtexError,

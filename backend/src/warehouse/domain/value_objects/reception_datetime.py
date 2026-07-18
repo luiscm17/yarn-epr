@@ -13,7 +13,7 @@ class ReceptionDateTime:
             raise InvalidReceptionDateTimeError(
                 "Reception date and time must be a datetime value."
             )
-        
+
         if self.value.tzinfo is None or self.value.utcoffset() is None:
             raise InvalidReceptionDateTimeError(
                 "Reception date and time must include timezone information."

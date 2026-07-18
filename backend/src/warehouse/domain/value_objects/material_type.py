@@ -11,13 +11,9 @@ class MaterialType:
         normalized = self.value.strip().upper()
 
         if not normalized:
-            raise InvalidMaterialTypeError(
-                "Material Type cannot be empty."
-            )
-        
+            raise InvalidMaterialTypeError("Material Type cannot be empty.")
+
         if len(normalized) > 20:
-            raise InvalidMaterialTypeError(
-                "Material Type cannot exceed 20 characters."
-            )
-        
+            raise InvalidMaterialTypeError("Material Type cannot exceed 20 characters.")
+
         object.__setattr__(self, "value", normalized)

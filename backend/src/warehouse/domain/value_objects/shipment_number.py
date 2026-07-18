@@ -11,9 +11,7 @@ class ShipmentNumber:
         normalized = self.value.strip().upper()
 
         if not normalized:
-            raise InvalidShipmentNumberError(
-                "Shipment number cannot be empty."
-            )
+            raise InvalidShipmentNumberError("Shipment number cannot be empty.")
 
         if len(normalized) > 10:
             raise InvalidShipmentNumberError(
