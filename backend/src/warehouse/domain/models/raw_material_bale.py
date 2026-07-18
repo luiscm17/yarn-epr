@@ -5,6 +5,7 @@ from warehouse.domain.exceptions.domain_errors import ( InvalidBaleStateTransiti
 from warehouse.domain.value_objects.bale_number import BaleNumber
 from warehouse.domain.value_objects.bale_weight import BaleWeight
 from warehouse.domain.value_objects.material_type import MaterialType
+from warehouse.domain.value_objects.dtex_number import Dtex
 from warehouse.domain.value_objects.raw_material_bale_id import (
     RawMaterialBaleId,
 )
@@ -19,6 +20,7 @@ class RawMaterialBale:
     reception_id: RawMaterialReceptionId
     bale_number: BaleNumber
     material: MaterialType
+    dtex: Dtex
     weight: BaleWeight
     status: BaleStatus = BaleStatus.IN_WAREHOUSE
 

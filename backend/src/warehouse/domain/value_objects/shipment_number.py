@@ -4,7 +4,7 @@ from warehouse.domain.exceptions.domain_errors import DomainError
 
 
 @dataclass(frozen=True, slots=True)
-class DepartureNumber:
+class ShipmentNumber:
     value: str
 
     def __post_init__(self) -> None:
@@ -12,12 +12,12 @@ class DepartureNumber:
 
         if not normalized:
             raise DomainError(
-                "Departure number cannot be empty."
+                "Shipment number cannot be empty."
             )
 
         if len(normalized) > 10:
             raise DomainError(
-                "Departure number cannot exceed 10 characters."
+                "Shipment number cannot exceed 10 characters."
             )
 
         object.__setattr__(self, "value", normalized)

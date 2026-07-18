@@ -3,8 +3,7 @@ from warehouse.domain import (
     BaleStatus,
     BaleWeight,
     DomainError,
-    DtexNumber,
-    DepartureNumber,
+    Dtex,
     InvalidBaleNumberError,
     InvalidBaleStateTransitionError,
     InvalidBaleWeightError,
@@ -14,6 +13,7 @@ from warehouse.domain import (
     RawMaterialBaleId,
     RawMaterialReceptionId,
     ReceptionDateTime,
+    ShipmentNumber,
 )
 
 __all__ = [
@@ -21,8 +21,7 @@ __all__ = [
     "BaleStatus",
     "BaleWeight",
     "DomainError",
-    "DtexNumber",
-    "DepartureNumber",
+    "Dtex",
     "InvalidBaleNumberError",
     "InvalidBaleStateTransitionError",
     "InvalidBaleWeightError",
@@ -32,4 +31,5 @@ __all__ = [
     "RawMaterialBaleId",
     "RawMaterialReceptionId",
     "ReceptionDateTime",
+    "ShipmentNumber",
 ]

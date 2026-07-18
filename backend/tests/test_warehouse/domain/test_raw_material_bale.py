@@ -14,6 +14,7 @@ from warehouse.domain.models import RawMaterialBale
 from warehouse.domain.value_objects import (
     BaleNumber,
     BaleWeight,
+    Dtex,
     MaterialType,
     RawMaterialBaleId,
     RawMaterialReceptionId,
@@ -37,6 +38,7 @@ class TestBaleStatus(unittest.TestCase):
             reception_id=RawMaterialReceptionId(uuid4()),
             bale_number=BaleNumber("BAL-001"),
             material=MaterialType("ALGODÓN"),
+            dtex=Dtex(Decimal("2.2")),
             weight=BaleWeight(
                 Decimal("120"),
                 Decimal("20"),
@@ -51,6 +53,7 @@ class TestRawMaterialBale(unittest.TestCase):
             reception_id=RawMaterialReceptionId(uuid4()),
             bale_number=BaleNumber("BAL-001"),
             material=MaterialType("ALGODÓN"),
+            dtex=Dtex(Decimal("2.2")),
             weight=BaleWeight(
                 Decimal("120"),
                 Decimal("20"),

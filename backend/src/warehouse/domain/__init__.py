@@ -10,12 +10,12 @@ from warehouse.domain.models import RawMaterialBale
 from warehouse.domain.value_objects import (
     BaleNumber,
     BaleWeight,
-    DepartureNumber,
-    DtexNumber,
+    Dtex,
     MaterialType,
     RawMaterialBaleId,
     RawMaterialReceptionId,
     ReceptionDateTime,
+    ShipmentNumber,
 )
 
 
@@ -24,6 +24,7 @@ __all__ = [
     "BaleStatus",
     "BaleWeight",
     "DomainError",
+    "Dtex",
     "InvalidBaleNumberError",
     "InvalidBaleStateTransitionError",
     "InvalidBaleWeightError",
@@ -33,6 +34,5 @@ __all__ = [
     "RawMaterialBaleId",
     "RawMaterialReceptionId",
     "ReceptionDateTime",
-    "DtexNumber",
-    "DepartureNumber",
+    "ShipmentNumber",
 ]
