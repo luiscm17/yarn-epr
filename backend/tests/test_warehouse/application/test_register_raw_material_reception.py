@@ -2,6 +2,7 @@ import unittest
 from collections.abc import Sequence
 from datetime import datetime, timezone
 from decimal import Decimal
+from types import TracebackType
 from typing import Self
 from uuid import UUID
 
@@ -59,7 +60,12 @@ class FakeWarehouseTransaction:
         self.entered = True
         return self
 
-    def __exit__(self, *args: object) -> None:
+    def __exit__(
+        self,
+        exception_type: type[BaseException] | None,
+        exception: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
         pass
 
     def commit(self) -> None:
@@ -171,8 +177,9 @@ class TestRegisterRawMaterialReception(unittest.TestCase):
         input_data = self._make_input()
         self.use_case.execute(input_data)
 
-        self.assertIsNotNone(self.reception_repo.added)
-        self.assertEqual(self.reception_repo.added.bale_count, 2)
+        added = self.reception_repo.added
+        assert added is not None
+        self.assertEqual(added.bale_count, 2)
         self.assertEqual(len(self.bale_repo.added_bales), 2)
 
     def test_commits_transaction(self) -> None:
@@ -188,7 +195,9 @@ class TestRegisterRawMaterialReception(unittest.TestCase):
         input_data = self._make_input()
         self.use_case.execute(input_data)
 
-        self.assertEqual(self.reception_repo.added.provider_name, "PROV-001")
+        added = self.reception_repo.added
+        assert added is not None
+        self.assertEqual(added.provider_name, "PROV-001")
 
     def test_generates_unique_identities(self) -> None:
         """Reception and each bale get distinct IDs."""
