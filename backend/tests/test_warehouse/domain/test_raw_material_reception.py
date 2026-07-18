@@ -1,12 +1,12 @@
 import unittest
 from datetime import datetime, timezone
-from decimal import Decimal
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from warehouse.domain.exceptions import (
     DomainError,
     DuplicateBaleIdError,
     EmptyRawMaterialReceptionError,
+    InvalidProviderNameError,
 )
 from warehouse.domain.models import RawMaterialReception
 from warehouse.domain.value_objects import (
@@ -62,6 +62,37 @@ class TestRawMaterialReception(unittest.TestCase):
             self._make_reception(bale_ids=(self.bale_id_1, self.bale_id_1))
         self.assertIn("duplicate", str(ctx.exception))
 
+    def test_strips_provider_name_whitespace(self) -> None:
+        reception = RawMaterialReception(
+            id=self.reception_id,
+            received_at=self.received_at,
+            shipment_number=self.shipment_number,
+            provider_name="  PROV-001  ",
+            bale_ids=(self.bale_id_1,),
+        )
+        self.assertEqual(reception.provider_name, "PROV-001")
+
+    def test_rejects_empty_provider_name(self) -> None:
+        with self.assertRaises(InvalidProviderNameError) as ctx:
+            RawMaterialReception(
+                id=self.reception_id,
+                received_at=self.received_at,
+                shipment_number=self.shipment_number,
+                provider_name="",
+                bale_ids=(self.bale_id_1,),
+            )
+        self.assertIn("empty", str(ctx.exception))
+
+    def test_rejects_whitespace_only_provider_name(self) -> None:
+        with self.assertRaises(InvalidProviderNameError):
+            RawMaterialReception(
+                id=self.reception_id,
+                received_at=self.received_at,
+                shipment_number=self.shipment_number,
+                provider_name="   ",
+                bale_ids=(self.bale_id_1,),
+            )
+
     def test_is_frozen(self) -> None:
         reception = self._make_reception()
         with self.assertRaises(AttributeError):
@@ -70,6 +101,7 @@ class TestRawMaterialReception(unittest.TestCase):
     def test_all_exceptions_inherit_from_domain_error(self) -> None:
         self.assertTrue(issubclass(EmptyRawMaterialReceptionError, DomainError))
         self.assertTrue(issubclass(DuplicateBaleIdError, DomainError))
+        self.assertTrue(issubclass(InvalidProviderNameError, DomainError))
 
 
 if __name__ == "__main__":

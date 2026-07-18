@@ -1,6 +1,6 @@
 import unittest
 from decimal import Decimal
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from warehouse.domain.enums import BaleStatus
 from warehouse.domain.exceptions import (
@@ -9,6 +9,7 @@ from warehouse.domain.exceptions import (
     InvalidBaleStateTransitionError,
     InvalidBaleWeightError,
     InvalidMaterialTypeError,
+    InvalidProviderNameError,
 )
 from warehouse.domain.models import RawMaterialBale
 from warehouse.domain.value_objects import (
@@ -99,9 +100,8 @@ class TestDomainExceptions(unittest.TestCase):
         self.assertTrue(issubclass(InvalidBaleNumberError, DomainError))
         self.assertTrue(issubclass(InvalidMaterialTypeError, DomainError))
         self.assertTrue(issubclass(InvalidBaleWeightError, DomainError))
-        self.assertTrue(
-            issubclass(InvalidBaleStateTransitionError, DomainError)
-        )
+        self.assertTrue(issubclass(InvalidBaleStateTransitionError, DomainError))
+        self.assertTrue(issubclass(InvalidProviderNameError, DomainError))
 
     def test_invalid_bale_number_error_message(self) -> None:
         err = InvalidBaleNumberError("test message")
