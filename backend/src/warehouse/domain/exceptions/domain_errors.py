@@ -13,7 +13,7 @@ class InvalidBaleWeightError(DomainError):
 class InvalidBaleStateTransitionError(DomainError):
     """Raised when an invalid state transition is attempted for a bale."""
 
-class InvalidDtexNumberError(DomainError):
+class InvalidDtexError(DomainError):
     """Raised when a Dtex number is invalid."""
 
 class InvalidReceptionDateTimeError(DomainError):

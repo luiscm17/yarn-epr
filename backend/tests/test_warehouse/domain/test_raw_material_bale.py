@@ -67,23 +67,23 @@ class TestRawMaterialBale(unittest.TestCase):
         self.assertTrue(self.bale.is_available)
 
     def test_is_not_available_after_delivery(self) -> None:
-        self.bale.delivered()
+        self.bale.deliver()
         self.assertFalse(self.bale.is_available)
 
     def test_delivered_changes_status(self) -> None:
-        self.bale.delivered()
+        self.bale.deliver()
         self.assertIs(self.bale.status, BaleStatus.DELIVERED)
 
     def test_delivered_twice_raises_error(self) -> None:
-        self.bale.delivered()
+        self.bale.deliver()
         with self.assertRaises(InvalidBaleStateTransitionError) as ctx:
-            self.bale.delivered()
+            self.bale.deliver()
         self.assertIn("BAL-001", str(ctx.exception))
 
     def test_delivered_on_pre_delivered_raises_error(self) -> None:
-        self.bale.delivered()
+        self.bale.deliver()
         with self.assertRaises(InvalidBaleStateTransitionError):
-            self.bale.delivered()
+            self.bale.deliver()
 
     def test_uses_slots(self) -> None:
         with self.assertRaises(AttributeError):

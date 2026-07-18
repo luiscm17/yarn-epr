@@ -5,7 +5,7 @@ from warehouse.domain.exceptions.domain_errors import ( InvalidBaleStateTransiti
 from warehouse.domain.value_objects.bale_number import BaleNumber
 from warehouse.domain.value_objects.bale_weight import BaleWeight
 from warehouse.domain.value_objects.material_type import MaterialType
-from warehouse.domain.value_objects.dtex_number import Dtex
+from warehouse.domain.value_objects.dtex import Dtex
 from warehouse.domain.value_objects.raw_material_bale_id import (
     RawMaterialBaleId,
 )
@@ -24,7 +24,7 @@ class RawMaterialBale:
     weight: BaleWeight
     status: BaleStatus = BaleStatus.IN_WAREHOUSE
 
-    def delivered(self) -> None:
+    def deliver(self) -> None:
         if self.status is not BaleStatus.IN_WAREHOUSE:
             raise InvalidBaleStateTransitionError(
                 f"Bale {self.bale_number.value} is not available in warehouse."

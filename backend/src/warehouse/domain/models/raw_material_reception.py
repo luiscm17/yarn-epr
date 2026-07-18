@@ -15,7 +15,7 @@ class RawMaterialReception:
     id: RawMaterialReceptionId
     received_at: ReceptionDateTime
     shipment_number: ShipmentNumber
-    provider_id: str
+    provider_name: str
     bale_ids: tuple[RawMaterialBaleId, ...]
 
     def __post_init__(self) -> None:

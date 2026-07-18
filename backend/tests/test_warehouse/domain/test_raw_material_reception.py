@@ -33,7 +33,7 @@ class TestRawMaterialReception(unittest.TestCase):
             id=self.reception_id,
             received_at=self.received_at,
             shipment_number=self.shipment_number,
-            provider_id="PROV-001",
+            provider_name="PROV-001",
             bale_ids=(self.bale_id_1, self.bale_id_2) if bale_ids is None else bale_ids,
         )
 
@@ -41,7 +41,7 @@ class TestRawMaterialReception(unittest.TestCase):
         reception = self._make_reception()
         self.assertEqual(reception.id, self.reception_id)
         self.assertEqual(reception.shipment_number.value, "SHIP-001")
-        self.assertEqual(reception.provider_id, "PROV-001")
+        self.assertEqual(reception.provider_name, "PROV-001")
         self.assertEqual(len(reception.bale_ids), 2)
 
     def test_creates_with_single_bale(self) -> None:
@@ -65,7 +65,7 @@ class TestRawMaterialReception(unittest.TestCase):
     def test_is_frozen(self) -> None:
         reception = self._make_reception()
         with self.assertRaises(AttributeError):
-            reception.provider_id = "OTHER"  # type: ignore[misc]
+            reception.provider_name = "OTHER"  # type: ignore[misc]
 
     def test_all_exceptions_inherit_from_domain_error(self) -> None:
         self.assertTrue(issubclass(EmptyRawMaterialReceptionError, DomainError))

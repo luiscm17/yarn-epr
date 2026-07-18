@@ -8,7 +8,7 @@ from warehouse.domain.value_objects.raw_material_reception_id import (
     RawMaterialReceptionId,
 )
 from warehouse.domain.value_objects.reception_datetime import ReceptionDateTime
-from warehouse.domain.value_objects.dtex_number import Dtex
+from warehouse.domain.value_objects.dtex import Dtex
 from warehouse.domain.value_objects.shipment_number import ShipmentNumber
 
 

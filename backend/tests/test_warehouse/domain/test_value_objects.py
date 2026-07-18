@@ -15,7 +15,7 @@ from warehouse.domain.exceptions import (
     DomainError,
     InvalidBaleNumberError,
     InvalidBaleWeightError,
-    InvalidDtexNumberError,
+    InvalidDtexError,
     InvalidMaterialTypeError,
 )
 
@@ -218,19 +218,19 @@ class TestDtex(unittest.TestCase):
         self.assertEqual(dtex.value, Decimal("100"))
 
     def test_rejects_zero(self) -> None:
-        with self.assertRaises(InvalidDtexNumberError):
+        with self.assertRaises(InvalidDtexError):
             Dtex(Decimal("0"))
 
     def test_rejects_negative(self) -> None:
-        with self.assertRaises(InvalidDtexNumberError):
+        with self.assertRaises(InvalidDtexError):
             Dtex(Decimal("-1"))
 
     def test_rejects_nan(self) -> None:
-        with self.assertRaises(InvalidDtexNumberError):
+        with self.assertRaises(InvalidDtexError):
             Dtex(Decimal("NaN"))
 
     def test_rejects_infinity(self) -> None:
-        with self.assertRaises(InvalidDtexNumberError):
+        with self.assertRaises(InvalidDtexError):
             Dtex(Decimal("Infinity"))
 
     def test_is_frozen(self) -> None:
