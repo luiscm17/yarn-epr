@@ -15,7 +15,7 @@ class BaleNumber:
         
         if len(normalized) > 10:
             raise InvalidBaleNumberError(
-                "Bale number cannot exceed 10 character."
+                "Bale number cannot exceed 10 characters."
             )
         
         object.__setattr__(self, "value", normalized)

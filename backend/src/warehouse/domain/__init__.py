@@ -1,6 +1,6 @@
 from warehouse.domain.enums import BaleStatus
 from warehouse.domain.exceptions import (
-    DomainErrors,
+    DomainError,
     InvalidBaleNumberError,
     InvalidBaleStateTransitionError,
     InvalidBaleWeightError,
@@ -10,9 +10,12 @@ from warehouse.domain.models import RawMaterialBale
 from warehouse.domain.value_objects import (
     BaleNumber,
     BaleWeight,
+    DepartureNumber,
+    DtexNumber,
     MaterialType,
     RawMaterialBaleId,
     RawMaterialReceptionId,
+    ReceptionDateTime,
 )
 
 
@@ -20,7 +23,7 @@ __all__ = [
     "BaleNumber",
     "BaleStatus",
     "BaleWeight",
-    "DomainErrors",
+    "DomainError",
     "InvalidBaleNumberError",
     "InvalidBaleStateTransitionError",
     "InvalidBaleWeightError",
@@ -29,4 +32,7 @@ __all__ = [
     "RawMaterialBale",
     "RawMaterialBaleId",
     "RawMaterialReceptionId",
+    "ReceptionDateTime",
+    "DtexNumber",
+    "DepartureNumber",
 ]
