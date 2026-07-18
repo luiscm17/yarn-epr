@@ -7,6 +7,9 @@ from warehouse.domain.value_objects.raw_material_bale_id import (
 from warehouse.domain.value_objects.raw_material_reception_id import (
     RawMaterialReceptionId,
 )
+from warehouse.domain.value_objects.reception_datetime import ReceptionDateTime
+from warehouse.domain.value_objects.dtex_number import DtexNumber
+from warehouse.domain.value_objects.departure_number import DepartureNumber
 
 
 __all__ = [
@@ -15,4 +18,7 @@ __all__ = [
     "MaterialType",
     "RawMaterialBaleId",
     "RawMaterialReceptionId",
+    "ReceptionDateTime",
+    "DtexNumber",
+    "DepartureNumber",
 ]
