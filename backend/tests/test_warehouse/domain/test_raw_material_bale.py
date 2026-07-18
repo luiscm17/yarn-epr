@@ -4,7 +4,7 @@ from uuid import UUID, uuid4
 
 from warehouse.domain.enums import BaleStatus
 from warehouse.domain.exceptions import (
-    DomainErrors,
+    DomainError,
     InvalidBaleNumberError,
     InvalidBaleStateTransitionError,
     InvalidBaleWeightError,
@@ -93,11 +93,11 @@ class TestRawMaterialBale(unittest.TestCase):
 
 class TestDomainExceptions(unittest.TestCase):
     def test_domain_errors_is_base(self) -> None:
-        self.assertTrue(issubclass(InvalidBaleNumberError, DomainErrors))
-        self.assertTrue(issubclass(InvalidMaterialTypeError, DomainErrors))
-        self.assertTrue(issubclass(InvalidBaleWeightError, DomainErrors))
+        self.assertTrue(issubclass(InvalidBaleNumberError, DomainError))
+        self.assertTrue(issubclass(InvalidMaterialTypeError, DomainError))
+        self.assertTrue(issubclass(InvalidBaleWeightError, DomainError))
         self.assertTrue(
-            issubclass(InvalidBaleStateTransitionError, DomainErrors)
+            issubclass(InvalidBaleStateTransitionError, DomainError)
         )
 
     def test_invalid_bale_number_error_message(self) -> None:

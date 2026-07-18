@@ -1,16 +1,24 @@
 from warehouse.domain.exceptions.domain_errors import (
-    DomainErrors,
+    DomainError,
     InvalidBaleNumberError,
     InvalidBaleStateTransitionError,
     InvalidBaleWeightError,
     InvalidMaterialTypeError,
+    InvalidDtexNumberError,
+    InvalidReceptionDateTimeError,
+    EmptyRawMaterialReceptionError,
+    DuplicateBaleIdError
 )
 
 
 __all__ = [
-    "DomainErrors",
+    "DomainError",
     "InvalidBaleNumberError",
     "InvalidBaleStateTransitionError",
     "InvalidBaleWeightError",
     "InvalidMaterialTypeError",
+    "InvalidDtexNumberError",
+    "InvalidReceptionDateTimeError",
+    "EmptyRawMaterialReceptionError",
+    "DuplicateBaleIdError",
 ]
