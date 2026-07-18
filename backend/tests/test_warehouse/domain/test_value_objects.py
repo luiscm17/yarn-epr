@@ -17,6 +17,7 @@ from warehouse.domain.exceptions import (
     InvalidBaleWeightError,
     InvalidDtexError,
     InvalidMaterialTypeError,
+    InvalidShipmentNumberError,
 )
 
 
@@ -182,15 +183,15 @@ class TestShipmentNumber(unittest.TestCase):
         self.assertEqual(sn.value, "SHIP-001")
 
     def test_rejects_empty_string(self) -> None:
-        with self.assertRaises(DomainError):
+        with self.assertRaises(InvalidShipmentNumberError):
             ShipmentNumber("")
 
     def test_rejects_whitespace_only(self) -> None:
-        with self.assertRaises(DomainError):
+        with self.assertRaises(InvalidShipmentNumberError):
             ShipmentNumber("   ")
 
     def test_rejects_too_long(self) -> None:
-        with self.assertRaises(DomainError):
+        with self.assertRaises(InvalidShipmentNumberError):
             ShipmentNumber("X" * 11)
 
     def test_accepts_max_length(self) -> None:

@@ -16,6 +16,9 @@ class InvalidBaleStateTransitionError(DomainError):
 class InvalidDtexError(DomainError):
     """Raised when a Dtex number is invalid."""
 
+class InvalidShipmentNumberError(DomainError):
+    """Raised when a shipment number is invalid."""
+
 class InvalidReceptionDateTimeError(DomainError):
     """Raised when a reception date and time is invalid."""
 

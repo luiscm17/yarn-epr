@@ -5,6 +5,7 @@ from warehouse.domain.exceptions.domain_errors import (
     InvalidBaleWeightError,
     InvalidMaterialTypeError,
     InvalidDtexError,
+    InvalidShipmentNumberError,
     InvalidReceptionDateTimeError,
     EmptyRawMaterialReceptionError,
     DuplicateBaleIdError
@@ -18,6 +19,7 @@ __all__ = [
     "InvalidBaleWeightError",
     "InvalidMaterialTypeError",
     "InvalidDtexError",
+    "InvalidShipmentNumberError",
     "InvalidReceptionDateTimeError",
     "EmptyRawMaterialReceptionError",
     "DuplicateBaleIdError",

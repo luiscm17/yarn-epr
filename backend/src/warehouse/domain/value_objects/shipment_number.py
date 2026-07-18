@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from warehouse.domain.exceptions.domain_errors import DomainError
+from warehouse.domain.exceptions.domain_errors import InvalidShipmentNumberError
 
 
 @dataclass(frozen=True, slots=True)
@@ -11,12 +11,12 @@ class ShipmentNumber:
         normalized = self.value.strip().upper()
 
         if not normalized:
-            raise DomainError(
+            raise InvalidShipmentNumberError(
                 "Shipment number cannot be empty."
             )
 
         if len(normalized) > 10:
-            raise DomainError(
+            raise InvalidShipmentNumberError(
                 "Shipment number cannot exceed 10 characters."
             )
 
