@@ -67,7 +67,7 @@ class RegisterRawMaterialReception:
             id=reception_id,
             received_at=ReceptionDateTime(reception_input.received_at),
             shipment_number=ShipmentNumber(reception_input.shipment_number),
-            provider_name=reception_input.provider_name.strip(),
+            provider_name=reception_input.provider_name,
             bale_ids=tuple(bale.id for bale in bales),
         )
 

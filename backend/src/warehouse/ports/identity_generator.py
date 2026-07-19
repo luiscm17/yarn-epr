@@ -4,5 +4,5 @@ from uuid import UUID
 
 class IdentityGenerator(Protocol):
     def next_id(self) -> UUID:
-        """Generator a new identity."""
+        """Generate a new identity."""
         ...
