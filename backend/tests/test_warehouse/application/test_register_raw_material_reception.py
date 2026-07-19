@@ -20,19 +20,14 @@ from warehouse.application.raw_material_reception_result import (
 from warehouse.application.register_raw_material_reception import (
     RegisterRawMaterialReception,
 )
+from warehouse.domain.exceptions import (
+    EmptyRawMaterialReceptionError,
+    InvalidBaleNumberError,
+)
 from warehouse.domain.models.raw_material_bale import RawMaterialBale
 from warehouse.domain.models.raw_material_reception import (
     RawMaterialReception,
 )
-
-
-class FakeIdentityGenerator:
-    def __init__(self) -> None:
-        self._counter = 0
-
-    def next_id(self) -> UUID:
-        self._counter += 1
-        return UUID(f"00000000-0000-0000-0000-{self._counter:012d}")
 
 
 class FakeRawMaterialReceptionRepository:
@@ -49,6 +44,31 @@ class FakeRawMaterialBaleRepository:
 
     def add_all(self, bales: Sequence[RawMaterialBale]) -> None:
         self.added_bales = tuple(bales)
+
+
+class FakeFailingReceptionRepository:
+    """Simulates a repository that raises on add()."""
+
+    def add(self, reception: RawMaterialReception) -> None:
+        msg = "Database connection failed"
+        raise RuntimeError(msg)
+
+
+class FakeFailingBaleRepository:
+    """Simulates a repository that raises on add_all()."""
+
+    def add_all(self, bales: Sequence[RawMaterialBale]) -> None:
+        msg = "Database connection failed"
+        raise RuntimeError(msg)
+
+
+class FakeIdentityGenerator:
+    def __init__(self) -> None:
+        self._counter = 0
+
+    def next_id(self) -> UUID:
+        self._counter += 1
+        return UUID(f"00000000-0000-0000-0000-{self._counter:012d}")
 
 
 class FakeWarehouseTransaction:
@@ -217,6 +237,49 @@ class TestRegisterRawMaterialReception(unittest.TestCase):
                 bale.reception_id.value,
                 result.reception_id,
             )
+
+    def test_no_side_effects_on_empty_reception(self) -> None:
+        """Empty reception raises domain error without persistence."""
+        input_data = self._make_input(bales=())
+
+        with self.assertRaises(EmptyRawMaterialReceptionError):
+            self.use_case.execute(input_data)
+
+        self.assertIsNone(self.reception_repo.added)
+        self.assertEqual(len(self.bale_repo.added_bales), 0)
+        self.assertFalse(self.transaction.entered)
+        self.assertFalse(self.transaction.committed)
+
+    def test_no_side_effects_on_invalid_bale_number(self) -> None:
+        """Invalid value object raises without persistence."""
+        input_data = self._make_input(
+            bales=(("", "ALGODÓN", "2.2", "120", "20"),)
+        )
+
+        with self.assertRaises(InvalidBaleNumberError):
+            self.use_case.execute(input_data)
+
+        self.assertIsNone(self.reception_repo.added)
+        self.assertEqual(len(self.bale_repo.added_bales), 0)
+        self.assertFalse(self.transaction.entered)
+        self.assertFalse(self.transaction.committed)
+
+    def test_no_commit_on_repository_failure(self) -> None:
+        """When the repository raises, transaction is not committed."""
+        failing_bale_repo = FakeFailingBaleRepository()
+        use_case = RegisterRawMaterialReception(
+            reception_repository=self.reception_repo,
+            bale_repository=failing_bale_repo,
+            warehouse_transaction=self.transaction,
+            identity_generator=self.identity_generator,
+        )
+
+        input_data = self._make_input()
+        with self.assertRaises(RuntimeError):
+            use_case.execute(input_data)
+
+        self.assertTrue(self.transaction.entered)
+        self.assertFalse(self.transaction.committed)
 
     def test_application_error_is_base(self) -> None:
         """DuplicateBaleNumberInReceptionError inherits from the base."""

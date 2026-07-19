@@ -88,7 +88,7 @@ class TestRawMaterialBale(unittest.TestCase):
 
     def test_uses_slots(self) -> None:
         with self.assertRaises(AttributeError):
-            self.bale.non_existent = "x"  # type: ignore[misc]
+            self.bale.non_existent = "x"  # type: ignore[attr-defined]
 
     def test_repr_includes_bale_number(self) -> None:
         representation = repr(self.bale)
