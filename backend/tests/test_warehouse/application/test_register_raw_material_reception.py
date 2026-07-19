@@ -1,5 +1,5 @@
 import unittest
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from datetime import datetime, timezone
 from decimal import Decimal
 from types import TracebackType
@@ -7,7 +7,7 @@ from typing import Self
 from uuid import UUID
 
 from warehouse.application.raw_material_reception_errors import (
-    DuplicateBaleNumberInReceptionError,
+    DuplicateBaleNumberError,
     RawMaterialReceptionApplicationError,
 )
 from warehouse.application.raw_material_reception_input import (
@@ -28,6 +28,10 @@ from warehouse.domain.models.raw_material_bale import RawMaterialBale
 from warehouse.domain.models.raw_material_reception import (
     RawMaterialReception,
 )
+from warehouse.domain.value_objects import BaleNumber
+from warehouse.ports.warehouse_transaction_errors import (
+    DuplicateBaleNumberConflict,
+)
 
 
 class FakeRawMaterialReceptionRepository:
@@ -39,8 +43,21 @@ class FakeRawMaterialReceptionRepository:
 
 
 class FakeRawMaterialBaleRepository:
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        existing: Collection[BaleNumber] = (),
+    ) -> None:
         self.added_bales: tuple[RawMaterialBale, ...] = ()
+        self.existing = frozenset(existing)
+        self.find_calls: list[tuple[BaleNumber, ...]] = []
+
+    def find(
+        self,
+        bale_numbers: Collection[BaleNumber],
+    ) -> frozenset[BaleNumber]:
+        requested = tuple(bale_numbers)
+        self.find_calls.append(requested)
+        return frozenset(requested) & self.existing
 
     def add_all(self, bales: Sequence[RawMaterialBale]) -> None:
         self.added_bales = tuple(bales)
@@ -56,6 +73,12 @@ class FakeFailingReceptionRepository:
 
 class FakeFailingBaleRepository:
     """Simulates a repository that raises on add_all()."""
+
+    def find(
+        self,
+        bale_numbers: Collection[BaleNumber],
+    ) -> frozenset[BaleNumber]:
+        return frozenset()
 
     def add_all(self, bales: Sequence[RawMaterialBale]) -> None:
         msg = "Database connection failed"
@@ -75,6 +98,7 @@ class FakeWarehouseTransaction:
     def __init__(self) -> None:
         self.committed = False
         self.entered = False
+        self.exited_with: BaseException | None = None
 
     def __enter__(self) -> Self:
         self.entered = True
@@ -86,10 +110,15 @@ class FakeWarehouseTransaction:
         exception: BaseException | None,
         traceback: TracebackType | None,
     ) -> None:
-        pass
+        self.exited_with = exception
 
     def commit(self) -> None:
         self.committed = True
+
+
+class FakeConflictingWarehouseTransaction(FakeWarehouseTransaction):
+    def commit(self) -> None:
+        raise DuplicateBaleNumberConflict
 
 
 class TestRegisterRawMaterialReception(unittest.TestCase):
@@ -164,16 +193,15 @@ class TestRegisterRawMaterialReception(unittest.TestCase):
         self.assertEqual(result.bale_count, 1)
         self.assertEqual(result.total_net_weight_kg, Decimal("150"))
 
-    def test_rejects_duplicate_bale_numbers(self) -> None:
-        """Duplicate bale numbers in input raise application error."""
+    def test_rejects_canonical_duplicate_bale_numbers(self) -> None:
         input_data = self._make_input(
             bales=(
                 ("BAL-001", "ALGODÓN", "2.2", "120", "20"),
-                ("BAL-001", "POLIÉSTER", "1.5", "130", "25"),
+                ("  bal-001  ", "POLIÉSTER", "1.5", "130", "25"),
             )
         )
 
-        with self.assertRaises(DuplicateBaleNumberInReceptionError):
+        with self.assertRaises(DuplicateBaleNumberError):
             self.use_case.execute(input_data)
 
     def test_no_side_effects_on_duplicate_bale_numbers(self) -> None:
@@ -185,12 +213,62 @@ class TestRegisterRawMaterialReception(unittest.TestCase):
             )
         )
 
-        with self.assertRaises(DuplicateBaleNumberInReceptionError):
+        with self.assertRaises(DuplicateBaleNumberError):
             self.use_case.execute(input_data)
 
         self.assertIsNone(self.reception_repo.added)
         self.assertEqual(len(self.bale_repo.added_bales), 0)
         self.assertFalse(self.transaction.committed)
+
+    def test_rejects_existing_bale_number_before_writes(self) -> None:
+        self.bale_repo.existing = frozenset({BaleNumber("BAL-001")})
+
+        with self.assertRaises(DuplicateBaleNumberError):
+            self.use_case.execute(self._make_input())
+
+        self.assertTrue(self.transaction.entered)
+        self.assertIsNone(self.reception_repo.added)
+        self.assertEqual(self.bale_repo.added_bales, ())
+        self.assertFalse(self.transaction.committed)
+
+    def test_partial_existing_conflict_rejects_whole_reception(self) -> None:
+        self.bale_repo.existing = frozenset({BaleNumber("BAL-002")})
+
+        with self.assertRaises(DuplicateBaleNumberError):
+            self.use_case.execute(self._make_input())
+
+        self.assertIsNone(self.reception_repo.added)
+        self.assertEqual(self.bale_repo.added_bales, ())
+
+    def test_find_receives_canonical_numbers(self) -> None:
+        self.use_case.execute(
+            self._make_input(
+                bales=(("  bal-001  ", "ALGODÓN", "2.2", "120", "20"),)
+            )
+        )
+
+        self.assertEqual(
+            self.bale_repo.find_calls,
+            [(BaleNumber("BAL-001"),)],
+        )
+        self.assertEqual(
+            self.bale_repo.added_bales[0].bale_number,
+            self.bale_repo.find_calls[0][0],
+        )
+
+    def test_maps_concurrent_duplicate_conflict(self) -> None:
+        transaction = FakeConflictingWarehouseTransaction()
+        use_case = RegisterRawMaterialReception(
+            reception_repository=self.reception_repo,
+            bale_repository=self.bale_repo,
+            warehouse_transaction=transaction,
+            identity_generator=self.identity_generator,
+        )
+
+        with self.assertRaises(DuplicateBaleNumberError):
+            use_case.execute(self._make_input())
+
+        self.assertIsInstance(transaction.exited_with, DuplicateBaleNumberConflict)
 
     def test_persists_reception_and_bales(self) -> None:
         """After a successful execution, reception and bales are stored."""
@@ -282,10 +360,10 @@ class TestRegisterRawMaterialReception(unittest.TestCase):
         self.assertFalse(self.transaction.committed)
 
     def test_application_error_is_base(self) -> None:
-        """DuplicateBaleNumberInReceptionError inherits from the base."""
+        """DuplicateBaleNumberError inherits from the application base."""
         self.assertTrue(
             issubclass(
-                DuplicateBaleNumberInReceptionError,
+                DuplicateBaleNumberError,
                 RawMaterialReceptionApplicationError,
             )
         )

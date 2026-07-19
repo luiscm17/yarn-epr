@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from warehouse.application.raw_material_reception_errors import (
-    DuplicateBaleNumberInReceptionError,
+    DuplicateBaleNumberError,
 )
 from warehouse.application.raw_material_reception_input import (
     RawMaterialBaleReceptionInput,
@@ -36,6 +36,9 @@ from warehouse.ports.raw_material_reception_repository import (
     RawMaterialReceptionRepository,
 )
 from warehouse.ports.warehouse_transaction import WarehouseTransaction
+from warehouse.ports.warehouse_transaction_errors import (
+    DuplicateBaleNumberConflict,
+)
 
 
 class RegisterRawMaterialReception:
@@ -55,13 +58,15 @@ class RegisterRawMaterialReception:
         self,
         reception_input: RawMaterialReceptionInput,
     ) -> RawMaterialReceptionResult:
-        self._ensure_unique_bale_numbers(reception_input.bales)
+        bale_numbers = self._canonical_bale_numbers(reception_input.bales)
+        self._ensure_unique_bale_numbers(bale_numbers)
 
         reception_id = RawMaterialReceptionId(self._identity_generator.next_id())
 
         bales = self._create_raw_material_bales(
             reception_id=reception_id,
             bale_inputs=reception_input.bales,
+            bale_numbers=bale_numbers,
         )
         reception = RawMaterialReception(
             id=reception_id,
@@ -71,10 +76,20 @@ class RegisterRawMaterialReception:
             bale_ids=tuple(bale.id for bale in bales),
         )
 
-        with self._warehouse_transaction:
-            self._reception_repository.add(reception)
-            self._bale_repository.add_all(bales)
-            self._warehouse_transaction.commit()
+        try:
+            with self._warehouse_transaction:
+                if self._bale_repository.find(bale_numbers):
+                    raise DuplicateBaleNumberError(
+                        "One or more bale numbers are already registered."
+                    )
+
+                self._reception_repository.add(reception)
+                self._bale_repository.add_all(bales)
+                self._warehouse_transaction.commit()
+        except DuplicateBaleNumberConflict as error:
+            raise DuplicateBaleNumberError(
+                "One or more bale numbers are already registered."
+            ) from error
 
         return RawMaterialReceptionResult(
             reception_id=reception.id.value,
@@ -87,23 +102,27 @@ class RegisterRawMaterialReception:
         self,
         reception_id: RawMaterialReceptionId,
         bale_inputs: tuple[RawMaterialBaleReceptionInput, ...],
+        bale_numbers: tuple[BaleNumber, ...],
     ) -> tuple[RawMaterialBale, ...]:
         return tuple(
             self._create_raw_material_bale(
-                reception_id=reception_id, bale_input=bale_input
+                reception_id=reception_id,
+                bale_input=bale_input,
+                bale_number=bale_number,
             )
-            for bale_input in bale_inputs
+            for bale_input, bale_number in zip(bale_inputs, bale_numbers, strict=True)
         )
 
     def _create_raw_material_bale(
         self,
         reception_id: RawMaterialReceptionId,
         bale_input: RawMaterialBaleReceptionInput,
+        bale_number: BaleNumber,
     ) -> RawMaterialBale:
         return RawMaterialBale(
             id=RawMaterialBaleId(self._identity_generator.next_id()),
             reception_id=reception_id,
-            bale_number=BaleNumber(bale_input.bale_number),
+            bale_number=bale_number,
             material=MaterialType(bale_input.material_type),
             dtex=Dtex(bale_input.dtex),
             weight=BaleWeight(
@@ -113,18 +132,22 @@ class RegisterRawMaterialReception:
         )
 
     @staticmethod
-    def _ensure_unique_bale_numbers(
+    def _canonical_bale_numbers(
         bale_inputs: tuple[
             RawMaterialBaleReceptionInput,
             ...,
         ],
-    ) -> None:
-        bale_numbers = tuple(
+    ) -> tuple[BaleNumber, ...]:
+        return tuple(
             BaleNumber(bale_input.bale_number) for bale_input in bale_inputs
         )
 
+    @staticmethod
+    def _ensure_unique_bale_numbers(
+        bale_numbers: tuple[BaleNumber, ...],
+    ) -> None:
         if len(bale_numbers) != len(set(bale_numbers)):
-            raise DuplicateBaleNumberInReceptionError(
+            raise DuplicateBaleNumberError(
                 "Raw material reception cannot contain duplicate bale numbers."
             )
 
