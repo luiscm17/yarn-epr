@@ -6,6 +6,8 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "fastapi[standard]>=0.138.1",
+    "psycopg[binary]>=3.3.4",
+    "sqlalchemy>=2.0.51",
 ]
 
 [build-system]
@@ -14,4 +16,4 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["warehouse*", "operation*"]
+include = ["warehouse*", "infra*", "bootstrap*"]
