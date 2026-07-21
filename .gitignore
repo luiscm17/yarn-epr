@@ -32,3 +32,6 @@ Thumbs.db
 
 # Tooling
 .atl/
+
+# environment
+*.env

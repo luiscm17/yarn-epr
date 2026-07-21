@@ -5,11 +5,12 @@ Textile production-management monorepo. PRDs and architecture documents still co
 ## Python workspace
 
 - Python 3.13 is pinned by `.python-version`; use `uv` from the repository root. `backend/` is a workspace member, and `uv sync --locked` provisions the lockfile exactly.
-- Root dependencies are `openpyxl>=3.1.5` and `pandas>=3.0.3`; the `backend` member depends on `fastapi[standard]>=0.138.1`. Keep `uv.lock` synchronized with both manifests.
+- Root dependencies are `openpyxl>=3.1.5`, `pandas>=3.0.3`, and `sqlalchemy>=2.0.51`; the `backend` member depends on `fastapi[standard]>=0.138.1`. Keep `uv.lock` synchronized with both manifests.
 - Backend uses setuptools `src` layout. `backend/pyproject.toml` discovers only `warehouse*` and `operation*`; run through the root uv environment so the editable workspace install resolves `warehouse` imports.
 - Run all backend tests: `uv run --locked python -m unittest discover -s backend/tests -v`.
 - Run one test module: `uv run --locked python -m unittest backend.tests.test_warehouse.domain.test_raw_material_bale -v`.
 - Focus a class or method by appending its dotted name, for example `...test_raw_material_bale.TestRawMaterialBale` or `...TestRawMaterialBale.test_delivered_changes_status`.
+- Persistence tests use in-memory SQLite: `uv run --locked python -m unittest backend.tests.test_warehouse.adapters.persistence.test_raw_material_bale_repository -v`. PostgreSQL constraint diagnostics, timezone round-trips, and arbitrary `Decimal` round-trips are not integration-tested.
 - Tests use stdlib `unittest`; no pytest, Python linter, formatter, type checker, or coverage tool is configured.
 - `uv run --locked python main.py` and `uv run --locked --package backend python backend/main.py` remain print-only scaffolds. FastAPI is installed, but there is no ASGI app or route.
 
@@ -23,9 +24,11 @@ Textile production-management monorepo. PRDs and architecture documents still co
 
 ## Backend boundaries
 
-- Import the Warehouse domain public API from `warehouse.domain`. Its `__init__.py` re-exports the aggregate, status, exceptions, and value objects; subpackage facades (`models`, `enums`, `exceptions`, `value_objects`) are also public import boundaries.
-- `backend/src/warehouse/` currently contains only raw-material-bale domain code. `backend/src/operation/` is an empty legacy package; do not use its existence as evidence for a generic Operation bounded context.
-- There are no implemented API, application-service, persistence, migration, or database layers. Planning documents and DBML do not prove runtime behavior.
+- Import the Warehouse domain public API from `warehouse.domain` or its subpackage facades. `warehouse.domain.models` exports both `RawMaterialBale` and `RawMaterialReception`, but `warehouse.domain` and top-level `warehouse` currently export only `RawMaterialBale`.
+- `warehouse.application` is the public facade for reception inputs, result, use case, and application errors. `warehouse.ports` exposes repository, identity, transaction, and transaction-conflict contracts; keep SQLAlchemy details in adapters.
+- `warehouse.adapters.persistence` contains concrete SQLAlchemy records, mappers, repositories, and transaction handling, but its `__init__.py` exports nothing. The application performs canonical bale-number checks inside the transaction; the named database unique constraint closes the concurrent-write race and is translated to the application error.
+- Persistence is library code, not a deployed database layer: there is no session factory, database URL/configuration, migration setup, ASGI app, or route. Adapter tests create their own SQLite engine; planning documents and DBML do not prove runtime behavior.
+- `backend/src/operation/` is an empty legacy package; do not treat its presence as evidence for a generic Operation bounded context.
 
 ## Business truth
 
