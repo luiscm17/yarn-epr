@@ -13,7 +13,7 @@ from warehouse.domain.value_objects.raw_material_reception_id import RawMaterial
 class RawMaterialBaleMapper:
     @staticmethod
     def to_record(
-        bale:RawMaterialBale,
+        bale: RawMaterialBale,
     ) -> RawMaterialBaleRecord:
         return RawMaterialBaleRecord(
             id=bale.id.value,
@@ -32,17 +32,13 @@ class RawMaterialBaleMapper:
     ) -> RawMaterialBale:
         return RawMaterialBale(
             id=RawMaterialBaleId(record.id),
-            reception_id=RawMaterialReceptionId(
-                record.reception_id
-            ),
+            reception_id=RawMaterialReceptionId(record.reception_id),
             bale_number=BaleNumber(record.bale_number),
-            material=MaterialType(
-                record.material_type
-            ),
+            material=MaterialType(record.material_type),
             dtex=Dtex(record.dtex),
             weight=BaleWeight(
                 gross_kg=record.gross_weight_kg,
-                container_kg=record.container_weight_kg
+                container_kg=record.container_weight_kg,
             ),
             status=BaleStatus(record.status),
         )

@@ -7,16 +7,12 @@ from warehouse.ports.raw_material_reception_repository import (
 )
 
 
-class RawMaterialReceptionRepository(
-    RawMaterialReceptionRepositoryPort
-):
+class RawMaterialReceptionRepository(RawMaterialReceptionRepositoryPort):
     def __init__(self, session: Session) -> None:
         self._session = session
 
     def add(
-            self,
-            reception: RawMaterialReception,
+        self,
+        reception: RawMaterialReception,
     ) -> None:
-        self._session.add(
-            RawMaterialReceptionMapper.to_record(reception)
-        )
+        self._session.add(RawMaterialReceptionMapper.to_record(reception))
