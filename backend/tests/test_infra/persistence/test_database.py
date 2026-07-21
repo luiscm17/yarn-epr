@@ -11,12 +11,14 @@ from infra.persistence.database_settings import DatabaseSettings
 class TestDatabaseSettings(unittest.TestCase):
     def test_loads_database_url_from_environment(self) -> None:
         settings = DatabaseSettings.from_env(
-            {"DATABASE_URL": "  postgresql+psycopg://user:pass@host/database  "}
+            {
+                "DATABASE_URL": "  postgresql+psycopg://fixture_user:fixture_password@database.invalid/fixture_database  "
+            }
         )
 
         self.assertEqual(
             settings.database_url,
-            "postgresql+psycopg://user:pass@host/database",
+            "postgresql+psycopg://fixture_user:fixture_password@database.invalid/fixture_database",
         )
 
     def test_rejects_missing_database_url(self) -> None:
@@ -34,7 +36,9 @@ class TestDatabaseSettings(unittest.TestCase):
 
 class TestDatabaseEngine(unittest.TestCase):
     def test_creates_engine_with_supplied_database_url_without_connecting(self) -> None:
-        settings = DatabaseSettings("postgresql+psycopg://user:pass@host/database")
+        settings = DatabaseSettings(
+            "postgresql+psycopg://fixture_user:fixture_password@database.invalid/fixture_database"
+        )
         expected_engine = object()
 
         with patch(
@@ -44,7 +48,9 @@ class TestDatabaseEngine(unittest.TestCase):
             engine = create_db_engine(settings)
 
         self.assertIs(engine, expected_engine)
-        create_engine_mock.assert_called_once_with(settings.database_url)
+        create_engine_mock.assert_called_once_with(
+            "postgresql+psycopg://fixture_user:fixture_password@database.invalid/fixture_database"
+        )
 
 
 class TestDatabaseSessionFactory(unittest.TestCase):
