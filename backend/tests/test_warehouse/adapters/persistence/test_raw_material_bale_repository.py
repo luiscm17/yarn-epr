@@ -16,16 +16,14 @@ from warehouse.adapters.persistence.raw_material_bale_repository import (
 from warehouse.adapters.persistence.raw_material_reception_record import (
     RawMaterialReceptionRecord,
 )
-from warehouse.adapters.persistence.warehouse_record_registry import (
-    WarehouseRecordRegistry,
-)
+from infra.persistence.record_registry import RecordRegistry
 from warehouse.domain.value_objects import BaleNumber
 
 
 class TestRawMaterialBaleRepositoryFind(unittest.TestCase):
     def setUp(self) -> None:
         self.engine = create_engine("sqlite+pysqlite:///:memory:")
-        WarehouseRecordRegistry.metadata.create_all(self.engine)
+        RecordRegistry.metadata.create_all(self.engine)
         self.session = Session(self.engine)
         self.repository = RawMaterialBaleRepository(self.session)
         self.reception_id = UUID(int=1)

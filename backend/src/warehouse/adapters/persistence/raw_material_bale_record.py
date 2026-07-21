@@ -4,10 +4,10 @@ from uuid import UUID
 from sqlalchemy import ForeignKey, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
-from warehouse.adapters.persistence.warehouse_record_registry import WarehouseRecordRegistry
+from infra.persistence.record_registry import RecordRegistry
 
 
-class RawMaterialBaleRecord(WarehouseRecordRegistry):
+class RawMaterialBaleRecord(RecordRegistry):
     __tablename__ = "raw_material_bales"
     __table_args__ = (
         UniqueConstraint(

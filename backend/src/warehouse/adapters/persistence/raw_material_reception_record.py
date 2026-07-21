@@ -4,10 +4,10 @@ from uuid import UUID
 from sqlalchemy import DateTime, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from warehouse.adapters.persistence.warehouse_record_registry import WarehouseRecordRegistry
+from infra.persistence.record_registry import RecordRegistry
 
 
-class RawMaterialReceptionRecord(WarehouseRecordRegistry):
+class RawMaterialReceptionRecord(RecordRegistry):
     __tablename__ = "raw_material_receptions"
 
     id: Mapped[UUID] = mapped_column(
