@@ -5,6 +5,6 @@ from infra.persistence.database_settings import DatabaseSettings
 
 
 def create_db_engine(
-        settings: DatabaseSettings
+    settings: DatabaseSettings,
 ) -> Engine:
     return create_engine(settings.database_url)
