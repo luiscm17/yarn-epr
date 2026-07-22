@@ -41,18 +41,15 @@ class WarehouseTransaction(WarehouseTransactionPort):
     ) -> None:
         if exception is not None and not self._rolled_back:
             self._rollback()
+        if isinstance(exception, IntegrityError):
+            self._raise_conflict(exception)
 
     def commit(self) -> None:
         try:
             self._session.commit()
         except IntegrityError as error:
             self._rollback()
-            constraint = violated_constraint(error)
-            if constraint == BALE_NUMBER_UNIQUE_CONSTRAINT:
-                raise DuplicateBaleNumberConflict from error
-            if constraint == SHIPMENT_NUMBER_UNIQUE_CONSTRAINT:
-                raise DuplicateShipmentNumberConflict from error
-            raise
+            self._raise_conflict(error)
         except Exception:
             self._rollback()
             raise
@@ -60,3 +57,12 @@ class WarehouseTransaction(WarehouseTransactionPort):
     def _rollback(self) -> None:
         self._session.rollback()
         self._rolled_back = True
+
+    @staticmethod
+    def _raise_conflict(error: IntegrityError) -> None:
+        constraint = violated_constraint(error)
+        if constraint == BALE_NUMBER_UNIQUE_CONSTRAINT:
+            raise DuplicateBaleNumberConflict from error
+        if constraint == SHIPMENT_NUMBER_UNIQUE_CONSTRAINT:
+            raise DuplicateShipmentNumberConflict from error
+        raise error

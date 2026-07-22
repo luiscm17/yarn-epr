@@ -16,3 +16,4 @@ class RawMaterialReceptionRepository(RawMaterialReceptionRepositoryPort):
         reception: RawMaterialReception,
     ) -> None:
         self._session.add(RawMaterialReceptionMapper.to_record(reception))
+        self._session.flush()
