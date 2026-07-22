@@ -92,7 +92,7 @@ agrupaciones funcionales para cerrar el significado del dato antes del diseño.
 ## 5.1 Materia Prima — Recepción física de fardos
 
 - **Qué representa:** ingreso físico de materia prima desde proveedor.
-- **Granularidad:** 1 recepción × N fardos o ítems recibidos.
+- **Granularidad:** 1 partida o recepción × uno o más fardos recibidos.
 
 ### Regla de frontera
 
@@ -102,9 +102,10 @@ agrupaciones funcionales para cerrar el significado del dato antes del diseño.
 
 ### Datos de cabecera
 
-- número de ingreso o recepción
+- `shipment_number`: número de partida que identifica la recepción o entrega de
+  materia prima; es obligatorio y globalmente único
 - proveedor
-- documento de respaldo del proveedor
+- documento de respaldo del proveedor, como dato comercial opcional y separado
 - origen o procedencia
 - número de camión cuando aplique
 - fecha de negocio de recepción
@@ -113,12 +114,17 @@ agrupaciones funcionales para cerrar el significado del dato antes del diseño.
 
 ### Datos por ítem o fardo
 
+- `bale_number`: obligatorio y único dentro de la partida o recepción; puede
+  repetirse en partidas diferentes
 - tipo de materia prima
 - título o referencia técnica conocida al momento de recibir
 - color, fibra o variante si aplica
 - cantidad o peso recibido
 - unidad principal de control: kg
 - estado u observación del fardo si existe diferencia física
+
+La identidad empresarial del fardo recibido queda determinada por la combinación
+`shipment_number` + `bale_number`.
 
 ### Datos técnicos automáticos
 
@@ -519,11 +525,8 @@ significado funcional del dato antes del diseño técnico.
 
 ## 8. Ambigüedades todavía abiertas
 
-1. Debe cerrarse con más precisión la granularidad exacta entre recepción por
-   documento, por camión y por fardo cuando una misma llegada mezcla múltiples
-   referencias.
-2. Debe definirse con más detalle el catálogo inicial de estados de
+1. Debe definirse con más detalle el catálogo inicial de estados de
    disponibilidad o clasificación operativa de PT.
-4. Debe decidirse si las devoluciones de PT reingresan siempre a la misma
+2. Debe decidirse si las devoluciones de PT reingresan siempre a la misma
    clasificación operativa previa o pasan primero por una nueva revisión de
    disponibilidad.
