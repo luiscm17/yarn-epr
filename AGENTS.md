@@ -5,14 +5,21 @@ Textile production-management monorepo. PRDs and architecture documents still co
 ## Python workspace
 
 - Python 3.13 is pinned by `.python-version`; use `uv` from the repository root. `backend/` is a workspace member, and `uv sync --locked` provisions the lockfile exactly.
-- Root dependencies are `openpyxl>=3.1.5`, `pandas>=3.0.3`, and `sqlalchemy>=2.0.51`; the `backend` member depends on `fastapi[standard]>=0.138.1`. Keep `uv.lock` synchronized with both manifests.
-- Backend uses setuptools `src` layout. `backend/pyproject.toml` discovers only `warehouse*` and `operation*`; run through the root uv environment so the editable workspace install resolves `warehouse` imports.
-- Run all backend tests: `uv run --locked python -m unittest discover -s backend/tests -v`.
+- Root owns `openpyxl`, `pandas`, and `sqlalchemy`; the `backend` member owns FastAPI, Psycopg, and SQLAlchemy. Keep `uv.lock` synchronized with both manifests rather than adding backend-only dependencies at the root.
+- Backend uses setuptools `src` layout and discovers only `warehouse*`, `infra*`, and `bootstrap*`; run through the root uv environment so editable workspace imports resolve.
+- Run all backend unit tests: `uv run --locked python -m unittest discover -s backend/tests -v` (currently 106 tests).
 - Run one test module: `uv run --locked python -m unittest backend.tests.test_warehouse.domain.test_raw_material_bale -v`.
 - Focus a class or method by appending its dotted name, for example `...test_raw_material_bale.TestRawMaterialBale` or `...TestRawMaterialBale.test_delivered_changes_status`.
-- Persistence tests use in-memory SQLite: `uv run --locked python -m unittest backend.tests.test_warehouse.adapters.persistence.test_raw_material_bale_repository -v`. PostgreSQL constraint diagnostics, timezone round-trips, and arbitrary `Decimal` round-trips are not integration-tested.
+- SQLite adapter tests belong to the unit suite; do not treat them as proof of PostgreSQL constraint diagnostics, migration shape, timezone, or `Decimal` round-trips.
 - Tests use stdlib `unittest`; no pytest, Python linter, formatter, type checker, or coverage tool is configured.
 - `uv run --locked python main.py` and `uv run --locked --package backend python backend/main.py` remain print-only scaffolds. FastAPI is installed, but there is no ASGI app or route.
+
+## Database and integration tests
+
+- Schema changes are imperative Supabase migrations under `supabase/migrations/`; there is no Alembic setup. Create migration filenames with the Supabase CLI rather than inventing timestamps.
+- Local database provisioning requires the Supabase CLI plus a Docker-compatible runtime. From the repository root run `supabase start`, then `supabase db reset --local --no-seed`; `--no-seed` is required because `supabase/config.toml` names `supabase/seed.sql`, which does not exist.
+- PostgreSQL integration tests deliberately accept only `postgresql+psycopg` URLs on loopback port `54322`, database `postgres`. Run them after migration with `TEST_DATABASE_URL=postgresql+psycopg://postgres:postgres@127.0.0.1:54322/postgres uv run --locked python -m unittest discover -s backend/integration_tests -v`.
+- Use `supabase migration list --local` to inspect local migration state. The Supabase CLI is not declared or vendored by this repository; do not assume it is installed.
 
 ## Frontend workspace
 
@@ -24,11 +31,11 @@ Textile production-management monorepo. PRDs and architecture documents still co
 
 ## Backend boundaries
 
-- Import the Warehouse domain public API from `warehouse.domain` or its subpackage facades. `warehouse.domain.models` exports both `RawMaterialBale` and `RawMaterialReception`, but `warehouse.domain` and top-level `warehouse` currently export only `RawMaterialBale`.
 - `warehouse.application` is the public facade for reception inputs, result, use case, and application errors. `warehouse.ports` exposes repository, identity, transaction, and transaction-conflict contracts; keep SQLAlchemy details in adapters.
-- `warehouse.adapters.persistence` contains concrete SQLAlchemy records, mappers, repositories, and transaction handling, but its `__init__.py` exports nothing. The application performs canonical bale-number checks inside the transaction; the named database unique constraint closes the concurrent-write race and is translated to the application error.
-- Persistence is library code, not a deployed database layer: there is no session factory, database URL/configuration, migration setup, ASGI app, or route. Adapter tests create their own SQLite engine; planning documents and DBML do not prove runtime behavior.
-- `backend/src/operation/` is an empty legacy package; do not treat its presence as evidence for a generic Operation bounded context.
+- `infra.persistence` owns `DATABASE_URL` settings, engine/session factories, and the shared SQLAlchemy registry; it is library wiring, not an application bootstrap. Package `__init__.py` files export nothing, and no deployed API currently assembles these components.
+- Reception registration canonicalizes and rejects duplicate bale numbers before persistence, then inserts the reception before bales in one transaction. Commit/flush integrity failures are rolled back and only the two named constraints are translated to application conflicts; unknown integrity failures propagate.
+- Shipment numbers are globally unique. Bale numbers are unique only within a reception, via `uq_raw_material_bales_reception_bale_number`; the same canonical bale number is valid in different receptions.
+- Keep ORM records and the tracked migration aligned. The migration also enables RLS and revokes direct access from `anon`, `authenticated`, and `service_role`; it defines no policies, API endpoint, or runtime authorization flow.
 
 ## Business truth
 
@@ -43,4 +50,4 @@ Textile production-management monorepo. PRDs and architecture documents still co
 - Follow `docs/dev-guide/naming-conventions.md`: Python packages/files are `snake_case`, React component files are `PascalCase.tsx`, DB tables are plural `snake_case`, and DB columns are singular `snake_case`.
 - Follow `docs/dev-guide/git-workflow.md`: branches use `<layer>/<short-topic>` with `front/`, `back/`, `devops/`, or `docs/`; commits are Conventional Commits; rebase on `main`; squash-merge one concern per PR.
 - Treat `openspec/changes/<change-name>/` as planning artifacts, not proof of implementation or authorization.
-- No versioned CI, pre-commit config, task runner, code generator, root/repo-local OpenCode config, or GitHub templates exist. `frontend/.agents/` contains vendored frontend skills, not project task commands.
+- No versioned CI, pre-commit config, task runner, Python quality configuration, code generator, repo-local OpenCode config, or GitHub templates exist. Root `.agents/` and `frontend/.agents/` contain agent skills, not project task commands.
