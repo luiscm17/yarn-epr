@@ -1,5 +1,6 @@
 from warehouse.application.raw_material_reception_errors import (
     DuplicateBaleNumberError,
+    DuplicateShipmentNumberError,
     RawMaterialReceptionApplicationError,
 )
 from warehouse.application.raw_material_reception_input import (
@@ -16,6 +17,7 @@ from warehouse.application.register_raw_material_reception import (
 
 __all__ = [
     "DuplicateBaleNumberError",
+    "DuplicateShipmentNumberError",
     "RawMaterialBaleReceptionInput",
     "RawMaterialReceptionApplicationError",
     "RawMaterialReceptionInput",

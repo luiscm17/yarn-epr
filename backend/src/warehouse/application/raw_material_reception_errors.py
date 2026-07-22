@@ -3,4 +3,8 @@ class RawMaterialReceptionApplicationError(Exception):
 
 
 class DuplicateBaleNumberError(RawMaterialReceptionApplicationError):
-    """A canonical bale number is already present or repeated."""
+    """A reception contains duplicate canonical bale numbers."""
+
+
+class DuplicateShipmentNumberError(RawMaterialReceptionApplicationError):
+    """A raw-material reception already uses the shipment number."""

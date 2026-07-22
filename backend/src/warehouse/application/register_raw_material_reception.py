@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from warehouse.application.raw_material_reception_errors import (
     DuplicateBaleNumberError,
+    DuplicateShipmentNumberError,
 )
 from warehouse.application.raw_material_reception_input import (
     RawMaterialBaleReceptionInput,
@@ -38,6 +39,7 @@ from warehouse.ports.raw_material_reception_repository import (
 from warehouse.ports.warehouse_transaction import WarehouseTransaction
 from warehouse.ports.warehouse_transaction_errors import (
     DuplicateBaleNumberConflict,
+    DuplicateShipmentNumberConflict,
 )
 
 
@@ -78,17 +80,16 @@ class RegisterRawMaterialReception:
 
         try:
             with self._warehouse_transaction:
-                if self._bale_repository.find(bale_numbers):
-                    raise DuplicateBaleNumberError(
-                        "One or more bale numbers are already registered."
-                    )
-
                 self._reception_repository.add(reception)
                 self._bale_repository.add_all(bales)
                 self._warehouse_transaction.commit()
         except DuplicateBaleNumberConflict as error:
             raise DuplicateBaleNumberError(
-                "One or more bale numbers are already registered."
+                "Raw material reception cannot contain duplicate bale numbers."
+            ) from error
+        except DuplicateShipmentNumberConflict as error:
+            raise DuplicateShipmentNumberError(
+                "Shipment number is already registered."
             ) from error
 
         return RawMaterialReceptionResult(

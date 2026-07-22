@@ -1,2 +1,6 @@
 class DuplicateBaleNumberConflict(Exception):
-    """A concurrent transaction persisted the same canonical bale number."""
+    """A reception contains duplicate canonical bale numbers."""
+
+
+class DuplicateShipmentNumberConflict(Exception):
+    """A transaction persisted an existing shipment number."""

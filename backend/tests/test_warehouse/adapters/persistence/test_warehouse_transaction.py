@@ -5,11 +5,13 @@ from sqlalchemy.exc import IntegrityError
 
 from warehouse.adapters.persistence.warehouse_transaction import (
     BALE_NUMBER_UNIQUE_CONSTRAINT,
+    SHIPMENT_NUMBER_UNIQUE_CONSTRAINT,
     WarehouseTransaction,
-    is_bale_number_unique_violation,
+    violated_constraint,
 )
 from warehouse.ports.warehouse_transaction_errors import (
     DuplicateBaleNumberConflict,
+    DuplicateShipmentNumberConflict,
 )
 
 
@@ -26,38 +28,35 @@ def make_integrity_error(constraint_name: str | None) -> IntegrityError:
     )
 
 
-class TestBaleNumberUniqueViolationClassification(unittest.TestCase):
-    def test_matches_named_bale_number_constraint(self) -> None:
+class TestViolatedConstraint(unittest.TestCase):
+    def test_extracts_postgresql_constraint_name(self) -> None:
         error = make_integrity_error(BALE_NUMBER_UNIQUE_CONSTRAINT)
 
-        self.assertTrue(is_bale_number_unique_violation(error))
+        self.assertEqual(
+            violated_constraint(error),
+            BALE_NUMBER_UNIQUE_CONSTRAINT,
+        )
 
-    def test_does_not_match_unrelated_constraint(self) -> None:
-        error = make_integrity_error("fk_raw_material_bales_reception_id")
-
-        self.assertFalse(is_bale_number_unique_violation(error))
-
-    def test_does_not_guess_without_postgresql_diagnostics(self) -> None:
+    def test_returns_none_without_postgresql_diagnostics(self) -> None:
         error = IntegrityError("statement", {}, Exception("unique failed"))
 
-        self.assertFalse(is_bale_number_unique_violation(error))
+        self.assertIsNone(violated_constraint(error))
 
 
 class TestWarehouseTransaction(unittest.TestCase):
-    def test_translates_named_unique_constraint_and_rolls_back_once(self) -> None:
-        session = Mock()
-        session.commit.side_effect = make_integrity_error(
-            BALE_NUMBER_UNIQUE_CONSTRAINT
+    def test_translates_bale_constraint_and_rolls_back_once(self) -> None:
+        self._assert_translated(
+            BALE_NUMBER_UNIQUE_CONSTRAINT,
+            DuplicateBaleNumberConflict,
         )
-        transaction = WarehouseTransaction(session)
 
-        with self.assertRaises(DuplicateBaleNumberConflict):
-            with transaction:
-                transaction.commit()
+    def test_translates_shipment_constraint_and_rolls_back_once(self) -> None:
+        self._assert_translated(
+            SHIPMENT_NUMBER_UNIQUE_CONSTRAINT,
+            DuplicateShipmentNumberConflict,
+        )
 
-        session.rollback.assert_called_once_with()
-
-    def test_preserves_unrelated_integrity_error_and_rolls_back(self) -> None:
+    def test_preserves_unknown_integrity_error_and_rolls_back_once(self) -> None:
         error = make_integrity_error("unrelated_constraint")
         session = Mock()
         session.commit.side_effect = error
@@ -68,6 +67,21 @@ class TestWarehouseTransaction(unittest.TestCase):
                 transaction.commit()
 
         self.assertIs(raised.exception, error)
+        session.rollback.assert_called_once_with()
+
+    def _assert_translated(
+        self,
+        constraint_name: str,
+        conflict: type[Exception],
+    ) -> None:
+        session = Mock()
+        session.commit.side_effect = make_integrity_error(constraint_name)
+        transaction = WarehouseTransaction(session)
+
+        with self.assertRaises(conflict):
+            with transaction:
+                transaction.commit()
+
         session.rollback.assert_called_once_with()
 
 

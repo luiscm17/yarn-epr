@@ -9,18 +9,19 @@ from warehouse.ports.warehouse_transaction import (
 )
 from warehouse.ports.warehouse_transaction_errors import (
     DuplicateBaleNumberConflict,
+    DuplicateShipmentNumberConflict,
 )
 
 
-BALE_NUMBER_UNIQUE_CONSTRAINT = "uq_raw_material_bales_bale_number"
+BALE_NUMBER_UNIQUE_CONSTRAINT = "uq_raw_material_bales_reception_bale_number"
+SHIPMENT_NUMBER_UNIQUE_CONSTRAINT = (
+    "uq_raw_material_receptions_shipment_number"
+)
 
 
-def is_bale_number_unique_violation(error: IntegrityError) -> bool:
+def violated_constraint(error: IntegrityError) -> str | None:
     diagnostic = getattr(error.orig, "diag", None)
-    return (
-        getattr(diagnostic, "constraint_name", None)
-        == BALE_NUMBER_UNIQUE_CONSTRAINT
-    )
+    return getattr(diagnostic, "constraint_name", None)
 
 
 class WarehouseTransaction(WarehouseTransactionPort):
@@ -46,8 +47,11 @@ class WarehouseTransaction(WarehouseTransactionPort):
             self._session.commit()
         except IntegrityError as error:
             self._rollback()
-            if is_bale_number_unique_violation(error):
+            constraint = violated_constraint(error)
+            if constraint == BALE_NUMBER_UNIQUE_CONSTRAINT:
                 raise DuplicateBaleNumberConflict from error
+            if constraint == SHIPMENT_NUMBER_UNIQUE_CONSTRAINT:
+                raise DuplicateShipmentNumberConflict from error
             raise
         except Exception:
             self._rollback()

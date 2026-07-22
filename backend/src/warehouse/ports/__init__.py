@@ -8,6 +8,7 @@ from warehouse.ports.raw_material_reception_repository import (
 from warehouse.ports.warehouse_transaction import WarehouseTransaction
 from warehouse.ports.warehouse_transaction_errors import (
     DuplicateBaleNumberConflict,
+    DuplicateShipmentNumberConflict,
 )
 
 
@@ -16,5 +17,6 @@ __all__ = [
     "RawMaterialBaleRepository",
     "RawMaterialReceptionRepository",
     "DuplicateBaleNumberConflict",
+    "DuplicateShipmentNumberConflict",
     "WarehouseTransaction",
 ]

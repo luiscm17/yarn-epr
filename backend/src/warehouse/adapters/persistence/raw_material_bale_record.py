@@ -11,8 +11,9 @@ class RawMaterialBaleRecord(RecordRegistry):
     __tablename__ = "raw_material_bales"
     __table_args__ = (
         UniqueConstraint(
+            "reception_id",
             "bale_number",
-            name="uq_raw_material_bales_bale_number",
+            name="uq_raw_material_bales_reception_bale_number",
         ),
     )
 

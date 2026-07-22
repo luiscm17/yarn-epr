@@ -14,11 +14,49 @@ class TestPersistenceSchema(unittest.TestCase):
     def test_domain_bounded_strings_match_domain_limits(self) -> None:
         bale_number = RawMaterialBaleRecord.__table__.c.bale_number.type
         material_type = RawMaterialBaleRecord.__table__.c.material_type.type
+        shipment_number = (
+            RawMaterialReceptionRecord.__table__.c.shipment_number.type
+        )
 
         self.assertIsInstance(bale_number, String)
         self.assertEqual(bale_number.length, 10)
         self.assertIsInstance(material_type, String)
         self.assertEqual(material_type.length, 20)
+        self.assertIsInstance(shipment_number, String)
+        self.assertEqual(shipment_number.length, 10)
+
+    def test_shipment_number_has_named_global_unique_constraint(self) -> None:
+        constraint = next(
+            constraint
+            for constraint in RawMaterialReceptionRecord.__table__.constraints
+            if constraint.name
+            == "uq_raw_material_receptions_shipment_number"
+        )
+
+        self.assertEqual(
+            tuple(column.name for column in constraint.columns),
+            ("shipment_number",),
+        )
+
+    def test_bale_number_is_unique_within_reception(self) -> None:
+        constraint = next(
+            constraint
+            for constraint in RawMaterialBaleRecord.__table__.constraints
+            if constraint.name
+            == "uq_raw_material_bales_reception_bale_number"
+        )
+
+        self.assertEqual(
+            tuple(column.name for column in constraint.columns),
+            ("reception_id", "bale_number"),
+        )
+
+    def test_reception_id_remains_indexed_without_defaults(self) -> None:
+        reception_id = RawMaterialBaleRecord.__table__.c.reception_id
+
+        self.assertTrue(reception_id.index)
+        self.assertIsNone(reception_id.default)
+        self.assertIsNone(reception_id.server_default)
 
     def test_provider_name_is_unbounded(self) -> None:
         provider_name = RawMaterialReceptionRecord.__table__.c.provider_name.type

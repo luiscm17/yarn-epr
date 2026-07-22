@@ -1,5 +1,5 @@
 import unittest
-from collections.abc import Collection, Sequence
+from collections.abc import Sequence
 from datetime import datetime, timezone
 from decimal import Decimal
 from types import TracebackType
@@ -8,6 +8,7 @@ from uuid import UUID
 
 from warehouse.application.raw_material_reception_errors import (
     DuplicateBaleNumberError,
+    DuplicateShipmentNumberError,
     RawMaterialReceptionApplicationError,
 )
 from warehouse.application.raw_material_reception_input import (
@@ -28,9 +29,9 @@ from warehouse.domain.models.raw_material_bale import RawMaterialBale
 from warehouse.domain.models.raw_material_reception import (
     RawMaterialReception,
 )
-from warehouse.domain.value_objects import BaleNumber
 from warehouse.ports.warehouse_transaction_errors import (
     DuplicateBaleNumberConflict,
+    DuplicateShipmentNumberConflict,
 )
 
 
@@ -43,21 +44,8 @@ class FakeRawMaterialReceptionRepository:
 
 
 class FakeRawMaterialBaleRepository:
-    def __init__(
-        self,
-        existing: Collection[BaleNumber] = (),
-    ) -> None:
+    def __init__(self) -> None:
         self.added_bales: tuple[RawMaterialBale, ...] = ()
-        self.existing = frozenset(existing)
-        self.find_calls: list[tuple[BaleNumber, ...]] = []
-
-    def find(
-        self,
-        bale_numbers: Collection[BaleNumber],
-    ) -> frozenset[BaleNumber]:
-        requested = tuple(bale_numbers)
-        self.find_calls.append(requested)
-        return frozenset(requested) & self.existing
 
     def add_all(self, bales: Sequence[RawMaterialBale]) -> None:
         self.added_bales = tuple(bales)
@@ -73,12 +61,6 @@ class FakeFailingReceptionRepository:
 
 class FakeFailingBaleRepository:
     """Simulates a repository that raises on add_all()."""
-
-    def find(
-        self,
-        bale_numbers: Collection[BaleNumber],
-    ) -> frozenset[BaleNumber]:
-        return frozenset()
 
     def add_all(self, bales: Sequence[RawMaterialBale]) -> None:
         msg = "Database connection failed"
@@ -117,8 +99,12 @@ class FakeWarehouseTransaction:
 
 
 class FakeConflictingWarehouseTransaction(FakeWarehouseTransaction):
+    def __init__(self, conflict: type[Exception]) -> None:
+        super().__init__()
+        self.conflict = conflict
+
     def commit(self) -> None:
-        raise DuplicateBaleNumberConflict
+        raise self.conflict
 
 
 class TestRegisterRawMaterialReception(unittest.TestCase):
@@ -220,44 +206,10 @@ class TestRegisterRawMaterialReception(unittest.TestCase):
         self.assertEqual(len(self.bale_repo.added_bales), 0)
         self.assertFalse(self.transaction.committed)
 
-    def test_rejects_existing_bale_number_before_writes(self) -> None:
-        self.bale_repo.existing = frozenset({BaleNumber("BAL-001")})
-
-        with self.assertRaises(DuplicateBaleNumberError):
-            self.use_case.execute(self._make_input())
-
-        self.assertTrue(self.transaction.entered)
-        self.assertIsNone(self.reception_repo.added)
-        self.assertEqual(self.bale_repo.added_bales, ())
-        self.assertFalse(self.transaction.committed)
-
-    def test_partial_existing_conflict_rejects_whole_reception(self) -> None:
-        self.bale_repo.existing = frozenset({BaleNumber("BAL-002")})
-
-        with self.assertRaises(DuplicateBaleNumberError):
-            self.use_case.execute(self._make_input())
-
-        self.assertIsNone(self.reception_repo.added)
-        self.assertEqual(self.bale_repo.added_bales, ())
-
-    def test_find_receives_canonical_numbers(self) -> None:
-        self.use_case.execute(
-            self._make_input(
-                bales=(("  bal-001  ", "ALGODÓN", "2.2", "120", "20"),)
-            )
+    def test_maps_duplicate_bale_number_conflict(self) -> None:
+        transaction = FakeConflictingWarehouseTransaction(
+            DuplicateBaleNumberConflict
         )
-
-        self.assertEqual(
-            self.bale_repo.find_calls,
-            [(BaleNumber("BAL-001"),)],
-        )
-        self.assertEqual(
-            self.bale_repo.added_bales[0].bale_number,
-            self.bale_repo.find_calls[0][0],
-        )
-
-    def test_maps_concurrent_duplicate_conflict(self) -> None:
-        transaction = FakeConflictingWarehouseTransaction()
         use_case = RegisterRawMaterialReception(
             reception_repository=self.reception_repo,
             bale_repository=self.bale_repo,
@@ -269,6 +221,25 @@ class TestRegisterRawMaterialReception(unittest.TestCase):
             use_case.execute(self._make_input())
 
         self.assertIsInstance(transaction.exited_with, DuplicateBaleNumberConflict)
+
+    def test_maps_duplicate_shipment_number_conflict(self) -> None:
+        transaction = FakeConflictingWarehouseTransaction(
+            DuplicateShipmentNumberConflict
+        )
+        use_case = RegisterRawMaterialReception(
+            reception_repository=self.reception_repo,
+            bale_repository=self.bale_repo,
+            warehouse_transaction=transaction,
+            identity_generator=self.identity_generator,
+        )
+
+        with self.assertRaises(DuplicateShipmentNumberError):
+            use_case.execute(self._make_input())
+
+        self.assertIsInstance(
+            transaction.exited_with,
+            DuplicateShipmentNumberConflict,
+        )
 
     def test_persists_reception_and_bales(self) -> None:
         """After a successful execution, reception and bales are stored."""
@@ -359,14 +330,11 @@ class TestRegisterRawMaterialReception(unittest.TestCase):
         self.assertTrue(self.transaction.entered)
         self.assertFalse(self.transaction.committed)
 
-    def test_application_error_is_base(self) -> None:
-        """DuplicateBaleNumberError inherits from the application base."""
-        self.assertTrue(
-            issubclass(
-                DuplicateBaleNumberError,
-                RawMaterialReceptionApplicationError,
+    def test_application_errors_inherit_from_base(self) -> None:
+        for error in (DuplicateBaleNumberError, DuplicateShipmentNumberError):
+            self.assertTrue(
+                issubclass(error, RawMaterialReceptionApplicationError)
             )
-        )
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import DateTime, String, Text
+from sqlalchemy import DateTime, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from infra.persistence.record_registry import RecordRegistry
@@ -9,6 +9,12 @@ from infra.persistence.record_registry import RecordRegistry
 
 class RawMaterialReceptionRecord(RecordRegistry):
     __tablename__ = "raw_material_receptions"
+    __table_args__ = (
+        UniqueConstraint(
+            "shipment_number",
+            name="uq_raw_material_receptions_shipment_number",
+        ),
+    )
 
     id: Mapped[UUID] = mapped_column(
         primary_key=True
