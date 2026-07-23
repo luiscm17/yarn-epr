@@ -10,6 +10,7 @@ from warehouse.adapters.http.raw_material.bale_reception_response import (
     BaleReceptionResponse,
     RegisteredBaleResponse,
 )
+from warehouse.adapters.http.raw_material.bale_router import create_router
 from warehouse.adapters.http.raw_material.error_response import (
     ErrorDetailResponse,
     ErrorResponse,
@@ -26,4 +27,5 @@ __all__ = [
     "RegisteredBaleResponse",
     "bale_reception_to_input",
     "bale_reception_to_response",
+    "create_router",
 ]
