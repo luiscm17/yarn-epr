@@ -2,16 +2,14 @@ import unittest
 from decimal import Decimal
 from uuid import UUID
 
-from warehouse.domain.value_objects import (
+from warehouse.domain.raw_material import (
+    BaleId,
     BaleNumber,
+    BaleReceptionId,
     BaleWeight,
     Dtex,
     MaterialType,
-    RawMaterialBaleId,
-    RawMaterialReceptionId,
     ShipmentNumber,
-)
-from warehouse.domain.exceptions import (
     InvalidBaleNumberError,
     InvalidBaleWeightError,
     InvalidDtexError,
@@ -87,26 +85,26 @@ class TestMaterialType(unittest.TestCase):
             mt.value = "OTRO"  # type: ignore[misc]
 
 
-class TestRawMaterialBaleId(unittest.TestCase):
+class TestBaleId(unittest.TestCase):
     def test_accepts_uuid(self) -> None:
         uid = UUID("12345678-1234-5678-1234-567812345678")
-        bale_id = RawMaterialBaleId(uid)
+        bale_id = BaleId(uid)
         self.assertEqual(bale_id.value, uid)
 
     def test_is_frozen(self) -> None:
-        bale_id = RawMaterialBaleId(UUID(int=1))
+        bale_id = BaleId(UUID(int=1))
         with self.assertRaises(AttributeError):
             bale_id.value = UUID(int=2)  # type: ignore[misc]
 
 
-class TestRawMaterialReceptionId(unittest.TestCase):
+class TestBaleReceptionId(unittest.TestCase):
     def test_accepts_uuid(self) -> None:
         uid = UUID("87654321-4321-8765-4321-876543210987")
-        reception_id = RawMaterialReceptionId(uid)
+        reception_id = BaleReceptionId(uid)
         self.assertEqual(reception_id.value, uid)
 
     def test_is_frozen(self) -> None:
-        reception_id = RawMaterialReceptionId(UUID(int=1))
+        reception_id = BaleReceptionId(UUID(int=1))
         with self.assertRaises(AttributeError):
             reception_id.value = UUID(int=2)  # type: ignore[misc]
 

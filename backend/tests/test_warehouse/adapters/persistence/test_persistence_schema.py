@@ -2,20 +2,20 @@ import unittest
 
 from sqlalchemy import DateTime, Numeric, String, Text
 
-from warehouse.adapters.persistence.raw_material_bale_record import (
-    RawMaterialBaleRecord,
+from warehouse.adapters.persistence.raw_material.bale_record import (
+    BaleRecord,
 )
-from warehouse.adapters.persistence.raw_material_reception_record import (
-    RawMaterialReceptionRecord,
+from warehouse.adapters.persistence.raw_material.bale_reception_record import (
+    BaleReceptionRecord,
 )
 
 
 class TestPersistenceSchema(unittest.TestCase):
     def test_domain_bounded_strings_match_domain_limits(self) -> None:
-        bale_number = RawMaterialBaleRecord.__table__.c.bale_number.type
-        material_type = RawMaterialBaleRecord.__table__.c.material_type.type
+        bale_number = BaleRecord.__table__.c.bale_number.type
+        material_type = BaleRecord.__table__.c.material_type.type
         shipment_number = (
-            RawMaterialReceptionRecord.__table__.c.shipment_number.type
+            BaleReceptionRecord.__table__.c.shipment_number.type
         )
 
         self.assertIsInstance(bale_number, String)
@@ -28,7 +28,7 @@ class TestPersistenceSchema(unittest.TestCase):
     def test_shipment_number_has_named_global_unique_constraint(self) -> None:
         constraint = next(
             constraint
-            for constraint in RawMaterialReceptionRecord.__table__.constraints
+            for constraint in BaleReceptionRecord.__table__.constraints
             if constraint.name
             == "uq_raw_material_receptions_shipment_number"
         )
@@ -41,7 +41,7 @@ class TestPersistenceSchema(unittest.TestCase):
     def test_bale_number_is_unique_within_reception(self) -> None:
         constraint = next(
             constraint
-            for constraint in RawMaterialBaleRecord.__table__.constraints
+            for constraint in BaleRecord.__table__.constraints
             if constraint.name
             == "uq_raw_material_bales_reception_bale_number"
         )
@@ -52,14 +52,14 @@ class TestPersistenceSchema(unittest.TestCase):
         )
 
     def test_reception_id_remains_indexed_without_defaults(self) -> None:
-        reception_id = RawMaterialBaleRecord.__table__.c.reception_id
+        reception_id = BaleRecord.__table__.c.reception_id
 
         self.assertTrue(reception_id.index)
         self.assertIsNone(reception_id.default)
         self.assertIsNone(reception_id.server_default)
 
     def test_provider_name_is_unbounded(self) -> None:
-        provider_name = RawMaterialReceptionRecord.__table__.c.provider_name.type
+        provider_name = BaleReceptionRecord.__table__.c.provider_name.type
 
         self.assertIsInstance(provider_name, Text)
 
@@ -69,13 +69,13 @@ class TestPersistenceSchema(unittest.TestCase):
             "gross_weight_kg",
             "container_weight_kg",
         ):
-            numeric = RawMaterialBaleRecord.__table__.c[column_name].type
+            numeric = BaleRecord.__table__.c[column_name].type
             self.assertIsInstance(numeric, Numeric)
             self.assertIsNone(numeric.precision)
             self.assertIsNone(numeric.scale)
 
     def test_reception_datetime_remains_timezone_aware(self) -> None:
-        received_at = RawMaterialReceptionRecord.__table__.c.received_at.type
+        received_at = BaleReceptionRecord.__table__.c.received_at.type
 
         self.assertIsInstance(received_at, DateTime)
         self.assertTrue(received_at.timezone)

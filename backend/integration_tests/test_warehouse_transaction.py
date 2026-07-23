@@ -11,11 +11,11 @@ from backend.integration_tests.database_test_support import (
     clean_warehouse_tables,
     create_test_engine,
 )
-from warehouse.adapters.persistence.raw_material_bale_record import (
-    RawMaterialBaleRecord,
+from warehouse.adapters.persistence.raw_material.bale_record import (
+    BaleRecord,
 )
-from warehouse.adapters.persistence.raw_material_reception_record import (
-    RawMaterialReceptionRecord,
+from warehouse.adapters.persistence.raw_material.bale_reception_record import (
+    BaleReceptionRecord,
 )
 from warehouse.adapters.persistence.warehouse_transaction import (
     WarehouseTransaction,
@@ -49,18 +49,18 @@ class TestWarehouseTransactionIntegration(unittest.TestCase):
                     session.add(self._reception(reception_id, "SHIP-900"))
                     session.flush()
                     self.assertIsNotNone(
-                        session.get(RawMaterialReceptionRecord, reception_id)
+                        session.get(BaleReceptionRecord, reception_id)
                     )
                     raise RuntimeError("deterministic failure")
 
         with Session(self.engine) as read_session:
             self.assertIsNone(
-                read_session.get(RawMaterialReceptionRecord, reception_id)
+                read_session.get(BaleReceptionRecord, reception_id)
             )
             self.assertEqual(
                 read_session.scalars(
-                    select(RawMaterialBaleRecord).where(
-                        RawMaterialBaleRecord.reception_id == reception_id
+                    select(BaleRecord).where(
+                        BaleRecord.reception_id == reception_id
                     )
                 ).all(),
                 [],
@@ -86,12 +86,12 @@ class TestWarehouseTransactionIntegration(unittest.TestCase):
 
         with Session(self.engine) as read_session:
             self.assertIsNone(
-                read_session.get(RawMaterialReceptionRecord, reception_id)
+                read_session.get(BaleReceptionRecord, reception_id)
             )
             self.assertEqual(
                 read_session.scalars(
-                    select(RawMaterialBaleRecord).where(
-                        RawMaterialBaleRecord.id.in_(
+                    select(BaleRecord).where(
+                        BaleRecord.id.in_(
                             (first_bale_id, second_bale_id)
                         )
                     )
@@ -100,8 +100,8 @@ class TestWarehouseTransactionIntegration(unittest.TestCase):
             )
 
     @staticmethod
-    def _reception(reception_id, shipment_number: str) -> RawMaterialReceptionRecord:
-        return RawMaterialReceptionRecord(
+    def _reception(reception_id, shipment_number: str) -> BaleReceptionRecord:
+        return BaleReceptionRecord(
             id=reception_id,
             received_at=datetime.now(timezone.utc),
             shipment_number=shipment_number,
@@ -109,8 +109,8 @@ class TestWarehouseTransactionIntegration(unittest.TestCase):
         )
 
     @staticmethod
-    def _bale(bale_id, reception_id, bale_number: str) -> RawMaterialBaleRecord:
-        return RawMaterialBaleRecord(
+    def _bale(bale_id, reception_id, bale_number: str) -> BaleRecord:
+        return BaleRecord(
             id=bale_id,
             reception_id=reception_id,
             bale_number=bale_number,

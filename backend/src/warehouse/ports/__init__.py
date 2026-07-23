@@ -1,9 +1,7 @@
 from warehouse.ports.identity_generator import IdentityGenerator
-from warehouse.ports.raw_material_bale_repository import (
-    RawMaterialBaleRepository,
-)
-from warehouse.ports.raw_material_reception_repository import (
-    RawMaterialReceptionRepository,
+from warehouse.ports.raw_material import (
+    BaleReceptionRepository,
+    BaleRepository,
 )
 from warehouse.ports.warehouse_transaction import WarehouseTransaction
 from warehouse.ports.warehouse_transaction_errors import (
@@ -14,8 +12,8 @@ from warehouse.ports.warehouse_transaction_errors import (
 
 __all__ = [
     "IdentityGenerator",
-    "RawMaterialBaleRepository",
-    "RawMaterialReceptionRepository",
+    "BaleReceptionRepository",
+    "BaleRepository",
     "DuplicateBaleNumberConflict",
     "DuplicateShipmentNumberConflict",
     "WarehouseTransaction",
