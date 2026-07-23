@@ -22,7 +22,7 @@ def _bale_status(status: str) -> Literal["in_warehouse"]:
     return status
 
 
-def map_bale_reception_request_to_input(
+def bale_reception_to_input(
     request: BaleReceptionRequest,
 ) -> RegisterBaleReceptionInput:
     return RegisterBaleReceptionInput(
@@ -42,7 +42,7 @@ def map_bale_reception_request_to_input(
     )
 
 
-def map_bale_reception_result_to_response(
+def bale_reception_to_response(
     result: BaleReceptionResult,
 ) -> BaleReceptionResponse:
     return BaleReceptionResponse(

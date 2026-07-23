@@ -1,6 +1,6 @@
 from warehouse.adapters.http.raw_material.bale_reception_mapping import (
-    map_bale_reception_request_to_input,
-    map_bale_reception_result_to_response,
+    bale_reception_to_input,
+    bale_reception_to_response,
 )
 from warehouse.adapters.http.raw_material.bale_reception_request import (
     BaleReceptionRequest,
@@ -24,6 +24,6 @@ __all__ = [
     "FieldErrorResponse",
     "ReceivedBaleRequest",
     "RegisteredBaleResponse",
-    "map_bale_reception_request_to_input",
-    "map_bale_reception_result_to_response",
+    "bale_reception_to_input",
+    "bale_reception_to_response",
 ]

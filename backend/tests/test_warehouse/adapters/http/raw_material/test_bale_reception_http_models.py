@@ -11,8 +11,8 @@ from warehouse.adapters.http.raw_material import (
     ErrorDetailResponse,
     ErrorResponse,
     FieldErrorResponse,
-    map_bale_reception_request_to_input,
-    map_bale_reception_result_to_response,
+    bale_reception_to_input,
+    bale_reception_to_response,
 )
 from warehouse.application.raw_material.bale_reception_result import (
     BaleReceptionResult,
@@ -127,7 +127,7 @@ class TestBaleReceptionMapping(unittest.TestCase):
         data["bales"] = [valid_bale("F-001"), valid_bale("F-002")]
         request = BaleReceptionRequest.model_validate(data)
 
-        mapped = map_bale_reception_request_to_input(request)
+        mapped = bale_reception_to_input(request)
 
         self.assertIsInstance(mapped, RegisterBaleReceptionInput)
         self.assertEqual(mapped.received_at, request.received_at)
@@ -164,7 +164,7 @@ class TestBaleReceptionMapping(unittest.TestCase):
             ),
         )
 
-        response = map_bale_reception_result_to_response(result)
+        response = bale_reception_to_response(result)
 
         self.assertEqual(response.reception_id, reception_id)
         self.assertEqual(response.received_at, received_at)
@@ -205,7 +205,7 @@ class TestBaleReceptionMapping(unittest.TestCase):
             ValueError,
             "Unexpected registered bale status: 'delivered'",
         ):
-            map_bale_reception_result_to_response(result)
+            bale_reception_to_response(result)
 
 
 class TestErrorResponse(unittest.TestCase):
