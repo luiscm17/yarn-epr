@@ -1,3 +1,3 @@
 from bootstrap.http_application import create_app
 
-app = create_app()
+__all__ = ["create_app"]
