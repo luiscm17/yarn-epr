@@ -12,7 +12,6 @@ class RegisteredBaleResult:
     dtex: Decimal
     gross_weight_kg: Decimal
     container_weight_kg: Decimal
-    net_weight_kg: Decimal
     status: str
 
 
@@ -23,5 +22,4 @@ class BaleReceptionResult:
     received_at: datetime
     provider_name: str
     bale_count: int
-    total_net_weight_kg: Decimal
     bales: tuple[RegisteredBaleResult, ...]

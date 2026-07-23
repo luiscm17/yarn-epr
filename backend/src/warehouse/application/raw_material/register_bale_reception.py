@@ -1,5 +1,3 @@
-from decimal import Decimal
-
 from warehouse.application.raw_material.bale_reception_errors import (
     DuplicateBaleNumberError,
     DuplicateShipmentNumberError,
@@ -88,7 +86,6 @@ class RegisterBaleReception:
             received_at=reception.received_at.value,
             provider_name=reception.provider_name,
             bale_count=reception.bale_count,
-            total_net_weight_kg=self._calculate_total_net_weight(bales=bales),
             bales=tuple(
                 RegisteredBaleResult(
                     id=bale.id.value,
@@ -97,7 +94,6 @@ class RegisterBaleReception:
                     dtex=bale.dtex.value,
                     gross_weight_kg=bale.weight.gross_kg,
                     container_weight_kg=bale.weight.container_kg,
-                    net_weight_kg=bale.weight.net_kg,
                     status=bale.status.value,
                 )
                 for bale in bales
@@ -151,10 +147,4 @@ class RegisterBaleReception:
             raise DuplicateBaleNumberError(
                 "Raw material reception cannot contain duplicate bale numbers."
             )
-
-    @staticmethod
-    def _calculate_total_net_weight(bales: tuple[Bale, ...]) -> Decimal:
-        return sum(
-            (bale.weight.net_kg for bale in bales),
-            start=Decimal("0"),
-        )
+        

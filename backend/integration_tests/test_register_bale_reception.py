@@ -86,7 +86,6 @@ class TestRegisterBaleReceptionIntegration(unittest.TestCase):
         self.assertEqual(len(result.bales), 2)
         self.assertTrue(all(isinstance(bale.id, UUID) for bale in result.bales))
         self.assertEqual(result.bale_count, 2)
-        self.assertEqual(result.total_net_weight_kg, Decimal("215.8750"))
 
         with Session(self.engine) as read_session:
             reception = read_session.scalar(

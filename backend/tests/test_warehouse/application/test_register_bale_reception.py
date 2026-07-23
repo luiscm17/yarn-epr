@@ -165,16 +165,14 @@ class TestRegisterBaleReception(unittest.TestCase):
         self.assertEqual(result.shipment_number, "SHIP-001")
         self.assertEqual(result.provider_name, "PROV-001")
         self.assertEqual(result.bales[0].bale_number, "BAL-001")
-        self.assertEqual(result.bales[0].net_weight_kg, Decimal("100"))
         self.assertEqual(result.bales[0].status, "in_warehouse")
+        self.assertFalse(hasattr(result.bales[0], "net_weight_kg"))
+        self.assertFalse(hasattr(result, "total_net_weight_kg"))
 
     def test_returns_correct_total_net_weight(self) -> None:
         """Net weight is sum of (gross - container) for all bales."""
         input_data = self._make_input()
         result = self.use_case.execute(input_data)
-
-        # BAL-001: 120 - 20 = 100, BAL-002: 130 - 25 = 105
-        self.assertEqual(result.total_net_weight_kg, Decimal("205"))
 
     def test_single_bale_reception(self) -> None:
         """Works with a single bale."""
@@ -184,7 +182,6 @@ class TestRegisterBaleReception(unittest.TestCase):
         result = self.use_case.execute(input_data)
 
         self.assertEqual(result.bale_count, 1)
-        self.assertEqual(result.total_net_weight_kg, Decimal("150"))
 
     def test_rejects_canonical_duplicate_bale_numbers(self) -> None:
         input_data = self._make_input(
